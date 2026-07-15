@@ -16,6 +16,29 @@ def update_product_stock_on_save(sender, instance, created, **kwargs):
         with transaction.atomic():
             product = Product.objects.select_for_update().get(pk=instance.product_id)
             product.stock_quantity += delta
+            
+            # Explicitly update shop/warehouse stocks based on transaction metadata
+            if instance.reference_type == 'ordered_slip' and instance.reference_id:
+                try:
+                    from purchases.models import OrderedSlip
+                    slip = OrderedSlip.objects.get(pk=instance.reference_id)
+                    if slip.delivery_location == 'SHOP':
+                        product.shop_stock += delta
+                    else:
+                        product.warehouse_stock += delta
+                except Exception:
+                    if instance.txn_type == 'IN':
+                        product.warehouse_stock += delta
+                    else:
+                        product.shop_stock += delta
+            elif instance.reference_type in ('sale', 'sale_return'):
+                product.shop_stock += delta
+            else:
+                if instance.txn_type == 'IN':
+                    product.warehouse_stock += delta
+                else:
+                    product.shop_stock += delta
+            
             product.save(update_fields=['stock_quantity', 'shop_stock', 'warehouse_stock'])
 
 
@@ -29,6 +52,29 @@ def update_product_stock_on_delete(sender, instance, **kwargs):
     with transaction.atomic():
         product = Product.objects.select_for_update().get(pk=instance.product_id)
         product.stock_quantity += delta
+        
+        # Explicitly reverse shop/warehouse stocks based on transaction metadata
+        if instance.reference_type == 'ordered_slip' and instance.reference_id:
+            try:
+                from purchases.models import OrderedSlip
+                slip = OrderedSlip.objects.get(pk=instance.reference_id)
+                if slip.delivery_location == 'SHOP':
+                    product.shop_stock += delta
+                else:
+                    product.warehouse_stock += delta
+            except Exception:
+                if instance.txn_type == 'IN':
+                    product.warehouse_stock += delta
+                else:
+                    product.shop_stock += delta
+        elif instance.reference_type in ('sale', 'sale_return'):
+            product.shop_stock += delta
+        else:
+            if instance.txn_type == 'IN':
+                product.warehouse_stock += delta
+            else:
+                product.shop_stock += delta
+                
         product.save(update_fields=['stock_quantity', 'shop_stock', 'warehouse_stock'])
 
 

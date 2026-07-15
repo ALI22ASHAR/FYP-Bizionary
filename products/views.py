@@ -552,6 +552,7 @@ def bulk_upload_products(request):
             description=description,
             supplier=supplier_instance
         )
+        product_instance.shop_stock, product_instance.warehouse_stock = product_instance.calculate_stock_split()
         products_to_create.append(product_instance)
 
         # Prepare BulkProduct staging instance

@@ -36,6 +36,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'supplier',
             'supplier_name',
             'status',
+            'order_from_warehouse',
             'is_low_stock',
             'stock_status',
             'inventory_value',

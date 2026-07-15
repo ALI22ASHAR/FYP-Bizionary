@@ -9,6 +9,22 @@ sys.path.append(os.getcwd())
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'erp_system.settings')
 django.setup()
 
+# Disconnect/mute all signals to prevent side-effects/locks during restoration
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete, m2m_changed
+pre_save.receivers = []
+post_save.receivers = []
+pre_delete.receivers = []
+post_delete.receivers = []
+m2m_changed.receivers = []
+
+# Optimize SQLite performance & prevent locks/corruption from file syncing (e.g. OneDrive)
+from django.db import connection
+with connection.cursor() as cursor:
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=OFF;")
+
+
+
 from django.db import transaction
 from django.apps import apps
 from django.core.serializers import deserialize

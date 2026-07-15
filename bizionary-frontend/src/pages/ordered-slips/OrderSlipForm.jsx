@@ -160,10 +160,12 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
         if (!target) return;
         const cat = normalizeProductCategory(target.category) || 'Tech';
         setSelectedCategory(cat);
+        const newDeliveryLocation = target.order_from_warehouse ? 'WAREHOUSE' : 'SHOP';
         setFormData((prev) => ({
             ...prev,
             product: String(target.id),
             quantity_ordered: Number(prefill.quantity_ordered || prefill.quantity || 1),
+            delivery_location: newDeliveryLocation,
         }));
     }, [products, prefill?.product_id, prefill?.quantity_ordered, prefill?.quantity]);
 
@@ -404,9 +406,12 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
         }
 
         if (name === 'product') {
+            const selectedProductObj = products.find((p) => p.id === Number(value));
+            const newDeliveryLocation = selectedProductObj?.order_from_warehouse ? 'WAREHOUSE' : 'SHOP';
             setFormData((prev) => ({
                 ...prev,
                 product: value,
+                delivery_location: newDeliveryLocation,
             }));
             return;
         }

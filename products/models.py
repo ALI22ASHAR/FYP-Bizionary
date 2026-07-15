@@ -58,6 +58,7 @@ class Product(models.Model):
         related_name='products'
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    order_from_warehouse = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,7 +101,9 @@ class Product(models.Model):
         return shop, warehouse
 
     def save(self, *args, **kwargs):
-        self.shop_stock, self.warehouse_stock = self.calculate_stock_split()
+        # Only initialize/calculate the automatic split if we are creating a new product (pk is None)
+        if self.pk is None:
+            self.shop_stock, self.warehouse_stock = self.calculate_stock_split()
         
         # Ensure shop_stock and warehouse_stock are in update_fields if passed
         update_fields = kwargs.get('update_fields')

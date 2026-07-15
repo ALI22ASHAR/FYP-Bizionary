@@ -15,6 +15,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
         sale_price: 0,
         supplier: '',
         status: 'ACTIVE',
+        order_from_warehouse: false,
     });
 
     useEffect(() => {
@@ -27,6 +28,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     sale_price: initialData.sale_price ?? initialData.unit_price ?? 0,
                     supplier: initialData.supplier_id || initialData.supplier || '',
                     status: initialData.status || 'ACTIVE',
+                    order_from_warehouse: initialData.order_from_warehouse ?? false,
                 });
             } else {
                 setFormData({
@@ -37,6 +39,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     sale_price: 0,
                     supplier: '',
                     status: 'ACTIVE',
+                    order_from_warehouse: false,
                 });
             }
         }
@@ -195,6 +198,20 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                                     <option value="ACTIVE">Active</option>
                                     <option value="INACTIVE">Inactive</option>
                                 </select>
+                            </div>
+
+                            <div className="col-span-2 flex items-center gap-2 py-2">
+                                <input
+                                    type="checkbox"
+                                    id="order_from_warehouse"
+                                    name="order_from_warehouse"
+                                    checked={formData.order_from_warehouse || false}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, order_from_warehouse: e.target.checked }))}
+                                    className="h-4.5 w-4.5 rounded border-card text-primary focus:ring-primary"
+                                />
+                                <label htmlFor="order_from_warehouse" className="text-sm font-semibold text-primary select-none cursor-pointer">
+                                    Order from Warehouse by default
+                                </label>
                             </div>
 
                         </div>
