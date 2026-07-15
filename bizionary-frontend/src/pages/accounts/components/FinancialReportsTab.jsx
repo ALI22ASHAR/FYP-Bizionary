@@ -16,6 +16,22 @@ const formatDateLabel = (dateStr) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const DEFAULT_PL_TEMPLATES = {
+    revenue_lines: [
+        { code: '4000', name: 'Sales Revenue', balance: 0.0, isTemplate: true },
+        { code: '4010', name: 'Service Revenue', balance: 0.0, isTemplate: true }
+    ],
+    cogs_lines: [
+        { code: '5000', name: 'Cost of Goods Sold', balance: 0.0, isTemplate: true }
+    ],
+    expense_lines: [
+        { code: '6000', name: 'Salaries & Wages', balance: 0.0, isTemplate: true },
+        { code: '6010', name: 'Rent Expense', balance: 0.0, isTemplate: true },
+        { code: '6020', name: 'Utilities Expense', balance: 0.0, isTemplate: true },
+        { code: '6030', name: 'Office Expense', balance: 0.0, isTemplate: true }
+    ]
+};
+
 const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
     const [reportType, setReportType] = useState('profit-loss'); // 'profit-loss' | 'balance-sheet'
     const [reportData, setReportData] = useState(null);
@@ -25,9 +41,15 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
     const [customColumns, setCustomColumns] = useState(() => {
         try {
             const saved = localStorage.getItem('bizionary_custom_columns_reports_v2');
-            return saved ? JSON.parse(saved) : { assets: [], liabilities: [], equity: [] };
+            return saved ? JSON.parse(saved) : { 
+                assets: [], liabilities: [], equity: [],
+                revenue_lines: [], cogs_lines: [], expense_lines: []
+            };
         } catch {
-            return { assets: [], liabilities: [], equity: [] };
+            return { 
+                assets: [], liabilities: [], equity: [],
+                revenue_lines: [], cogs_lines: [], expense_lines: []
+            };
         }
     });
 
@@ -35,9 +57,15 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
     const [customRows, setCustomRows] = useState(() => {
         try {
             const saved = localStorage.getItem('bizionary_custom_rows_reports_v2');
-            return saved ? JSON.parse(saved) : { assets: [], liabilities: [], equity: [] };
+            return saved ? JSON.parse(saved) : { 
+                assets: [], liabilities: [], equity: [],
+                revenue_lines: [], cogs_lines: [], expense_lines: []
+            };
         } catch {
-            return { assets: [], liabilities: [], equity: [] };
+            return { 
+                assets: [], liabilities: [], equity: [],
+                revenue_lines: [], cogs_lines: [], expense_lines: []
+            };
         }
     });
 
@@ -61,6 +89,16 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         }
     });
 
+    // Deleted Templates State
+    const [deletedTemplates, setDeletedTemplates] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_deleted_templates');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
     // Active edit state
     const [editingCell, setEditingCell] = useState(null); // { code, column }
     const [editingValue, setEditingValue] = useState('');
@@ -81,12 +119,16 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         localStorage.setItem('bizionary_custom_cells', JSON.stringify(customCellValues));
     }, [customCellValues]);
 
+    useEffect(() => {
+        localStorage.setItem('bizionary_deleted_templates', JSON.stringify(deletedTemplates));
+    }, [deletedTemplates]);
+
     const handleAddColumn = (section) => {
         const colName = prompt(`Enter new column name for ${section.toUpperCase()}:`);
         if (colName && colName.trim()) {
             const trimmed = colName.trim();
             const cols = customColumns[section] || [];
-            if (!cols.includes(trimmed) && trimmed !== 'Account Code' && trimmed !== 'Account Name' && trimmed !== 'Balance') {
+            if (!cols.includes(trimmed) && trimmed !== 'Account Code' && trimmed !== 'Account Name' && trimmed !== 'Balance' && trimmed !== 'Amount' && trimmed !== 'Account') {
                 setCustomColumns({
                     ...customColumns,
                     [section]: [...cols, trimmed]
@@ -146,11 +188,16 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
 
     const handleDeleteRow = (section, code) => {
         if (window.confirm(`Are you sure you want to delete row "${code}"?`)) {
-            const existingRows = customRows[section] || [];
-            setCustomRows({
-                ...customRows,
-                [section]: existingRows.filter(r => r.code !== code)
-            });
+            const isTemplate = DEFAULT_PL_TEMPLATES[section]?.some(t => t.code === code);
+            if (isTemplate) {
+                setDeletedTemplates([...deletedTemplates, code]);
+            } else {
+                const existingRows = customRows[section] || [];
+                setCustomRows({
+                    ...customRows,
+                    [section]: existingRows.filter(r => r.code !== code)
+                });
+            }
             
             const newOverrides = { ...balanceOverrides };
             delete newOverrides[code];
@@ -173,7 +220,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         return parseFloat(item.balance) || 0.0;
     };
 
-    // Merged Lists
+    // Merged Balance Sheet Lists
     const mergedAssets = useMemo(() => {
         if (!reportData) return [];
         const standard = reportData.assets || [];
@@ -194,6 +241,40 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         const custom = customRows.equity || [];
         return [...standard, ...custom].sort((a, b) => a.code.localeCompare(b.code));
     }, [reportData, customRows.equity]);
+
+    // Merged Profit & Loss Lists
+    const mergedRevenue = useMemo(() => {
+        const standard = (reportData && reportData.revenue_lines) || [];
+        const custom = customRows.revenue_lines || [];
+        const templates = DEFAULT_PL_TEMPLATES.revenue_lines.filter(t => 
+            !standard.some(s => s.code === t.code) && 
+            !custom.some(c => c.code === t.code) &&
+            !deletedTemplates.includes(t.code)
+        );
+        return [...standard, ...custom, ...templates].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.revenue_lines, deletedTemplates]);
+
+    const mergedCOGS = useMemo(() => {
+        const standard = (reportData && reportData.cogs_lines) || [];
+        const custom = customRows.cogs_lines || [];
+        const templates = DEFAULT_PL_TEMPLATES.cogs_lines.filter(t => 
+            !standard.some(s => s.code === t.code) && 
+            !custom.some(c => c.code === t.code) &&
+            !deletedTemplates.includes(t.code)
+        );
+        return [...standard, ...custom, ...templates].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.cogs_lines, deletedTemplates]);
+
+    const mergedExpense = useMemo(() => {
+        const standard = (reportData && reportData.expense_lines) || [];
+        const custom = customRows.expense_lines || [];
+        const templates = DEFAULT_PL_TEMPLATES.expense_lines.filter(t => 
+            !standard.some(s => s.code === t.code) && 
+            !custom.some(c => c.code === t.code) &&
+            !deletedTemplates.includes(t.code)
+        );
+        return [...standard, ...custom, ...templates].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.expense_lines, deletedTemplates]);
 
     // Calculate dynamic totals for Balance Sheet
     const dynamicTotals = useMemo(() => {
@@ -222,6 +303,42 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
             total_liabilities_and_equity: totalLiabilities + totalEquity
         };
     }, [reportData, reportType, balanceOverrides, mergedAssets, mergedLiabilities, mergedEquity]);
+
+    // Calculate dynamic totals for Profit & Loss
+    const dynamicPLTotals = useMemo(() => {
+        if (!reportData || reportType !== 'profit-loss') return null;
+
+        let totalRevenue = 0;
+        let totalCOGS = 0;
+        let totalExpense = 0;
+
+        mergedRevenue.forEach(item => {
+            totalRevenue += getActiveBalance(item);
+        });
+
+        mergedCOGS.forEach(item => {
+            totalCOGS += getActiveBalance(item);
+        });
+
+        mergedExpense.forEach(item => {
+            totalExpense += getActiveBalance(item);
+        });
+
+        const grossProfit = totalRevenue - totalCOGS;
+        const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0.0;
+        const netProfit = grossProfit - totalExpense;
+        const netMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0.0;
+
+        return {
+            total_revenue: totalRevenue,
+            total_cogs: totalCOGS,
+            gross_profit: grossProfit,
+            gross_profit_margin: grossMargin,
+            total_expense: totalExpense,
+            net_profit: netProfit,
+            net_profit_margin: netMargin
+        };
+    }, [reportData, reportType, balanceOverrides, mergedRevenue, mergedCOGS, mergedExpense]);
 
     const startEditing = (code, column, currentValue) => {
         setEditingCell({ code, column });
@@ -348,26 +465,26 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
             csvRows.push('');
             csvRows.push('Account Code,Account Name,Balance (PKR)');
             csvRows.push('REVENUE');
-            (reportData.revenue_lines || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedRevenue.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total Revenue,${reportData.total_revenue}`);
+            csvRows.push(`,Total Revenue,${dynamicPLTotals ? dynamicPLTotals.total_revenue : reportData.total_revenue}`);
             csvRows.push('');
             csvRows.push('COST OF GOODS SOLD (COGS)');
-            (reportData.cogs_lines || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedCOGS.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total COGS,${reportData.total_cogs}`);
+            csvRows.push(`,Total COGS,${dynamicPLTotals ? dynamicPLTotals.total_cogs : reportData.total_cogs}`);
             csvRows.push('');
-            csvRows.push(`,GROSS PROFIT (${reportData.gross_profit_margin?.toFixed(1)}% margin),${reportData.gross_profit}`);
+            csvRows.push(`,GROSS PROFIT (${(dynamicPLTotals ? dynamicPLTotals.gross_profit_margin : reportData.gross_profit_margin)?.toFixed(1)}% margin),${dynamicPLTotals ? dynamicPLTotals.gross_profit : reportData.gross_profit}`);
             csvRows.push('');
             csvRows.push('OPERATING EXPENSES');
-            (reportData.expense_lines || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedExpense.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total Operating Expenses,${reportData.total_expense}`);
+            csvRows.push(`,Total Operating Expenses,${dynamicPLTotals ? dynamicPLTotals.total_expense : reportData.total_expense}`);
             csvRows.push('');
-            csvRows.push(`,NET PROFIT (${reportData.net_profit_margin?.toFixed(1)}% margin),${reportData.net_profit}`);
+            csvRows.push(`,NET PROFIT (${(dynamicPLTotals ? dynamicPLTotals.net_profit_margin : reportData.net_profit_margin)?.toFixed(1)}% margin),${dynamicPLTotals ? dynamicPLTotals.net_profit : reportData.net_profit}`);
         } else {
             filename = `Balance_Sheet_${endDate || 'custom'}.csv`;
             csvRows.push(`Balance Sheet - As of Date: ${reportData.as_of_date || endDate || 'Current'}`);
@@ -455,7 +572,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                     <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                     <p className="text-sm text-secondary font-bold">Compiling ledger balances and report lines...</p>
                 </div>
-            ) : (!reportData || (reportType === 'profit-loss' && (reportData.revenue || []).length === 0 && (reportData.expense || []).length === 0)) ? (
+            ) : (!reportData || (reportType === 'profit-loss' && mergedRevenue.length === 0 && mergedExpense.length === 0)) ? (
                 <div className="empty-state-message text-center py-20 font-bold text-secondary bg-card rounded-2xl border border-card p-6">
                     No matching database records found for this period.
                 </div>
@@ -490,30 +607,76 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                         <div className="space-y-6">
                             {/* Section 1: Revenue */}
                             <div className="space-y-2">
-                                <div className="bg-status-info text-card px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded">
-                                    1. Revenue (from Sales)
+                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                    <span>1. Revenue (from Sales)</span>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleAddColumn('revenue_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Column
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddRow('revenue_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Row
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="border border-card/60 rounded-xl overflow-hidden">
+                                <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider">
+                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
                                                 <th className="py-2 pl-4 w-24">Code</th>
-                                                <th className="py-2">Account</th>
+                                                <th className="py-2">Account Name</th>
+                                                {(customColumns.revenue_lines || []).map((col, idx) => (
+                                                    <th key={idx} className="py-2 text-right relative group pr-4 w-28">
+                                                        <span>{col}</span>
+                                                        <button 
+                                                            onClick={() => handleDeleteColumn('revenue_lines', col)}
+                                                            className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </th>
+                                                ))}
                                                 <th className="py-2 pr-4 text-right">Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(reportData.revenue_lines || []).map((item, idx) => (
+                                            {mergedRevenue.map((item, idx) => (
                                                 <tr key={idx} className="hover:bg-page/50">
                                                     <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
-                                                    <td className="py-2.5 text-primary font-bold">{item.name}</td>
-                                                    <td className="py-2.5 pr-4 text-right font-mono text-status-info font-bold">{formatPKR(item.balance)}</td>
+                                                    <td className="py-2.5 text-primary font-bold flex items-center">
+                                                        <span>{item.name}</span>
+                                                        {(item.isCustom || item.isTemplate) && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('revenue_lines', item.code); }}
+                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                title="Delete row"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    {(customColumns.revenue_lines || []).map((col, cIdx) => (
+                                                        <td key={cIdx} className="py-2.5 text-right">
+                                                            {renderCell(item, col)}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-2.5 pr-4 text-right">
+                                                        {renderCell(item, 'balance')}
+                                                    </td>
                                                 </tr>
                                             ))}
-                                            <tr className="border-t-2 border-blue-200 bg-active-pill/20/50 font-bold">
+                                            <tr className="border-t-2 border-blue-200 bg-active-pill/20/50 font-bold bg-page/50">
                                                 <td className="py-3 pl-4"></td>
                                                 <td className="py-3 text-blue-900 uppercase">Total Revenue</td>
-                                                <td className="py-3 pr-4 text-right font-mono text-blue-900 text-sm">{formatPKR(reportData.total_revenue)}</td>
+                                                {(customColumns.revenue_lines || []).map((_, idx) => <td key={idx}></td>)}
+                                                <td className="py-3 pr-4 text-right font-mono text-blue-900 text-sm">
+                                                    {formatPKR(dynamicPLTotals ? dynamicPLTotals.total_revenue : reportData.total_revenue)}
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -522,30 +685,76 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
 
                             {/* Section 2: COGS */}
                             <div className="space-y-2">
-                                <div className="bg-orange-500 text-card px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded">
-                                    2. Cost of Goods Sold (COGS)
+                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                    <span>2. Cost of Goods Sold (COGS)</span>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleAddColumn('cogs_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Column
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddRow('cogs_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Row
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="border border-card/60 rounded-xl overflow-hidden">
+                                <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider">
+                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
                                                 <th className="py-2 pl-4 w-24">Code</th>
-                                                <th className="py-2">Account</th>
+                                                <th className="py-2">Account Name</th>
+                                                {(customColumns.cogs_lines || []).map((col, idx) => (
+                                                    <th key={idx} className="py-2 text-right relative group pr-4 w-28">
+                                                        <span>{col}</span>
+                                                        <button 
+                                                            onClick={() => handleDeleteColumn('cogs_lines', col)}
+                                                            className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </th>
+                                                ))}
                                                 <th className="py-2 pr-4 text-right">Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(reportData.cogs_lines || []).map((item, idx) => (
+                                            {mergedCOGS.map((item, idx) => (
                                                 <tr key={idx} className="hover:bg-page/50">
                                                     <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
-                                                    <td className="py-2.5 text-primary font-bold">{item.name}</td>
-                                                    <td className="py-2.5 pr-4 text-right font-mono text-status-info font-bold">{formatPKR(item.balance)}</td>
+                                                    <td className="py-2.5 text-primary font-bold flex items-center">
+                                                        <span>{item.name}</span>
+                                                        {(item.isCustom || item.isTemplate) && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('cogs_lines', item.code); }}
+                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                title="Delete row"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    {(customColumns.cogs_lines || []).map((col, cIdx) => (
+                                                        <td key={cIdx} className="py-2.5 text-right">
+                                                            {renderCell(item, col)}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-2.5 pr-4 text-right">
+                                                        {renderCell(item, 'balance')}
+                                                    </td>
                                                 </tr>
                                             ))}
-                                            <tr className="border-t-2 border-orange-200 bg-orange-50/50 font-bold">
+                                            <tr className="border-t-2 border-orange-200 bg-orange-50/50 font-bold bg-page/50">
                                                 <td className="py-3 pl-4"></td>
-                                                <td className="py-3 text-orange-900 uppercase">Total COGS</td>
-                                                <td className="py-3 pr-4 text-right font-mono text-orange-900 text-sm">{formatPKR(reportData.total_cogs)}</td>
+                                                <td className="py-3 text-orange-950 uppercase">Total COGS</td>
+                                                {(customColumns.cogs_lines || []).map((_, idx) => <td key={idx}></td>)}
+                                                <td className="py-3 pr-4 text-right font-mono text-orange-950 text-sm">
+                                                    {formatPKR(dynamicPLTotals ? dynamicPLTotals.total_cogs : reportData.total_cogs)}
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -553,55 +762,95 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                             </div>
 
                             {/* Section 3: Gross Profit Subtotal */}
-                            <div className={`rounded-xl p-4 flex justify-between items-center border-2 ${reportData.gross_profit >= 0 ? 'bg-status-success/10 border-card' : 'bg-status-info/10 border-card'}`}>
+                            <div className={`rounded-xl p-4 flex justify-between items-center border-2 bg-status-success/10 border-emerald-600`}>
                                 <div>
-                                    <p className={`text-xs font-black uppercase tracking-wider ${reportData.gross_profit >= 0 ? 'text-status-success' : 'text-status-info'}`}>
+                                    <p className={`text-xs font-black uppercase tracking-wider text-emerald-800`}>
                                         3. Gross Profit
                                     </p>
                                     <p className="text-[10px] text-secondary mt-0.5">Revenue minus Cost of Goods Sold</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`text-lg font-black font-mono ${reportData.gross_profit >= 0 ? 'text-status-success' : 'text-status-info'}`}>
-                                        {formatPKR(reportData.gross_profit)}
+                                    <p className={`text-lg font-black font-mono text-emerald-800`}>
+                                        {formatPKR(dynamicPLTotals ? dynamicPLTotals.gross_profit : reportData.gross_profit)}
                                     </p>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${reportData.gross_profit >= 0 ? 'bg-status-success/20 text-status-success' : 'bg-status-info/20 text-rose-800'}`}>
-                                        {reportData.gross_profit_margin?.toFixed(1)}% margin
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-success/20 text-emerald-800`}>
+                                        {(dynamicPLTotals ? dynamicPLTotals.gross_profit_margin : reportData.gross_profit_margin)?.toFixed(1)}% margin
                                     </span>
                                 </div>
                             </div>
 
                             {/* Section 4: Operating Expenses */}
                             <div className="space-y-2">
-                                <div className="bg-status-info text-card px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded">
-                                    4. Operating Expenses
+                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                    <span>4. Operating Expenses</span>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleAddColumn('expense_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Column
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddRow('expense_lines')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Row
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="border border-card/60 rounded-xl overflow-hidden">
+                                <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider">
-                                                <th className="py-2 pl-4 w-24">Category</th>
-                                                <th className="py-2">Expense Type</th>
+                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
+                                                <th className="py-2 pl-4 w-24">Code</th>
+                                                <th className="py-2">Account Name</th>
+                                                {(customColumns.expense_lines || []).map((col, idx) => (
+                                                    <th key={idx} className="py-2 text-right relative group pr-4 w-28">
+                                                        <span>{col}</span>
+                                                        <button 
+                                                            onClick={() => handleDeleteColumn('expense_lines', col)}
+                                                            className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </th>
+                                                ))}
                                                 <th className="py-2 pr-4 text-right">Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(reportData.expense_lines || []).length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="3" className="py-4 text-center text-secondary text-xs italic">No operating expenses recorded for this period.</td>
+                                            {mergedExpense.map((item, idx) => (
+                                                <tr key={idx} className="hover:bg-page/50">
+                                                    <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
+                                                    <td className="py-2.5 text-primary font-bold flex items-center">
+                                                        <span>{item.name}</span>
+                                                        {(item.isCustom || item.isTemplate) && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('expense_lines', item.code); }}
+                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                title="Delete row"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    {(customColumns.expense_lines || []).map((col, cIdx) => (
+                                                        <td key={cIdx} className="py-2.5 text-right">
+                                                            {renderCell(item, col)}
+                                                        </td>
+                                                    ))}
+                                                    <td className="py-2.5 pr-4 text-right">
+                                                        {renderCell(item, 'balance')}
+                                                    </td>
                                                 </tr>
-                                            ) : (
-                                                (reportData.expense_lines || []).map((item, idx) => (
-                                                    <tr key={idx} className="hover:bg-page/50">
-                                                        <td className="py-2.5 pl-4 font-mono text-secondary font-semibold text-[10px]">{item.code}</td>
-                                                        <td className="py-2.5 text-primary font-bold">{item.name}</td>
-                                                        <td className="py-2.5 pr-4 text-right font-mono text-status-info font-bold">{formatPKR(item.balance)}</td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                            <tr className="border-t-2 border-card bg-status-info/10/50 font-bold">
+                                            ))}
+                                            <tr className="border-t-2 border-card bg-page/50 font-bold">
                                                 <td className="py-3 pl-4"></td>
-                                                <td className="py-3 text-rose-900 uppercase">Total Operating Expenses</td>
-                                                <td className="py-3 pr-4 text-right font-mono text-rose-900 text-sm">{formatPKR(reportData.total_expense)}</td>
+                                                <td className="py-3 text-rose-950 uppercase">Total Operating Expenses</td>
+                                                {(customColumns.expense_lines || []).map((_, idx) => <td key={idx}></td>)}
+                                                <td className="py-3 pr-4 text-right font-mono text-rose-950 text-sm">
+                                                    {formatPKR(dynamicPLTotals ? dynamicPLTotals.total_expense : reportData.total_expense)}
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -609,7 +858,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                             </div>
 
                             {/* Section 5: Net Profit */}
-                            <div className={`rounded-xl p-5 flex justify-between items-center border-2 ${reportData.net_profit >= 0 ? 'bg-status-success border-emerald-700' : 'bg-status-info border-rose-700'}`}>
+                            <div className={`rounded-xl p-5 flex justify-between items-center border-2 border-emerald-700 bg-status-success`}>
                                 <div>
                                     <p className="text-xs font-black uppercase tracking-wider text-card/80">
                                         5. Net Profit / Loss
@@ -618,10 +867,10 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                 </div>
                                 <div className="text-right">
                                     <p className="text-2xl font-black font-mono text-card">
-                                        {formatPKR(reportData.net_profit)}
+                                        {formatPKR(dynamicPLTotals ? dynamicPLTotals.net_profit : reportData.net_profit)}
                                     </p>
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-card/20 text-card">
-                                        {reportData.net_profit_margin?.toFixed(1)}% net margin
+                                        {(dynamicPLTotals ? dynamicPLTotals.net_profit_margin : reportData.net_profit_margin)?.toFixed(1)}% net margin
                                     </span>
                                 </div>
                             </div>
