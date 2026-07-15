@@ -1,6 +1,6 @@
 # PROJECT DOCUMENTATION: BIZIONARY ERP SYSTEM
 
-### Final Year Project (FYP) Complete Technical Documentation & Systems Blueprint
+### Final Year Project (FYP) Complete Technical Documentation
 
 ---
 
@@ -43,6 +43,34 @@ The primary objective of the Bizionary ERP system is to establish a secure, unif
 ### 1.5 Scope of the Project
 
 The scope of Bizionary covers the operations of a single-tenant enterprise containing multiple administrative departments and staff roles. The system is designed to run locally using an optimized SQLite database for immediate developer bootstrap and is structured to scale to production environments using MySQL or PostgreSQL. Third-party integrations are limited to Groq and OpenAI APIs.
+
+### 1.6 Technology Stack & Component Purpose
+
+The Bizionary ERP ecosystem is designed using modern, enterprise-grade software stacks to ensure security, transactional integrity, and scalable AI operations. The components and their specific purposes are outlined below:
+
+#### 1.6.1 Tech Stack Matrix
+
+| Tier | Technology | Specific Purpose |
+| :--- | :--- | :--- |
+| **Frontend Core** | React 19.2 (Vite) | Renders the single-page application (SPA) with fast hot-reloading and modular UI updates. |
+| **Styling & UI** | Tailwind CSS v4, Lucide Icons | Implements a responsive, clean design system with custom utility styling. |
+| **Data Visualization**| Recharts & ECharts | Renders real-time financial graphs, KPI trackers, and trend analytics. |
+| **Frontend Export** | jsPDF + html2canvas | Allows client-side generation and downloading of invoices and custom reports. |
+| **Backend Core** | Django 4.2.7 | Handles secure business APIs, ORM database transactions, and signal-driven events. |
+| **API Framework** | Django REST Framework (DRF) | Exposes stateless REST APIs, handles JWT token validation, and controls CORS middleware. |
+| **Database (Dev)** | SQLite 3 | Low-overhead relational database for local development and direct bootstrapping. |
+| **Database (Prod)**| PostgreSQL | Enterprise-grade, transaction-secure database for cloud-hosted environments. |
+| **AI Cognitive Layer**| Groq API (Llama 3.3) | Drives the natural-language chatbot engine utilizing function-calling tool schemas. |
+| **AI Fallback/Utils**| OpenAI GPT Models | Performs complementary text summarization and semantic sentiment tasks. |
+| **Excel Parser** | Pandas + OpenPyXL | Scans and ingests monthly sales and billing sheets from raw business spreadsheets. |
+| **Hosting & Cloud** | Railway + Vercel | Seamless CI/CD hosting; Vercel for frontend static builds and Railway for backend containers. |
+
+#### 1.6.2 Key Architectural Choices
+
+1. **Vite + React SPA vs Server-Side Rendering (SSR):** A React SPA delivers an instantaneous, desktop-app-like user experience where the sidebars, tables, and analytical views update without full page refreshes.
+2. **Django ORM & Signals vs Manual Triggers:** Financial journals and inventory ledger balances must remain mathematically balanced. Django’s post-save database signals act as a centralized, transactional broker ensuring that actions (like recording a sale return) trigger balance sheets, cash flows, and inventory logs in one atomic commit.
+3. **Groq Llama 3.3 API vs Self-Hosted Models:** Groq's high-speed inference provides sub-second responses for natural language database queries (function calling tool schema), which is essential for responsive conversational RAG chatbots.
+4. **Decoupled Deployment (Railway + Vercel):** By separating static client distribution (Vercel edge CDN) from Python container runtime execution (Railway hosting), the system limits resource consumption and increases reliability.
 
 ---
 

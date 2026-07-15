@@ -3,7 +3,19 @@ import { Folder, FolderOpen, FileText, ChevronDown, ChevronRight, RefreshCw, Eye
 import { accountsApi } from '../../../services/accountsApi';
 import { formatPKR } from '../../../utils/currency';
 
-const AccountNode = ({ node, level = 0, expandedNodes, toggleExpand }) => {
+const AccountNode = ({ 
+    node, 
+    level = 0, 
+    expandedNodes, 
+    toggleExpand,
+    customColumns,
+    balanceOverrides,
+    customCellValues,
+    editingCell,
+    startEditing,
+    renderCell,
+    getAccountBalance
+}) => {
     const isGroup = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
     
@@ -19,48 +31,68 @@ const AccountNode = ({ node, level = 0, expandedNodes, toggleExpand }) => {
         }
     };
 
+    const currentBalance = getAccountBalance(node);
+
     return (
         <div className="select-none">
             <div 
-                className={`flex items-center justify-between p-2.5 my-1 rounded-xl transition-all border border-transparent hover:border-card/60 hover:bg-page/85 cursor-pointer`}
-                style={{ marginLeft: `${level * 24}px` }}
-                onClick={() => isGroup && toggleExpand(node.id)}
+                className={`grid items-center gap-4 p-2.5 my-1 rounded-xl transition-all border border-transparent hover:border-card/60 hover:bg-page/85 cursor-pointer`}
+                style={{ 
+                    gridTemplateColumns: `1fr 100px 140px ${customColumns.map(() => '120px').join(' ')}` 
+                }}
+                onClick={(e) => {
+                    if (isGroup) {
+                        toggleExpand(node.id);
+                    }
+                }}
             >
-                <div className="flex items-center gap-2.5">
+                {/* Column 1: Account Code & Name */}
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div style={{ width: `${level * 20}px` }} className="flex-shrink-0" />
                     {isGroup ? (
-                        <button className="text-secondary hover:text-primary p-0.5 rounded transition-colors">
+                        <button className="text-secondary hover:text-primary p-0.5 rounded transition-colors flex-shrink-0">
                             {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                     ) : (
-                        <div className="w-5" /> // spacing spacer
+                        <div className="w-5 flex-shrink-0" />
                     )}
                     
                     {isGroup ? (
                         isExpanded ? (
-                            <FolderOpen className="w-4 h-4 text-primary" />
+                            <FolderOpen className="w-4 h-4 text-primary flex-shrink-0" />
                         ) : (
-                            <Folder className="w-4 h-4 text-primary/80" />
+                            <Folder className="w-4 h-4 text-primary/80 flex-shrink-0" />
                         )
                     ) : (
-                        <FileText className="w-4 h-4 text-secondary" />
+                        <FileText className="w-4 h-4 text-secondary flex-shrink-0" />
                     )}
 
-                    <span className="text-[10px] font-bold font-mono text-secondary bg-page px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold font-mono text-secondary bg-page px-1.5 py-0.5 rounded flex-shrink-0">
                         {node.code}
                     </span>
-                    <span className={`text-sm font-bold ${isGroup ? 'text-primary' : 'text-secondary'}`}>
+                    <span className={`text-sm font-bold truncate ${isGroup ? 'text-primary' : 'text-secondary'}`}>
                         {node.name}
                     </span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* Column 2: Account Type */}
+                <div className="flex items-center">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getTypeColor(node.account_type)}`}>
                         {node.account_type}
                     </span>
-                    <span className={`text-sm font-bold font-mono ${node.balance < 0 ? 'text-status-info' : 'text-primary'}`}>
-                        {formatPKR(node.balance)}
-                    </span>
                 </div>
+
+                {/* Column 3: Balance */}
+                <div className="text-right">
+                    {renderCell(node, 'balance')}
+                </div>
+
+                {/* Additional dynamic columns */}
+                {customColumns.map((col, idx) => (
+                    <div key={idx} className="text-right">
+                        {renderCell(node, col)}
+                    </div>
+                ))}
             </div>
 
             {isGroup && isExpanded && (
@@ -71,7 +103,14 @@ const AccountNode = ({ node, level = 0, expandedNodes, toggleExpand }) => {
                             node={child} 
                             level={level + 1} 
                             expandedNodes={expandedNodes} 
-                            toggleExpand={toggleExpand} 
+                            toggleExpand={toggleExpand}
+                            customColumns={customColumns}
+                            balanceOverrides={balanceOverrides}
+                            customCellValues={customCellValues}
+                            editingCell={editingCell}
+                            startEditing={startEditing}
+                            renderCell={renderCell}
+                            getAccountBalance={getAccountBalance}
                         />
                     ))}
                 </div>
@@ -105,6 +144,178 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
     const [loading, setLoading] = useState(true);
     const [expandedNodes, setExpandedNodes] = useState({});
 
+    // Custom columns state
+    const [customColumns, setCustomColumns] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_custom_columns_coa');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    // Balance overrides state
+    const [balanceOverrides, setBalanceOverrides] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_coa_balance_overrides');
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
+    });
+
+    // Custom cell values state
+    const [customCellValues, setCustomCellValues] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_coa_custom_cells');
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
+    });
+
+    // Editing states
+    const [editingCell, setEditingCell] = useState(null); // { code, column }
+    const [editingValue, setEditingValue] = useState('');
+
+    useEffect(() => {
+        localStorage.setItem('bizionary_custom_columns_coa', JSON.stringify(customColumns));
+    }, [customColumns]);
+
+    useEffect(() => {
+        localStorage.setItem('bizionary_coa_balance_overrides', JSON.stringify(balanceOverrides));
+    }, [balanceOverrides]);
+
+    useEffect(() => {
+        localStorage.setItem('bizionary_coa_custom_cells', JSON.stringify(customCellValues));
+    }, [customCellValues]);
+
+    const handleAddColumn = () => {
+        const colName = prompt("Enter new column name:");
+        if (colName && colName.trim()) {
+            const trimmed = colName.trim();
+            if (!customColumns.includes(trimmed) && trimmed !== 'Account Code' && trimmed !== 'Account Name' && trimmed !== 'Balance') {
+                setCustomColumns([...customColumns, trimmed]);
+            }
+        }
+    };
+
+    const handleDeleteColumn = (colName) => {
+        if (window.confirm(`Are you sure you want to delete the column "${colName}"?`)) {
+            setCustomColumns(customColumns.filter(c => c !== colName));
+            const newCells = { ...customCellValues };
+            Object.keys(newCells).forEach(key => {
+                if (key.endsWith(`_${colName}`)) {
+                    delete newCells[key];
+                }
+            });
+            setCustomCellValues(newCells);
+        }
+    };
+
+    const getAccountBalance = (node) => {
+        const hasOverride = balanceOverrides[node.code] !== undefined;
+        if (hasOverride) {
+            return parseFloat(balanceOverrides[node.code]) || 0;
+        }
+        if (node.children && node.children.length > 0) {
+            return node.children.reduce((sum, child) => sum + getAccountBalance(child), 0);
+        }
+        return parseFloat(node.balance) || 0;
+    };
+
+    const startEditing = (code, column, currentValue) => {
+        setEditingCell({ code, column });
+        setEditingValue(currentValue.toString());
+    };
+
+    const handleSaveEdit = () => {
+        if (!editingCell) return;
+        const { code, column } = editingCell;
+        
+        if (column === 'balance') {
+            const val = parseFloat(editingValue);
+            if (isNaN(val)) {
+                const newOverrides = { ...balanceOverrides };
+                delete newOverrides[code];
+                setBalanceOverrides(newOverrides);
+            } else {
+                setBalanceOverrides({
+                    ...balanceOverrides,
+                    [code]: val
+                });
+            }
+        } else {
+            setCustomCellValues({
+                ...customCellValues,
+                [`${code}_${column}`]: editingValue
+            });
+        }
+        setEditingCell(null);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSaveEdit();
+        } else if (e.key === 'Escape') {
+            setEditingCell(null);
+        }
+    };
+
+    const renderCell = (node, column) => {
+        const isEditing = editingCell && editingCell.code === node.code && editingCell.column === column;
+        const isBalanceCol = column === 'balance';
+        const isGroup = node.children && node.children.length > 0;
+        
+        const currentValue = isBalanceCol 
+            ? getAccountBalance(node)
+            : (customCellValues[`${node.code}_${column}`] || '');
+
+        if (isEditing) {
+            return (
+                <input
+                    type={isBalanceCol ? "number" : "text"}
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    onBlur={handleSaveEdit}
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-page border border-primary text-primary px-2 py-0.5 rounded text-xs text-right font-mono"
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                />
+            );
+        }
+
+        const isOverridden = isBalanceCol && balanceOverrides[node.code] !== undefined;
+
+        return (
+            <div 
+                onClick={(e) => {
+                    if (isBalanceCol && isGroup) return;
+                    e.stopPropagation();
+                    startEditing(node.code, column, currentValue);
+                }}
+                className={`px-2 py-0.5 rounded transition-colors group flex justify-end items-center gap-1.5 ${isBalanceCol ? 'font-mono text-right font-bold text-primary' : 'text-secondary'} ${(!isBalanceCol || !isGroup) ? 'cursor-pointer hover:bg-page/75' : ''}`}
+            >
+                <span>
+                    {isBalanceCol ? formatPKR(currentValue) : (currentValue || <span className="text-secondary/40 italic">Add...</span>)}
+                </span>
+                {isOverridden && isBalanceCol && (
+                    <span 
+                        title="Manual override active. Click to edit or clear." 
+                        className="w-1.5 h-1.5 bg-yellow-500 rounded-full inline-block cursor-pointer animate-pulse"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const newOverrides = { ...balanceOverrides };
+                            delete newOverrides[node.code];
+                            setBalanceOverrides(newOverrides);
+                        }}
+                    />
+                )}
+            </div>
+        );
+    };
+
     // Memoize the filtered active accounts tree
     const activeTreeData = useMemo(() => filterNonZeroAccounts(treeData), [treeData]);
 
@@ -116,7 +327,6 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
                 const rawData = res.data.data || [];
                 setTreeData(rawData);
                 
-                // By default, expand only top-level active accounts that survive filtering
                 const activeTree = filterNonZeroAccounts(rawData);
                 const defaultExpanded = {};
                 activeTree.forEach(node => {
@@ -165,6 +375,12 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
             <div className="flex justify-between items-center bg-card p-3 rounded-2xl border border-card shadow-sm">
                 <div className="flex gap-2">
                     <button 
+                        onClick={handleAddColumn}
+                        className="flex items-center gap-1.5 bg-[#003A6B] hover:bg-[#002b50] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                        + Add Column
+                    </button>
+                    <button 
                         onClick={expandAll}
                         className="flex items-center gap-1.5 bg-page hover:bg-active-pill text-primary px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
@@ -197,13 +413,43 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
                     No matching database records found for this period.
                 </div>
             ) : (
-                <div className="bg-card p-6 rounded-2xl border border-card shadow-sm space-y-1">
+                <div className="bg-card p-6 rounded-2xl border border-card shadow-sm space-y-1 overflow-x-auto">
+                    {/* Header Row for Tree Grid */}
+                    <div 
+                        className="grid gap-4 px-4 py-2 border-b border-card bg-page/70 text-secondary font-bold text-xs uppercase tracking-wider rounded-t-xl mb-2"
+                        style={{
+                            gridTemplateColumns: `1fr 100px 140px ${customColumns.map(() => '120px').join(' ')}`
+                        }}
+                    >
+                        <div className="pl-4">Account Code & Name</div>
+                        <div>Type</div>
+                        <div className="text-right pr-4">Balance</div>
+                        {customColumns.map((col, idx) => (
+                            <div key={idx} className="text-right relative group pr-4">
+                                <span>{col}</span>
+                                <button 
+                                    onClick={() => handleDeleteColumn(col)}
+                                    className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px] cursor-pointer"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
                     {activeTreeData.map(node => (
                         <AccountNode 
                             key={node.id} 
                             node={node} 
                             expandedNodes={expandedNodes} 
                             toggleExpand={toggleExpand} 
+                            customColumns={customColumns}
+                            balanceOverrides={balanceOverrides}
+                            customCellValues={customCellValues}
+                            editingCell={editingCell}
+                            startEditing={startEditing}
+                            renderCell={renderCell}
+                            getAccountBalance={getAccountBalance}
                         />
                     ))}
                 </div>
@@ -213,3 +459,4 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
 };
 
 export default COATreeTab;
+
