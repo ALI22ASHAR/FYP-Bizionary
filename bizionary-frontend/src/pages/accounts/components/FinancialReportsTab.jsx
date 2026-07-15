@@ -858,22 +858,28 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                             </div>
 
                             {/* Section 5: Net Profit */}
-                            <div className={`rounded-xl p-5 flex justify-between items-center border-2 border-emerald-700 bg-status-success`}>
-                                <div>
-                                    <p className="text-xs font-black uppercase tracking-wider text-card/80">
-                                        5. Net Profit / Loss
-                                    </p>
-                                    <p className="text-[10px] text-card/60 mt-0.5">Gross Profit minus Operating Expenses</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-black font-mono text-card">
-                                        {formatPKR(dynamicPLTotals ? dynamicPLTotals.net_profit : reportData.net_profit)}
-                                    </p>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-card/20 text-card">
-                                        {(dynamicPLTotals ? dynamicPLTotals.net_profit_margin : reportData.net_profit_margin)?.toFixed(1)}% net margin
-                                    </span>
-                                </div>
-                            </div>
+                            {(() => {
+                                const netProfitValue = dynamicPLTotals ? dynamicPLTotals.net_profit : (reportData ? reportData.net_profit : 0);
+                                const isLoss = netProfitValue < 0;
+                                return (
+                                    <div className={`rounded-xl p-5 flex justify-between items-center border-2 transition-colors duration-300 ${isLoss ? 'bg-rose-650 border-rose-750' : 'bg-status-success border-emerald-750'}`}>
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-wider text-card/90">
+                                                5. Net Profit / Loss
+                                            </p>
+                                            <p className="text-[10px] text-card/75 mt-0.5">Gross Profit minus Operating Expenses</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-black font-mono text-card">
+                                                {formatPKR(netProfitValue)}
+                                            </p>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-card/25 text-card">
+                                                {(dynamicPLTotals ? dynamicPLTotals.net_profit_margin : reportData.net_profit_margin)?.toFixed(1)}% net margin
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     ) : (
                         /* BALANCE SHEET VIEW */
