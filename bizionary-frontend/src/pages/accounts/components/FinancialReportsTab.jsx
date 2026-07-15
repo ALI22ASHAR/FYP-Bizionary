@@ -374,24 +374,24 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
             csvRows.push('');
             csvRows.push('Account Code,Account Name,Balance (PKR)');
             csvRows.push('ASSETS');
-            (reportData.assets || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedAssets.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total Assets,${reportData.total_assets}`);
+            csvRows.push(`,Total Assets,${dynamicTotals ? dynamicTotals.total_assets : reportData.total_assets}`);
             csvRows.push('');
             csvRows.push('LIABILITIES');
-            (reportData.liabilities || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedLiabilities.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total Liabilities,${reportData.total_liabilities}`);
+            csvRows.push(`,Total Liabilities,${dynamicTotals ? dynamicTotals.total_liabilities : reportData.total_liabilities}`);
             csvRows.push('');
             csvRows.push('EQUITY');
-            (reportData.equity || []).forEach(item => {
-                csvRows.push(`${item.code},"${item.name}",${item.balance}`);
+            mergedEquity.forEach(item => {
+                csvRows.push(`${item.code},"${item.name}",${getActiveBalance(item)}`);
             });
-            csvRows.push(`,Total Equity,${reportData.total_equity}`);
+            csvRows.push(`,Total Equity,${dynamicTotals ? dynamicTotals.total_equity : reportData.total_equity}`);
             csvRows.push('');
-            csvRows.push(`,TOTAL LIABILITIES & EQUITY,${reportData.total_liabilities_and_equity}`);
+            csvRows.push(`,TOTAL LIABILITIES & EQUITY,${dynamicTotals ? dynamicTotals.total_liabilities_and_equity : reportData.total_liabilities_and_equity}`);
         }
 
         const csvContent = csvRows.join('\n');
@@ -427,7 +427,6 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                     </button>
                 </div>
                 <div className="flex gap-2">
-
                     <button 
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 bg-page hover:bg-active-pill text-primary px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
@@ -632,8 +631,22 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 print:grid-cols-2">
                             {/* Left Column: Assets */}
                             <div className="space-y-4">
-                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary">
-                                    Assets
+                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                    <span>Assets</span>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleAddColumn('assets')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Column
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddRow('assets')}
+                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                        >
+                                            + Row
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
                                     <table className="w-full text-left text-xs border-collapse">
@@ -641,11 +654,11 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                             <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
                                                 <th className="py-2 pl-4 w-24">Account Code</th>
                                                 <th className="py-2">Account Name</th>
-                                                {customColumns.map((col, idx) => (
+                                                {(customColumns.assets || []).map((col, idx) => (
                                                     <th key={idx} className="py-2 text-right relative group pr-4 w-28">
                                                         <span>{col}</span>
                                                         <button 
-                                                            onClick={() => handleDeleteColumn(col)}
+                                                            onClick={() => handleDeleteColumn('assets', col)}
                                                             className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
                                                         >
                                                             ×
@@ -656,11 +669,22 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(reportData.assets || []).map((item, idx) => (
+                                            {mergedAssets.map((item, idx) => (
                                                 <tr key={idx} className="hover:bg-page/50">
                                                     <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
-                                                    <td className="py-2.5 text-primary font-bold">{item.name}</td>
-                                                    {customColumns.map((col, cIdx) => (
+                                                    <td className="py-2.5 text-primary font-bold flex items-center">
+                                                        <span>{item.name}</span>
+                                                        {item.isCustom && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('assets', item.code); }}
+                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                title="Delete custom row"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    {(customColumns.assets || []).map((col, cIdx) => (
                                                         <td key={cIdx} className="py-2.5 text-right">
                                                             {renderCell(item, col)}
                                                         </td>
@@ -673,7 +697,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                             <tr className="border-t-2 border-card font-bold bg-page/50">
                                                 <td className="py-3 pl-4"></td>
                                                 <td className="py-3 text-primary uppercase tracking-wide">Total Assets</td>
-                                                {customColumns.map((_, idx) => <td key={idx}></td>)}
+                                                {(customColumns.assets || []).map((_, idx) => <td key={idx}></td>)}
                                                 <td className="py-3 pr-4 text-right font-mono text-primary text-sm border-double-bottom">
                                                     {formatPKR(dynamicTotals ? dynamicTotals.total_assets : reportData.total_assets)}
                                                 </td>
@@ -687,8 +711,22 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                             <div className="space-y-6">
                                 {/* Liabilities Section */}
                                 <div className="space-y-4">
-                                    <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary">
-                                        Liabilities
+                                    <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                        <span>Liabilities</span>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleAddColumn('liabilities')}
+                                                className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                            >
+                                                + Column
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAddRow('liabilities')}
+                                                className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                            >
+                                                + Row
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
                                         <table className="w-full text-left text-xs border-collapse">
@@ -696,11 +734,11 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                                 <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
                                                     <th className="py-2 pl-4 w-24">Account Code</th>
                                                     <th className="py-2">Account Name</th>
-                                                    {customColumns.map((col, idx) => (
+                                                    {(customColumns.liabilities || []).map((col, idx) => (
                                                         <th key={idx} className="py-2 text-right relative group pr-4 w-28">
                                                             <span>{col}</span>
                                                             <button 
-                                                                onClick={() => handleDeleteColumn(col)}
+                                                                onClick={() => handleDeleteColumn('liabilities', col)}
                                                                 className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
                                                             >
                                                                 ×
@@ -711,135 +749,136 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
-                                            {mergedLiabilities.map((item, idx) => (
-                                                <tr key={idx} className="hover:bg-page/50">
-                                                    <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
-                                                    <td className="py-2.5 text-primary font-bold flex items-center">
-                                                        <span>{item.name}</span>
-                                                        {item.isCustom && (
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('liabilities', item.code); }}
-                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
-                                                                title="Delete custom row"
-                                                            >
-                                                                🗑️
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                    {(customColumns.liabilities || []).map((col, cIdx) => (
-                                                        <td key={cIdx} className="py-2.5 text-right">
-                                                            {renderCell(item, col)}
+                                                {mergedLiabilities.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-page/50">
+                                                        <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
+                                                        <td className="py-2.5 text-primary font-bold flex items-center">
+                                                            <span>{item.name}</span>
+                                                            {item.isCustom && (
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteRow('liabilities', item.code); }}
+                                                                    className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                    title="Delete custom row"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            )}
                                                         </td>
-                                                    ))}
-                                                    <td className="py-2.5 pr-4 text-right">
-                                                        {renderCell(item, 'balance')}
+                                                        {(customColumns.liabilities || []).map((col, cIdx) => (
+                                                            <td key={cIdx} className="py-2.5 text-right">
+                                                                {renderCell(item, col)}
+                                                            </td>
+                                                        ))}
+                                                        <td className="py-2.5 pr-4 text-right">
+                                                            {renderCell(item, 'balance')}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                <tr className="border-t-2 border-card font-bold bg-page/50">
+                                                    <td className="py-3 pl-4"></td>
+                                                    <td className="py-3 text-primary uppercase">Total Liabilities</td>
+                                                    {(customColumns.liabilities || []).map((_, idx) => <td key={idx}></td>)}
+                                                    <td className="py-3 pr-4 text-right font-mono text-primary">
+                                                        {formatPKR(dynamicTotals ? dynamicTotals.total_liabilities : reportData.total_liabilities)}
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            <tr className="border-t-2 border-card font-bold bg-page/50">
-                                                <td className="py-3 pl-4"></td>
-                                                <td className="py-3 text-primary uppercase">Total Liabilities</td>
-                                                {(customColumns.liabilities || []).map((_, idx) => <td key={idx}></td>)}
-                                                <td className="py-3 pr-4 text-right font-mono text-primary">
-                                                    {formatPKR(dynamicTotals ? dynamicTotals.total_liabilities : reportData.total_liabilities)}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            {/* Equity Section */}
-                            <div className="space-y-4">
-                                <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
-                                    <span>Owner's Equity</span>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => handleAddColumn('equity')}
-                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
-                                        >
-                                            + Column
-                                        </button>
-                                        <button 
-                                            onClick={() => handleAddRow('equity')}
-                                            className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
-                                        >
-                                            + Row
-                                        </button>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                                <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
-                                    <table className="w-full text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
-                                                <th className="py-2 pl-4 w-24">Account Code</th>
-                                                <th className="py-2">Account Name</th>
-                                                {(customColumns.equity || []).map((col, idx) => (
-                                                    <th key={idx} className="py-2 text-right relative group pr-4 w-28">
-                                                        <span>{col}</span>
-                                                        <button 
-                                                            onClick={() => handleDeleteColumn('equity', col)}
-                                                            className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </th>
-                                                ))}
-                                                <th className="py-2 pr-4 text-right">Balance</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {mergedEquity.map((item, idx) => (
-                                                <tr key={idx} className="hover:bg-page/50">
-                                                    <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
-                                                    <td className="py-2.5 text-primary font-bold flex items-center">
-                                                        <span>{item.name}</span>
-                                                        {item.isCustom && (
+
+                                {/* Equity Section */}
+                                <div className="space-y-4">
+                                    <div className="bg-[#003A6B] text-white px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded print:bg-page print:text-primary flex justify-between items-center">
+                                        <span>Owner's Equity</span>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleAddColumn('equity')}
+                                                className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                            >
+                                                + Column
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAddRow('equity')}
+                                                className="bg-card/20 hover:bg-card/30 text-white text-[10px] px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                                            >
+                                                + Row
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="border border-card/60 rounded-2xl overflow-hidden bg-card shadow-xs print:border-card">
+                                        <table className="w-full text-left text-xs border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-card bg-page/70 text-secondary font-bold uppercase tracking-wider print:bg-page print:text-secondary">
+                                                    <th className="py-2 pl-4 w-24">Account Code</th>
+                                                    <th className="py-2">Account Name</th>
+                                                    {(customColumns.equity || []).map((col, idx) => (
+                                                        <th key={idx} className="py-2 text-right relative group pr-4 w-28">
+                                                            <span>{col}</span>
                                                             <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteRow('equity', item.code); }}
-                                                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
-                                                                title="Delete custom row"
+                                                                onClick={() => handleDeleteColumn('equity', col)}
+                                                                className="ml-1 text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity absolute top-0.5 right-0.5 text-[10px]"
                                                             >
-                                                                🗑️
+                                                                ×
                                                             </button>
-                                                        )}
-                                                    </td>
-                                                    {(customColumns.equity || []).map((col, cIdx) => (
-                                                        <td key={cIdx} className="py-2.5 text-right">
-                                                            {renderCell(item, col)}
-                                                        </td>
+                                                        </th>
                                                     ))}
-                                                    <td className="py-2.5 pr-4 text-right">
-                                                        {renderCell(item, 'balance')}
+                                                    <th className="py-2 pr-4 text-right">Balance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {mergedEquity.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-page/50">
+                                                        <td className="py-2.5 pl-4 font-mono text-secondary font-semibold">{item.code}</td>
+                                                        <td className="py-2.5 text-primary font-bold flex items-center">
+                                                            <span>{item.name}</span>
+                                                            {item.isCustom && (
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteRow('equity', item.code); }}
+                                                                    className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                                                    title="Delete custom row"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                        {(customColumns.equity || []).map((col, cIdx) => (
+                                                            <td key={cIdx} className="py-2.5 text-right">
+                                                                {renderCell(item, col)}
+                                                            </td>
+                                                        ))}
+                                                        <td className="py-2.5 pr-4 text-right">
+                                                            {renderCell(item, 'balance')}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                <tr className="border-t-2 border-card font-bold bg-page/50">
+                                                    <td className="py-3 pl-4"></td>
+                                                    <td className="py-3 text-primary uppercase">Total Equity</td>
+                                                    {(customColumns.equity || []).map((_, idx) => <td key={idx}></td>)}
+                                                    <td className="py-3 pr-4 text-right font-mono text-primary">
+                                                        {formatPKR(dynamicTotals ? dynamicTotals.total_equity : reportData.total_equity)}
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            <tr className="border-t-2 border-card font-bold bg-page/50">
-                                                <td className="py-3 pl-4"></td>
-                                                <td className="py-3 text-primary uppercase">Total Equity</td>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Total Liabilities & Equity Summary */}
+                                <div className="border border-card/60 rounded-xl overflow-hidden bg-page text-primary print:border-card">
+                                    <table className="w-full border-collapse text-xs font-bold">
+                                        <tbody>
+                                            <tr>
+                                                <td className="py-3.5 pl-4 uppercase tracking-wider">Total Liabilities & Owner's Equity</td>
                                                 {(customColumns.equity || []).map((_, idx) => <td key={idx}></td>)}
-                                                <td className="py-3 pr-4 text-right font-mono text-primary">
-                                                    {formatPKR(dynamicTotals ? dynamicTotals.total_equity : reportData.total_equity)}
+                                                <td className="py-3.5 pr-4 text-right font-mono text-sm border-double-bottom">
+                                                    {formatPKR(dynamicTotals ? dynamicTotals.total_liabilities_and_equity : reportData.total_liabilities_and_equity)}
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-
-                            {/* Total Liabilities & Equity Summary */}
-                            <div className="border border-card/60 rounded-xl overflow-hidden bg-page text-primary print:border-card">
-                                <table className="w-full border-collapse text-xs font-bold">
-                                    <tbody>
-                                        <tr>
-                                            <td className="py-3.5 pl-4 uppercase tracking-wider">Total Liabilities & Owner's Equity</td>
-                                            {(customColumns.equity || []).map((_, idx) => <td key={idx}></td>)}
-                                            <td className="py-3.5 pr-4 text-right font-mono text-sm border-double-bottom">
-                                                {formatPKR(dynamicTotals ? dynamicTotals.total_liabilities_and_equity : reportData.total_liabilities_and_equity)}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     )}
