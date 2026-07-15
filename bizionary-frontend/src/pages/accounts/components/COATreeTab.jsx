@@ -14,7 +14,8 @@ const AccountNode = ({
     editingCell,
     startEditing,
     renderCell,
-    getAccountBalance
+    getAccountBalance,
+    handleDeleteAccount
 }) => {
     const isGroup = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
@@ -70,8 +71,17 @@ const AccountNode = ({
                     <span className="text-[10px] font-bold font-mono text-secondary bg-page px-1.5 py-0.5 rounded flex-shrink-0">
                         {node.code}
                     </span>
-                    <span className={`text-sm font-bold truncate ${isGroup ? 'text-primary' : 'text-secondary'}`}>
-                        {node.name}
+                    <span className={`text-sm font-bold truncate ${isGroup ? 'text-primary' : 'text-secondary'} flex items-center`}>
+                        <span className="truncate">{node.name}</span>
+                        {node.isCustom && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteAccount(node.code); }}
+                                className="ml-2 text-rose-500 hover:text-rose-700 font-bold transition-all text-[10px] cursor-pointer"
+                                title="Delete custom account"
+                            >
+                                🗑️
+                            </button>
+                        )}
                     </span>
                 </div>
 
@@ -111,6 +121,7 @@ const AccountNode = ({
                             startEditing={startEditing}
                             renderCell={renderCell}
                             getAccountBalance={getAccountBalance}
+                            handleDeleteAccount={handleDeleteAccount}
                         />
                     ))}
                 </div>
@@ -125,7 +136,7 @@ const filterNonZeroAccounts = (nodes) => {
         .map(node => {
             if (node.children && node.children.length > 0) {
                 const filteredChildren = filterNonZeroAccounts(node.children);
-                if (filteredChildren.length > 0 || Number(node.balance || 0) !== 0) {
+                if (filteredChildren.length > 0 || Number(node.balance || 0) !== 0 || node.isCustom) {
                     return {
                         ...node,
                         children: filteredChildren
@@ -133,10 +144,59 @@ const filterNonZeroAccounts = (nodes) => {
                 }
                 return null;
             } else {
-                return Number(node.balance || 0) !== 0 ? node : null;
+                return (Number(node.balance || 0) !== 0 || node.isCustom) ? node : null;
             }
         })
         .filter(Boolean);
+};
+
+const mergeCustomAccounts = (tree, customAccts) => {
+    if (!customAccts || customAccts.length === 0) return tree;
+
+    const clonedTree = JSON.parse(JSON.stringify(tree));
+    const nodeMap = {};
+    
+    const buildMap = (nodes) => {
+        nodes.forEach(node => {
+            nodeMap[node.code] = node;
+            if (node.children) {
+                buildMap(node.children);
+            }
+        });
+    };
+    buildMap(clonedTree);
+
+    const sortedCustom = [...customAccts].sort((a, b) => a.code.localeCompare(b.code));
+
+    sortedCustom.forEach(acct => {
+        const node = {
+            id: `custom-${acct.code}`,
+            code: acct.code,
+            name: acct.name,
+            account_type: acct.account_type,
+            balance: acct.balance,
+            isCustom: true,
+            children: []
+        };
+        
+        nodeMap[acct.code] = node;
+
+        if (acct.parent_code && nodeMap[acct.parent_code]) {
+            const parent = nodeMap[acct.parent_code];
+            if (!parent.children) parent.children = [];
+            if (!parent.children.some(c => c.code === acct.code)) {
+                parent.children.push(node);
+                parent.children.sort((a, b) => a.code.localeCompare(b.code));
+            }
+        } else {
+            if (!clonedTree.some(r => r.code === acct.code)) {
+                clonedTree.push(node);
+            }
+        }
+    });
+
+    clonedTree.sort((a, b) => a.code.localeCompare(b.code));
+    return clonedTree;
 };
 
 const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
@@ -148,6 +208,16 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
     const [customColumns, setCustomColumns] = useState(() => {
         try {
             const saved = localStorage.getItem('bizionary_custom_columns_coa');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    // Custom accounts / rows state
+    const [customAccounts, setCustomAccounts] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_custom_accounts_coa');
             return saved ? JSON.parse(saved) : [];
         } catch {
             return [];
@@ -183,6 +253,10 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
     }, [customColumns]);
 
     useEffect(() => {
+        localStorage.setItem('bizionary_custom_accounts_coa', JSON.stringify(customAccounts));
+    }, [customAccounts]);
+
+    useEffect(() => {
         localStorage.setItem('bizionary_coa_balance_overrides', JSON.stringify(balanceOverrides));
     }, [balanceOverrides]);
 
@@ -206,6 +280,64 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
             const newCells = { ...customCellValues };
             Object.keys(newCells).forEach(key => {
                 if (key.endsWith(`_${colName}`)) {
+                    delete newCells[key];
+                }
+            });
+            setCustomCellValues(newCells);
+        }
+    };
+
+    const handleAddAccount = () => {
+        const code = prompt("Enter unique account code (e.g. 1020):");
+        if (!code || !code.trim()) return;
+        const trimmedCode = code.trim();
+
+        if (customAccounts.some(a => a.code === trimmedCode)) {
+            alert("An account with that code already exists!");
+            return;
+        }
+
+        const name = prompt("Enter account name (e.g. Petty Cash):");
+        if (!name || !name.trim()) return;
+        const trimmedName = name.trim();
+
+        const type = prompt("Enter account type (ASSET, LIABILITY, EQUITY, REVENUE, or EXPENSE):", "ASSET");
+        if (!type) return;
+        const upperType = type.trim().toUpperCase();
+        if (!['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'].includes(upperType)) {
+            alert("Invalid account type! Must be ASSET, LIABILITY, EQUITY, REVENUE, or EXPENSE.");
+            return;
+        }
+
+        const parentCode = prompt("Enter parent account code (optional, e.g. 1000):");
+        const trimmedParent = parentCode ? parentCode.trim() : "";
+
+        const balStr = prompt("Enter initial balance (PKR):", "0");
+        const balance = parseFloat(balStr) || 0.0;
+
+        const newAccount = {
+            code: trimmedCode,
+            name: trimmedName,
+            account_type: upperType,
+            parent_code: trimmedParent,
+            balance: balance,
+            isCustom: true
+        };
+
+        setCustomAccounts([...customAccounts, newAccount]);
+    };
+
+    const handleDeleteAccount = (code) => {
+        if (window.confirm(`Are you sure you want to delete custom account "${code}"?`)) {
+            setCustomAccounts(customAccounts.filter(a => a.code !== code));
+            
+            const newOverrides = { ...balanceOverrides };
+            delete newOverrides[code];
+            setBalanceOverrides(newOverrides);
+
+            const newCells = { ...customCellValues };
+            Object.keys(newCells).forEach(key => {
+                if (key.startsWith(`${code}_`)) {
                     delete newCells[key];
                 }
             });
@@ -316,8 +448,13 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
         );
     };
 
+    // Merge dynamic custom accounts into standard tree hierarchy
+    const mergedTreeData = useMemo(() => {
+        return mergeCustomAccounts(treeData, customAccounts);
+    }, [treeData, customAccounts]);
+
     // Memoize the filtered active accounts tree
-    const activeTreeData = useMemo(() => filterNonZeroAccounts(treeData), [treeData]);
+    const activeTreeData = useMemo(() => filterNonZeroAccounts(mergedTreeData), [mergedTreeData]);
 
     const fetchTree = async () => {
         try {
@@ -327,7 +464,7 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
                 const rawData = res.data.data || [];
                 setTreeData(rawData);
                 
-                const activeTree = filterNonZeroAccounts(rawData);
+                const activeTree = filterNonZeroAccounts(mergeCustomAccounts(rawData, customAccounts));
                 const defaultExpanded = {};
                 activeTree.forEach(node => {
                     defaultExpanded[node.id] = true;
@@ -376,9 +513,15 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
                 <div className="flex gap-2">
                     <button 
                         onClick={handleAddColumn}
-                        className="flex items-center gap-1.5 bg-[#003A6B] hover:bg-[#002b50] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 bg-page hover:bg-active-pill text-primary px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                         + Add Column
+                    </button>
+                    <button 
+                        onClick={handleAddAccount}
+                        className="flex items-center gap-1.5 bg-[#003A6B] hover:bg-[#002b50] text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                        + Add Row
                     </button>
                     <button 
                         onClick={expandAll}
@@ -450,6 +593,7 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
                             startEditing={startEditing}
                             renderCell={renderCell}
                             getAccountBalance={getAccountBalance}
+                            handleDeleteAccount={handleDeleteAccount}
                         />
                     ))}
                 </div>
@@ -459,4 +603,3 @@ const COATreeTab = ({ refreshTrigger, dateRange, startDate, endDate }) => {
 };
 
 export default COATreeTab;
-

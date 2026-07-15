@@ -21,13 +21,23 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Custom Columns State
+    // Custom Columns State (Isolated by Section)
     const [customColumns, setCustomColumns] = useState(() => {
         try {
-            const saved = localStorage.getItem('bizionary_custom_columns_reports');
-            return saved ? JSON.parse(saved) : [];
+            const saved = localStorage.getItem('bizionary_custom_columns_reports_v2');
+            return saved ? JSON.parse(saved) : { assets: [], liabilities: [], equity: [] };
         } catch {
-            return [];
+            return { assets: [], liabilities: [], equity: [] };
+        }
+    });
+
+    // Custom Rows State (Isolated by Section)
+    const [customRows, setCustomRows] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bizionary_custom_rows_reports_v2');
+            return saved ? JSON.parse(saved) : { assets: [], liabilities: [], equity: [] };
+        } catch {
+            return { assets: [], liabilities: [], equity: [] };
         }
     });
 
@@ -56,8 +66,12 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
     const [editingValue, setEditingValue] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('bizionary_custom_columns_reports', JSON.stringify(customColumns));
+        localStorage.setItem('bizionary_custom_columns_reports_v2', JSON.stringify(customColumns));
     }, [customColumns]);
+
+    useEffect(() => {
+        localStorage.setItem('bizionary_custom_rows_reports_v2', JSON.stringify(customRows));
+    }, [customRows]);
 
     useEffect(() => {
         localStorage.setItem('bizionary_balance_overrides', JSON.stringify(balanceOverrides));
@@ -67,22 +81,84 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         localStorage.setItem('bizionary_custom_cells', JSON.stringify(customCellValues));
     }, [customCellValues]);
 
-    const handleAddColumn = () => {
-        const colName = prompt("Enter new column name:");
+    const handleAddColumn = (section) => {
+        const colName = prompt(`Enter new column name for ${section.toUpperCase()}:`);
         if (colName && colName.trim()) {
             const trimmed = colName.trim();
-            if (!customColumns.includes(trimmed) && trimmed !== 'Account Code' && trimmed !== 'Account Name' && trimmed !== 'Balance') {
-                setCustomColumns([...customColumns, trimmed]);
+            const cols = customColumns[section] || [];
+            if (!cols.includes(trimmed) && trimmed !== 'Account Code' && trimmed !== 'Account Name' && trimmed !== 'Balance') {
+                setCustomColumns({
+                    ...customColumns,
+                    [section]: [...cols, trimmed]
+                });
             }
         }
     };
 
-    const handleDeleteColumn = (colName) => {
-        if (window.confirm(`Are you sure you want to delete the column "${colName}"?`)) {
-            setCustomColumns(customColumns.filter(c => c !== colName));
+    const handleDeleteColumn = (section, colName) => {
+        if (window.confirm(`Are you sure you want to delete column "${colName}" from ${section.toUpperCase()}?`)) {
+            const cols = customColumns[section] || [];
+            setCustomColumns({
+                ...customColumns,
+                [section]: cols.filter(c => c !== colName)
+            });
             const newCells = { ...customCellValues };
             Object.keys(newCells).forEach(key => {
                 if (key.endsWith(`_${colName}`)) {
+                    delete newCells[key];
+                }
+            });
+            setCustomCellValues(newCells);
+        }
+    };
+
+    const handleAddRow = (section) => {
+        const code = prompt(`Enter unique account code for new ${section.toUpperCase()}:`);
+        if (!code || !code.trim()) return;
+        const trimmedCode = code.trim();
+
+        const standardRows = (reportData && reportData[section]) || [];
+        const existingRows = customRows[section] || [];
+        if (existingRows.some(r => r.code === trimmedCode) || standardRows.some(r => r.code === trimmedCode)) {
+            alert("An account with that code already exists!");
+            return;
+        }
+
+        const name = prompt(`Enter name for new row:`);
+        if (!name || !name.trim()) return;
+        const trimmedName = name.trim();
+
+        const balStr = prompt(`Enter initial balance (PKR):`, "0");
+        const balance = parseFloat(balStr) || 0.0;
+
+        const newRow = {
+            code: trimmedCode,
+            name: trimmedName,
+            balance: balance,
+            isCustom: true
+        };
+
+        setCustomRows({
+            ...customRows,
+            [section]: [...existingRows, newRow]
+        });
+    };
+
+    const handleDeleteRow = (section, code) => {
+        if (window.confirm(`Are you sure you want to delete row "${code}"?`)) {
+            const existingRows = customRows[section] || [];
+            setCustomRows({
+                ...customRows,
+                [section]: existingRows.filter(r => r.code !== code)
+            });
+            
+            const newOverrides = { ...balanceOverrides };
+            delete newOverrides[code];
+            setBalanceOverrides(newOverrides);
+
+            const newCells = { ...customCellValues };
+            Object.keys(newCells).forEach(key => {
+                if (key.startsWith(`${code}_`)) {
                     delete newCells[key];
                 }
             });
@@ -97,6 +173,28 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         return parseFloat(item.balance) || 0.0;
     };
 
+    // Merged Lists
+    const mergedAssets = useMemo(() => {
+        if (!reportData) return [];
+        const standard = reportData.assets || [];
+        const custom = customRows.assets || [];
+        return [...standard, ...custom].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.assets]);
+
+    const mergedLiabilities = useMemo(() => {
+        if (!reportData) return [];
+        const standard = reportData.liabilities || [];
+        const custom = customRows.liabilities || [];
+        return [...standard, ...custom].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.liabilities]);
+
+    const mergedEquity = useMemo(() => {
+        if (!reportData) return [];
+        const standard = reportData.equity || [];
+        const custom = customRows.equity || [];
+        return [...standard, ...custom].sort((a, b) => a.code.localeCompare(b.code));
+    }, [reportData, customRows.equity]);
+
     // Calculate dynamic totals for Balance Sheet
     const dynamicTotals = useMemo(() => {
         if (!reportData || reportType !== 'balance-sheet') return null;
@@ -105,15 +203,15 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
         let totalLiabilities = 0;
         let totalEquity = 0;
 
-        (reportData.assets || []).forEach(item => {
+        mergedAssets.forEach(item => {
             totalAssets += getActiveBalance(item);
         });
 
-        (reportData.liabilities || []).forEach(item => {
+        mergedLiabilities.forEach(item => {
             totalLiabilities += getActiveBalance(item);
         });
 
-        (reportData.equity || []).forEach(item => {
+        mergedEquity.forEach(item => {
             totalEquity += getActiveBalance(item);
         });
 
@@ -123,7 +221,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
             total_equity: totalEquity,
             total_liabilities_and_equity: totalLiabilities + totalEquity
         };
-    }, [reportData, reportType, balanceOverrides]);
+    }, [reportData, reportType, balanceOverrides, mergedAssets, mergedLiabilities, mergedEquity]);
 
     const startEditing = (code, column, currentValue) => {
         setEditingCell({ code, column });
@@ -329,14 +427,7 @@ const FinancialReportsTab = ({ refreshTrigger, dateRange, startDate, endDate }) 
                     </button>
                 </div>
                 <div className="flex gap-2">
-                    {reportType === 'balance-sheet' && (
-                        <button 
-                            onClick={handleAddColumn}
-                            className="flex items-center gap-1.5 bg-[#003A6B] hover:bg-[#002b50] text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                        >
-                            + Add Column
-                        </button>
-                    )}
+
                     <button 
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 bg-page hover:bg-active-pill text-primary px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
