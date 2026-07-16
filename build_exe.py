@@ -13,6 +13,12 @@ def main():
             print(f"Cleaning existing {folder} folder...")
             shutil.rmtree(folder)
             
+    # 1.5. Compile React Frontend
+    print("Compiling React frontend...")
+    frontend_dir = os.path.join(os.getcwd(), 'bizionary-frontend')
+    npm_cmd = 'npm.cmd' if os.name == 'nt' else 'npm'
+    subprocess.run([npm_cmd, 'run', 'build'], cwd=frontend_dir, shell=True, check=True)
+            
     # 2. Run Django collectstatic to gather all React + standard admin static files
     print("Collecting static files...")
     os.environ['DISABLE_MANIFEST'] = 'True'
