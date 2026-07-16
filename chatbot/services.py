@@ -22,7 +22,11 @@ def _is_revenue_question(message):
     msg = str(message).lower()
     keywords = ['revenue', 'income', 'aamdani', 'revanue', 'revenu', 'sales amount', 'sales total', 'current revenue']
     # If the message mentions specific days, dates, months, yesterday, or today, let the LLM execute tools instead of returning a hardcoded overall total.
-    date_keywords = ['today', 'yesterday', 'month', 'date', 'year', 'day', 'week', 'last', 'breakdown', 'detail']
+    date_keywords = [
+        'today', 'yesterday', 'month', 'date', 'year', 'day', 'week', 'last', 'breakdown', 'detail',
+        'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+        'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+    ]
     if any(dk in msg for dk in date_keywords) or any(char.isdigit() for char in msg):
         return False
     return any(k in msg for k in keywords)
