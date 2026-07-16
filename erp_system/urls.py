@@ -9,6 +9,9 @@ from django.contrib import admin
 from django.urls import path, include
 from user_management import views as user_mgmt_views
 
+from django.views.generic import TemplateView
+from django.urls import re_path
+
 urlpatterns = [
     # Django Admin
     path('admin/', admin.site.urls),
@@ -51,4 +54,7 @@ urlpatterns = [
     path('api/products/', include('products.urls')),
     path('api/purchases/', include('purchases.urls')),
     path('api/sales/', include('sales.urls')),
+    
+    # Fallback to React Frontend
+    re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='react-frontend'),
 ]

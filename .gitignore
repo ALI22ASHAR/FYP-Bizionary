@@ -22,3 +22,8 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Standalone build outputs
+staticfiles/
+BizionaryERP_Windows.zip
+*.spec

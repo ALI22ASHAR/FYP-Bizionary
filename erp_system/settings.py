@@ -11,7 +11,17 @@ import dj_database_url
 load_dotenv()
 
 # Build paths inside the project
-BASE_DIR = Path(__file__).resolve().parent.parent
+import sys
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys._MEIPASS)
+    TEMPLATE_DIR = BASE_DIR / 'staticfiles'
+    STATICFILES_DIRS = []
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    TEMPLATE_DIR = BASE_DIR / 'bizionary-frontend' / 'dist'
+    STATICFILES_DIRS = [
+        BASE_DIR / 'bizionary-frontend' / 'dist',
+    ]
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here-change-in-production')
@@ -67,7 +77,7 @@ ROOT_URLCONF = 'erp_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMPLATE_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -121,15 +131,27 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+
+
 # Whitenoise storage configuration for static files compression and caching
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+if os.environ.get('DISABLE_MANIFEST', 'False') == 'True' or getattr(sys, 'frozen', False):
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
