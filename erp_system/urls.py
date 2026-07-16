@@ -12,9 +12,11 @@ from user_management import views as user_mgmt_views
 import os
 from django.conf import settings
 from django.conf.urls.static import static
+import sys
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from django.urls import re_path
+from django.views.static import serve
 
 urlpatterns = [
     # Django Admin
@@ -59,8 +61,15 @@ urlpatterns = [
     path('api/purchases/', include('purchases.urls')),
     path('api/sales/', include('sales.urls')),
     
-    # Serve Vite assets folder at root /assets/ path
-    *static('/assets/', document_root=os.path.join(settings.BASE_DIR, 'staticfiles', 'assets') if getattr(settings, 'frozen', False) else os.path.join(settings.BASE_DIR, 'bizionary-frontend', 'dist', 'assets')),
+    # Serve Vite assets folder at root /assets/ path (works in production DEBUG=False too!)
+    re_path(r'^assets/(?P<path>.*)$', serve, {
+        'document_root': os.path.join(settings.BASE_DIR, 'staticfiles', 'assets') if getattr(sys, 'frozen', False) else os.path.join(settings.BASE_DIR, 'bizionary-frontend', 'dist', 'assets')
+    }),
+    
+    # Serve public folder files (like vite.svg, favicon.ico) from static files root
+    re_path(r'^(?P<path>(?:vite\.svg|favicon\.ico|manifest\.json))$', serve, {
+        'document_root': os.path.join(settings.BASE_DIR, 'staticfiles') if getattr(sys, 'frozen', False) else os.path.join(settings.BASE_DIR, 'bizionary-frontend', 'dist')
+    }),
     
     # Fallback to React Frontend
     re_path(r'^.*$', never_cache(TemplateView.as_view(template_name='index.html')), name='react-frontend'),
