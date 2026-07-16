@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Edit2, Key, Ban, UserCheck, Mail, Building, Phone, BadgeCheck, MoreVertical, ShieldAlert } from 'lucide-react';
+import { Edit2, Key, Ban, UserCheck, Mail, Building, Phone, BadgeCheck, MoreVertical, ShieldAlert, Trash2 } from 'lucide-react';
 import Skeleton from '../../../components/ui/Skeleton';
 
-const UsersTable = ({ users, loading, onEdit, onToggleStatus, onResetPassword }) => {
+const UsersTable = ({ users, loading, onEdit, onToggleStatus, onResetPassword, onDelete }) => {
     // Track which user's action dropdown is currently open
     const [openMenuId, setOpenMenuId] = useState(null);
 
@@ -223,6 +223,16 @@ const UsersTable = ({ users, loading, onEdit, onToggleStatus, onResetPassword })
                                                         Deactivate User
                                                     </button>
                                                 )}
+
+                                                <div className="border-t border-card my-1" />
+                                                
+                                                <button
+                                                    onClick={() => { onDelete(user); setOpenMenuId(null); }}
+                                                    className="w-full px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-bold transition-colors"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    Delete User
+                                                </button>
                                             </div>
                                         </>
                                     )}

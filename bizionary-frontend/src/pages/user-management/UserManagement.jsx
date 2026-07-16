@@ -127,6 +127,19 @@ const UserManagement = () => {
         }
     };
 
+    const handleDeleteUser = async (user) => {
+        if (window.confirm(`Are you sure you want to PERMANENTLY DELETE user: ${user.username}? This action cannot be undone.`)) {
+            try {
+                const res = await userManagementApi.deactivateUser(user.id);
+                alert(res.data?.message || 'User deleted successfully.');
+                fetchData();
+            } catch (error) {
+                console.error('Failed to delete user:', error);
+                alert(error.response?.data?.error || 'Failed to delete user.');
+            }
+        }
+    };
+
     const handleSaveUser = async (formData) => {
         try {
             if (selectedUser) {
@@ -274,6 +287,7 @@ const UserManagement = () => {
                             onEdit={handleEditUser} 
                             onToggleStatus={handleToggleStatus} 
                             onResetPassword={handleResetPassword}
+                            onDelete={handleDeleteUser}
                         />
                         
                         {/* Pagination Controls */}

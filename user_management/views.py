@@ -539,25 +539,45 @@ def user_detail_view(request, pk):
         if not requesting_user or requesting_user.role.level != 'ADMIN':
             return Response({
                 'success': False,
-                'error': 'Permission Denied. Only an Admin can deactivate users.'
+                'error': 'Permission Denied. Only an Admin can delete users.'
             }, status=status.HTTP_403_FORBIDDEN)
 
-        user.status = 'INACTIVE'
-        user.is_active = False
-        user.save()
-        
-        # Log audit activity
-        ActivityLog.objects.create(
-            user=requesting_user,
-            action='DELETE',
-            module='User Management',
-            description=f"Deactivated user {user.username}."
-        )
-        
-        return Response({
-            'success': True,
-            'message': 'User deactivated successfully'
-        }, status=status.HTTP_200_OK)
+        if requesting_user.id == user.id:
+            return Response({
+                'success': False,
+                'error': 'Cannot delete your own admin account.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        username = user.username
+        from django.db import models
+        try:
+            user.delete()
+            # Log audit activity
+            ActivityLog.objects.create(
+                user=requesting_user,
+                action='DELETE',
+                module='User Management',
+                description=f"Permanently deleted user {username}."
+            )
+            return Response({
+                'success': True,
+                'message': 'User deleted successfully'
+            }, status=status.HTTP_200_OK)
+        except models.ProtectedError:
+            # Fallback to deactivation
+            user.status = 'INACTIVE'
+            user.is_active = False
+            user.save()
+            ActivityLog.objects.create(
+                user=requesting_user,
+                action='DELETE',
+                module='User Management',
+                description=f"Deactivated user {username} (prevented deletion due to referenced records)."
+            )
+            return Response({
+                'success': True,
+                'message': 'User has transaction records and cannot be permanently deleted. Account deactivated instead.'
+            }, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
