@@ -115,103 +115,15 @@ SYSTEM CONTEXT - Bizionary ERP System
 {dynamic_context}
 
 PROJECT OVERVIEW:
-- Name: Bizionary Business Management ERP
+- Name: Bizionary ERP (Offline Standalone Business Management)
 - Stack: Django backend, React frontend, SQLite database
-- Goal: A full ERP for sales, products, purchases, invoices, finance, analytics, and user management
 
 ANSWER RULES:
-- Keep answers simple and direct.
-- If the user asks a question about any section or data (like products, stock, sales, expenses, users, invoices, etc.), ALWAYS call the corresponding database tool and list the results directly in your response. Do NOT tell the user to visit or check the section unless they explicitly asked how to navigate there.
-- If the user asks for a list of products (e.g., products with stock less than a threshold, out of stock, unpaid invoices, etc.), list ALL the items returned by the tool. Do not truncate the list or say 'check the section' without listing the items.
-- Use the exact Bizionary section or API endpoint when relevant.
-- If the user asks for a total, KPI, revenue, count, or summary, answer with the specific dashboard/section name.
-- If a question is about a module, mention the matching module and endpoint.
-- If something is not available, say that clearly and briefly.
-- CRITICAL: Customer invoices and receivables are managed in the Accounts module under the Invoices tab. Do NOT direct users to the Create Order section for customer invoices.
-- CRITICAL: The Create Order section is only for supplier ordered slips and pending purchase payables.
-
-FRONTEND SECTIONS (Sidebar Navigation):
-- Dashboard (Main KPIs, summaries)
-- Accounts (Expense logging, revenues, invoices, and transaction logs)
-- Products (Product catalog)
-- Stock (Inventory list and low stock items)
-- Sales (Sales analytics and transactions)
-- Create Order (Ordered slips and supplier payables)
-- AI Chatbot (AI Assistant page)
-- Admin (User management, roles, and permissions)
-
-BACKEND MODULES AND WHAT THEY DO:
-- dashboard: main KPIs, revenue, top products, low stock, recent sales, sales performance, payables
-- screen_2_sales_items: sales KPIs, monthly performance, category breakdown, top products, trends, targets
-- products: product catalog and stock management
-- sales: sales transactions
-- purchases: purchase orders and supplier/company tracking
-- invoices: invoice records
-- accounts: revenues, expenses, invoices, trends, API configuration, finance KPIs
-- insights: live insights, pricing, demand alerts, stock warnings, recommendations, customer reviews, smart reorder
-- user_management: users, roles, departments, modules, permissions, invites, security settings, activity logs
-- chatbot: AI support for answering Bizionary questions
-
-KEY DASHBOARD ENDPOINTS:
-- GET /api/dashboard/kpis/
-- GET /api/dashboard/monthly-revenue/
-- GET /api/dashboard/top-products/
-- GET /api/dashboard/low-stock-products/
-- GET /api/dashboard/recent-sales/
-- GET /api/dashboard/outstanding-payables/
-- GET /api/dashboard/sales-performance/
-
-KEY SALES ANALYTICS ENDPOINTS:
-- GET /api/screen2/analytics/kpis/
-- GET /api/screen2/analytics/monthly-performance/
-- GET /api/screen2/analytics/category-breakdown/
-- GET /api/screen2/analytics/top-products/
-- GET /api/screen2/analytics/trends/
-- GET /api/screen2/analytics/targets/
-
-KEY ACCOUNTS ENDPOINTS:
-- GET /api/accounts/kpis/
-- GET /api/accounts/trend/
-- GET /api/accounts/recent-invoices/
-- GET /api/accounts/expense-categories/
-- GET /api/accounts/revenues/
-- GET /api/accounts/expenses/
-- GET /api/accounts/invoices/
-- GET /api/accounts/api-configuration/
-
-KEY INSIGHTS ENDPOINTS:
-- GET /api/insights/
-- GET /api/insights/live/
-- GET /api/insights/pricing/
-- GET /api/insights/demand-alerts/
-- GET /api/insights/stock-warnings/
-- GET /api/insights/recommendations/
-- GET /api/insights/nlp-report/live/
-- GET /api/insights/customer-reviews/
-- GET /api/insights/smart-reorder/
-
-KEY USER MANAGEMENT ENDPOINTS:
-- GET /api/user-management/kpis/
-- GET /api/user-management/users/
-- GET /api/user-management/roles/
-- GET /api/user-management/departments/
-- GET /api/user-management/modules/
-- GET /api/user-management/permissions/
-- GET /api/user-management/invites/
-- GET /api/user-management/security-settings/
-
-TECHNOLOGY STACK:
-- Backend: Python, Django 4.2.7, Django REST Framework
-- Frontend: React 19, Vite, Tailwind CSS
-- Database: SQLite
-- AI: Groq API
-- Auth: Token-based DRF auth
-
-IMPORTANT:
-- For revenue questions, use the dashboard revenue data or the live sales total from the database
-- For section questions, answer with the exact Bizionary section name
-- For module questions, mention the matching endpoint if helpful
-"""
+- Keep answers simple, concise and direct.
+- Always execute the corresponding database tool when requested for data. List the results directly.
+- Use route links in markdown like [Go to Dashboard](route:/) when navigation is requested.
+- Customer invoices are in Accounts -> Invoices. Supplier payables are in Create Order.
+"""""
     
     messages = [
         {
@@ -253,37 +165,14 @@ IMPORTANT:
                 '- In your response, present the download URL returned by the tool as a standard link button in markdown: `[Download <type> Report](url)` where url is the download_url returned by the tool.\n\n'
                 'CONVERSATIONAL SALE RECORDING RULES:\n'
                 '- When the user asks to record, create, register, add, or make a sale, you MUST NOT execute the `create_sale` tool immediately.\n'
-                '- CRITICAL: If the user has not specified a quantity for the product they wish to sell, you MUST NOT draft the sale or ask for confirmation yet. Instead, you MUST ask the user to specify the quantity first (e.g. "How many units of that product would you like to sell?"). Once they provide the quantity, you can proceed.\n'
-                '- Once product and quantity are known, first search for the product details using `search_products` to confirm its availability, unit price, and stock.\n'
-                '- Present a drafted sale summary to the user including Product Name, Quantity, Unit Price, Total Price (applying any discount), Payment Method, and Customer Name.\n'
-                '- Ask the user: "Would you like to confirm recording this sale? Please reply with \'Confirm\' to proceed."\n'
+                '- STEP-BY-STEP FLOW:\n'
+                '  1. If the user has not specified a product name or SKU, ask them for it first (e.g. "Which product would you like to sell?").\n'
+                '  2. If the user has specified the product but not the quantity, ask them for the quantity first (e.g. "How many units of [Product Name] would you like to sell?").\n'
+                '  3. Once both product and quantity are specified, execute `search_products` to verify the item exists, get its exact name/SKU, check unit price, and verify that there is enough stock available. If the search returns multiple options or matches, ask the user to clarify which specific product they mean.\n'
+                '  4. If stock is insufficient, report it to the user and ask if they want to adjust the quantity.\n'
+                '  5. Present a drafted sale summary including Product Name, Quantity, Unit Price, Total Price (applying any discount), Payment Method, and Customer Name. Ask the user: "Would you like to confirm recording this sale? Please reply with \'Confirm\' to proceed."\n'
                 '- ONLY execute the `create_sale` tool in the subsequent turn if the user explicitly replies with "Confirm", "Yes", "Go ahead", or similar confirmation. If they cancel or do not confirm, do not create the sale.\n\n'
-                'TOOL SELECTION RULES — use the most specific tool available:\n'
-                '- Sales by date / time period → `get_sales_by_date_range`\n'
-                '- Sales by payment method (cash/card) → `get_sales_by_payment_method`\n'
-                '- Sales by customer name → `get_sales_by_customer`\n'
-                '- Sales by product category → `get_sales_by_category`\n'
-                '- Profit margin / net profit → `get_profit_margin`\n'
-                '- Returns / refunds → `get_sales_returns`\n'
-                '- Discounts given → `get_discount_summary`\n'
-                '- Top customers / best buyers → `get_top_customers`\n'
-                '- Customer reviews / ratings → `get_customer_reviews`\n'
-                '- Expenses by category → `get_expenses_by_category`\n'
-                '- Expenses by date → `get_expenses_by_date_range`\n'
-                '- Budget vs actual spending → `get_budget_vs_actual`\n'
-                '- Revenue vs expenses / P&L → `get_revenue_vs_expenses`\n'
-                '- Cash flow / cash transactions → `get_cash_transactions`\n'
-                '- Salary payments → `get_salary_payments`\n'
-                '- Utility bills → `get_utility_bills`\n'
-                '- Purchases / procurement summary → `get_purchases_summary`\n'
-                '- Supplier performance → `get_supplier_performance`\n'
-                '- Purchase order status → `get_purchase_orders_status`\n'
-                '- Purchases for a specific product → `get_purchases_by_product`\n'
-                '- Stock/inventory total value → `get_inventory_valuation`\n'
-                '- Stock movement / inventory transactions → `get_stock_movement`\n'
-                '- Dead stock / zero-sales products → `get_dead_stock`\n'
-                '- Sales targets / goal tracking → `get_sales_targets`\n'
-                '- Performance metrics / KPI → `get_performance_metrics`\n'
+                'TOOL SELECTION RULES:\n'
                 '- Product search → `search_products`\n'
                 '- Low stock alerts → `get_stock_alerts`\n'
                 '- Overall KPIs / dashboard → `get_financial_kpis`\n'
@@ -291,9 +180,13 @@ IMPORTANT:
                 '- Supplier payables → `get_outstanding_payables`\n'
                 '- Reorder recommendations → `get_reorder_recommendations`\n'
                 '- Hot selling products → `get_hot_selling_products`\n'
-                '- Cold / slow selling products → `get_cold_selling_products`\n'
                 '- Recent sales list → `get_recent_sales`\n'
                 '- Users list → `get_erp_users`\n'
+                '- Expenses by category → `get_expenses_by_category`\n'
+                '- Expenses by date → `get_expenses_by_date_range`\n'
+                '- Sales by date range → `get_sales_by_date_range`\n'
+                '- Profit margin / net profit → `get_profit_margin`\n'
+                '- Visual chart generation → `get_analytics_chart_data`\n'
                 '- Activity logs → `get_activity_logs`\n\n'
                 'IMPORTANT ON TOOL USE:\n'
                 '- Always call the appropriate tool when a data question is asked. NEVER redirect to a UI page for data questions.\n'
@@ -321,14 +214,11 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "search_products",
-            "description": "Search the product catalog by product name, SKU, or category to get their prices, inventory stock levels, and active status.",
+            "description": "Search products by name, SKU, or category.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The name, category, or SKU query string to search for."
-                    }
+                    "query": {"type": "string", "description": "Search term."}
                 },
                 "required": ["query"]
             }
@@ -338,14 +228,11 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_stock_alerts",
-            "description": "Get a list of products that have low stock, or are below/less than a specific stock quantity threshold (e.g. stock less than 15, inventory under 10). Use this for any stock level comparisons.",
+            "description": "List low stock items below threshold.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "threshold": {
-                        "type": "integer",
-                        "description": "Maximum stock quantity threshold to check (e.g., 10)."
-                    }
+                    "threshold": {"type": "integer", "description": "Stock threshold."}
                 }
             }
         }
@@ -354,80 +241,51 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_financial_kpis",
-            "description": "Get overall dashboard and financial KPI metrics, including total revenue, total sales count, product counts, and customer invoice counts.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "Get overall dashboard KPI statistics.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
             "name": "get_unpaid_invoices",
-            "description": "Get a list of all unpaid or pending customer invoices from accounts billing ledger.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "List unpaid client invoices.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
             "name": "get_outstanding_payables",
-            "description": "Get a list of all outstanding supplier payables (unpaid/partial purchase orders).",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "List outstanding supplier payables.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
             "name": "get_reorder_recommendations",
-            "description": "Get list of smart reorder recommendations detailing which products to buy, recommended quantities, weighted daily demand, and restocking urgency.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "Get smart reorder recommendations.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
             "name": "get_hot_selling_products",
-            "description": "Get a list of hot-selling top products, including units sold and total generated revenue.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_cold_selling_products",
-            "description": "Get a list of cold-selling (least sold) products, including units sold, total revenue, and stock levels. Use this when the user asks about cold products, least selling products, or items with very few or no sales.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "Get list of top hot selling products.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
             "name": "get_recent_sales",
-            "description": "Get a list of recent sales transactions. Use this when the user asks about recent sales, order logs, transaction history, or specific sale records.",
+            "description": "Get list of recent sales transactions.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of recent sales to return. Defaults to 10."
-                    }
+                    "limit": {"type": "integer", "description": "Max count."}
                 }
             }
         }
@@ -436,36 +294,19 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_erp_users",
-            "description": "Get a list of ERP users, their designations, departments, roles, and status. Use this for user management queries (e.g. registered users, active/inactive staff).",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+            "description": "List ERP users and roles.",
+            "parameters": {"type": "object", "properties": {}}
         }
     },
     {
         "type": "function",
         "function": {
-            "name": "get_user_invites",
-            "description": "Get a list of user invitations, their statuses (e.g., PENDING, ACCEPTED), roles, and departments. Use this for queries about invitations or pending invites.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_activity_logs",
-            "description": "Get recent security and activity audit logs showing user actions like login, logout, create, update, or delete. Use this when the user asks about activity logs or action history.",
+            "name": "get_expenses_by_category",
+            "description": "Get expenses breakdown by category.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of audit logs to retrieve. Defaults to 15."
-                    }
+                    "category": {"type": "string", "description": "Category name."}
                 }
             }
         }
@@ -473,32 +314,15 @@ CHATBOT_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "get_expenses",
-            "description": "Get a list of recorded expenses. Filter by category if the query is about specific spend categories.",
+            "name": "get_expenses_by_date_range",
+            "description": "Get expenses total between two dates.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "category": {
-                        "type": "string",
-                        "description": "Optional category filter. Allowed values: PAYROLL, MARKETING, RENT_UTILITIES, SUPPLIES, TECHNOLOGY, TRAVEL, OTHER."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of expenses to retrieve. Defaults to 20."
-                    }
+                    "start_date": {"type": "string", "description": "YYYY-MM-DD."},
+                    "end_date": {"type": "string", "description": "YYYY-MM-DD."}
                 },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_expense_breakdown",
-            "description": "Get a breakdown of expenses by category (total amounts, percentages, and transaction counts). Use this for summary expense queries.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
+                "required": ["start_date", "end_date"]
             }
         }
     },
@@ -506,14 +330,13 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_analytics_chart_data",
-            "description": "Retrieve dynamic visual chart data configs (Bar, Line, Pie) for analytical questions, comparisons, revenue vs expense trends, expense category breakdowns, or recent sales trend.",
+            "description": "Get data configs for analytical charts.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "metric": {
                         "type": "string",
-                        "enum": ["revenue_vs_expense", "expense_category", "low_stock", "recent_sales_trend"],
-                        "description": "The specific metric type of visual chart to generate."
+                        "enum": ["revenue_vs_expense", "expense_category", "low_stock", "recent_sales_trend"]
                     }
                 },
                 "required": ["metric"]
@@ -524,40 +347,17 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "create_sale",
-            "description": "Create a new sales transaction in the database. Use this when the user requests to record, register, create, add, or make a sale.",
+            "description": "Record a sales transaction in database.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "product_name_or_sku": {
-                        "type": "string",
-                        "description": "The name or SKU of the product to sell (e.g. 'Pepsi 1.5L')."
-                    },
-                    "customer_name": {
-                        "type": "string",
-                        "description": "The name of the customer buying the product. Default is 'Walk-in Customer'."
-                    },
-                    "quantity": {
-                        "type": "integer",
-                        "description": "The number of units sold. Must be at least 1."
-                    },
-                    "payment_status": {
-                        "type": "string",
-                        "enum": ["PAID", "PENDING", "FAILED"],
-                        "description": "Status of the payment. Default is 'PAID'."
-                    },
-                    "payment_method": {
-                        "type": "string",
-                        "enum": ["CASH", "CARD", "EASYPAY_JAZZCASH", "BANK_TRANSFER", "OTHER"],
-                        "description": "Method of payment. Default is 'CASH'."
-                    },
-                    "discount": {
-                        "type": "number",
-                        "description": "Discount amount applied to the sale in Rs. Default is 0.00."
-                    },
-                    "notes": {
-                        "type": "string",
-                        "description": "Optional notes or comments about the sale."
-                    }
+                    "product_name_or_sku": {"type": "string", "description": "Name or SKU."},
+                    "customer_name": {"type": "string", "description": "Customer name."},
+                    "quantity": {"type": "integer", "description": "Units sold."},
+                    "payment_status": {"type": "string", "enum": ["PAID", "PENDING", "FAILED"]},
+                    "payment_method": {"type": "string", "enum": ["CASH", "CARD", "EASYPAY_JAZZCASH", "BANK_TRANSFER", "OTHER"]},
+                    "discount": {"type": "number", "description": "Discount in Rs."},
+                    "notes": {"type": "string", "description": "Notes."}
                 },
                 "required": ["product_name_or_sku", "quantity"]
             }
@@ -566,74 +366,15 @@ CHATBOT_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "generate_report",
-            "description": "Generate a downloadable CSV report link for sales, expenses, or inventory stock.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "report_type": {
-                        "type": "string",
-                        "enum": ["sales", "expenses", "inventory"],
-                        "description": "The type of report to generate (sales, expenses, or inventory)."
-                    }
-                },
-                "required": ["report_type"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sales_by_category",
-            "description": "Get sales analytics broken down by product category. Returns total quantity sold, total revenue, and number of transactions for each category. Optionally filter by a specific category name. Use this when the user asks about sales per category, total units sold in a specific category (e.g. 'Electronics', 'Books'), or revenue by category.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "category": {
-                        "type": "string",
-                        "description": "Optional. Filter results to a specific category name (e.g. 'Electronics & Appliances', 'Books'). Leave empty to get all categories."
-                    }
-                },
-                "required": []
-            }
-        }
-    },
-    # ── SALES TOOLS ──────────────────────────────────────────────
-    {
-        "type": "function",
-        "function": {
             "name": "get_sales_by_date_range",
-            "description": "Get total sales revenue, quantity sold, and transaction count between two dates. Use for queries like 'sales last week', 'sales in June', 'revenue between Jan and March', 'aaj ki sale', 'is hafty ki farokht'.",
+            "description": "Get sales revenue between two dates.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "start_date": {"type": "string", "description": "Start date in YYYY-MM-DD format."},
-                    "end_date": {"type": "string", "description": "End date in YYYY-MM-DD format."}
+                    "start_date": {"type": "string", "description": "YYYY-MM-DD."},
+                    "end_date": {"type": "string", "description": "YYYY-MM-DD."}
                 },
                 "required": ["start_date", "end_date"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sales_by_payment_method",
-            "description": "Get sales broken down by payment method (Cash, Card, Online, etc). Use for queries like 'how many cash sales?', 'card vs cash revenue', 'payment method breakdown'.",
-            "parameters": {"type": "object", "properties": {}, "required": []}
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sales_by_customer",
-            "description": "Get sales records and total spending for a specific customer, or list top customers by revenue. Use for 'how much did Ali spend?', 'customer purchase history', 'sales for customer X'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "customer_name": {"type": "string", "description": "Optional customer name to filter. Leave empty to get all customers ranked by spending."},
-                    "limit": {"type": "integer", "description": "Number of top customers to return. Default 10."}
-                },
-                "required": []
             }
         }
     },
@@ -641,288 +382,17 @@ CHATBOT_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_profit_margin",
-            "description": "Get profit margin, net profit, gross profit, total cost, and total revenue. Optionally filter by product category or date range. Use for 'profit margin?', 'net profit?', 'how much profit did we make?', 'Electronics ka profit kya hai?'.",
+            "description": "Get profit margin, net/gross profit, total cost, and revenue.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "category": {"type": "string", "description": "Optional product category to filter."},
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
+                    "category": {"type": "string", "description": "Optional category."},
+                    "start_date": {"type": "string", "description": "Optional YYYY-MM-DD."},
+                    "end_date": {"type": "string", "description": "Optional YYYY-MM-DD."}
+                }
             }
         }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sales_returns",
-            "description": "Get sales return/refund records including quantities returned and refund amounts. Use for 'returns this month?', 'how many refunds?', 'return amount?', 'wapas kiya gaya maal'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_discount_summary",
-            "description": "Get total discounts given, average discount per sale, and maximum discount. Use for 'total discounts?', 'how much discount given?', 'average discount on sales?'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_top_customers",
-            "description": "Get the top customers ranked by total amount spent. Use for 'best customers', 'top buyers', 'who spends the most?', 'VIP customers'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "integer", "description": "Number of top customers to return. Default 10."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_customer_reviews",
-            "description": "Get customer reviews and ratings for products. Use for 'customer reviews', 'ratings', 'negative feedback', 'customer satisfaction'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "min_rating": {"type": "number", "description": "Optional minimum rating filter (1-5)."},
-                    "max_rating": {"type": "number", "description": "Optional maximum rating filter (1-5)."},
-                    "limit": {"type": "integer", "description": "Number of reviews to return. Default 20."}
-                },
-                "required": []
-            }
-        }
-    },
-    # ── EXPENSE & ACCOUNTS TOOLS ──────────────────────────────────
-    {
-        "type": "function",
-        "function": {
-            "name": "get_expenses_by_category",
-            "description": "Get total expenses broken down by category (Utilities, Salaries, Rent, etc). Use for 'expense breakdown', 'how much spent on utilities?', 'salary expenses', 'kharcha categories'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "category": {"type": "string", "description": "Optional specific expense category to filter."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_expenses_by_date_range",
-            "description": "Get total expenses between two dates. Use for 'expenses last month?', 'spending in January?', 'pichlay mahiny ka kharcha'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "End date YYYY-MM-DD."}
-                },
-                "required": ["start_date", "end_date"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_budget_vs_actual",
-            "description": "Compare budgeted amounts vs actual expenses per category. Use for 'are we over budget?', 'budget utilization?', 'how much of budget is used?'.",
-            "parameters": {"type": "object", "properties": {}, "required": []}
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_revenue_vs_expenses",
-            "description": "Get a profit and loss summary comparing total revenue vs total expenses and net profit/loss. Use for 'P&L', 'profit and loss', 'income vs expenses', 'are we profitable?', 'aamdani vs kharcha'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_cash_transactions",
-            "description": "Get recent cash flow transactions (cash in and cash out). Use for 'cash flow', 'cash transactions', 'recent cash movements'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "limit": {"type": "integer", "description": "Number of transactions to return. Default 20."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_salary_payments",
-            "description": "Get salary payment records for employees. Use for 'salary payments', 'who was paid?', 'total salary cost', 'employee pay'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_utility_bills",
-            "description": "Get utility bill records (electricity, gas, water, internet, etc). Use for 'utility bills', 'electricity bill', 'overdue bills', 'bijli ka bill'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "status": {"type": "string", "description": "Optional status filter: PAID, UNPAID, OVERDUE."},
-                    "utility_type": {"type": "string", "description": "Optional utility type: Electricity, Gas, Water, Internet, etc."}
-                },
-                "required": []
-            }
-        }
-    },
-    # ── PURCHASES & SUPPLIER TOOLS ────────────────────────────────
-    {
-        "type": "function",
-        "function": {
-            "name": "get_purchases_summary",
-            "description": "Get total purchase cost, quantity purchased, and number of purchase orders. Optionally filter by date range. Use for 'total purchases this month', 'procurement cost', 'how much stock did we buy?'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_date": {"type": "string", "description": "Optional start date YYYY-MM-DD."},
-                    "end_date": {"type": "string", "description": "Optional end date YYYY-MM-DD."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_supplier_performance",
-            "description": "Get supplier performance ranking by total purchases and order value. Use for 'best supplier', 'supplier ranking', 'which supplier gives us most?'.",
-            "parameters": {"type": "object", "properties": {}, "required": []}
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_purchase_orders_status",
-            "description": "Get purchase orders / ordered slips filtered by status (PENDING, RECEIVED, PARTIAL, CANCELLED). Use for 'pending orders', 'received orders', 'order status', 'kaunsa order pending hai?'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "status": {"type": "string", "description": "Optional status filter: PENDING, RECEIVED, PARTIAL, CANCELLED. Leave empty for all."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_purchases_by_product",
-            "description": "Get purchase history for a specific product including quantities bought and total cost. Use for 'how much did we buy of Samsung TV?', 'purchase history for product X'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "product_name": {"type": "string", "description": "Product name or partial name to search for."}
-                },
-                "required": ["product_name"]
-            }
-        }
-    },
-    # ── INVENTORY TOOLS ───────────────────────────────────────────
-    {
-        "type": "function",
-        "function": {
-            "name": "get_inventory_valuation",
-            "description": "Get the total monetary value of current stock (quantity × cost price) per product and per category. Use for 'stock value', 'inventory worth', 'total inventory value', 'maal ki qeemat kitni hai?'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "category": {"type": "string", "description": "Optional category to filter."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_stock_movement",
-            "description": "Get inventory transaction history (IN/OUT movements) for a specific product or all products. Use for 'stock movement', 'inventory transactions', 'stock history for product X'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "product_name": {"type": "string", "description": "Optional product name to filter transactions."},
-                    "limit": {"type": "integer", "description": "Number of transactions to return. Default 20."}
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_dead_stock",
-            "description": "Get products that have had zero or very few sales in the last N days (stagnant/dead inventory). Use for 'dead stock', 'zero sales products', 'which products are not selling?', 'stagnant inventory'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "days": {"type": "integer", "description": "Number of days to look back for sales activity. Default 30."}
-                },
-                "required": []
-            }
-        }
-    },
-    # ── TARGETS & PERFORMANCE TOOLS ───────────────────────────────
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sales_targets",
-            "description": "Get sales targets and compare with actual sales achieved. Use for 'sales target', 'target vs actual', 'are we hitting targets?', 'goal achievement'.",
-            "parameters": {"type": "object", "properties": {}, "required": []}
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_performance_metrics",
-            "description": "Get stored performance metrics and KPI values from the analytics system. Use for 'performance metrics', 'KPI dashboard', 'business performance'.",
-            "parameters": {"type": "object", "properties": {}, "required": []}
-        }
-    },
+    }
 ]
 
 
