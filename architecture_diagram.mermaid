@@ -1,0 +1,19 @@
+graph TD
+    %% Define Theme Colors
+    classDef default fill:#F5F3F0,stroke:#2B2620,stroke-width:2px,color:#2B2620;
+    classDef launcher fill:#E5E1DB,stroke:#2B2620,stroke-width:2px,font-weight:bold,color:#2B2620;
+    classDef database fill:#E8E4DF,stroke:#2B2620,stroke-width:2px,color:#2B2620;
+
+    subgraph Shopkeeper PC [Shopkeeper Windows Computer]
+        BAT[BizionaryERP.bat]:::launcher -->|Launches| EXE[BizionaryERP.exe]:::default
+        
+        EXE -->|Extracts python runtime & libraries to| INT[_internal / sys._MEIPASS]:::default
+        
+        EXE -->|1. Starts Local Web Server| Django[Django Backend Server<br/>Port: 8000]:::default
+        EXE -->|2. Opens Default Browser| Browser[Shopkeeper Browser<br/>127.0.0.1:8000]:::default
+        
+        Browser <-->|Sends/Receives REST APIs| Django
+        
+        Django -->|Serves Static UI Assets| Assets[Packaged React Frontend<br/>HTML/CSS/JS]:::default
+        Django <-->|Reads & Writes Local Data| DB[(SQLite Database<br/>File: db.sqlite3)]:::database
+    end
