@@ -26,7 +26,7 @@ const ChatbotModal = ({ isOpen, onClose }) => {
         return [
             {
                 sender: 'assistant',
-                text: 'Hello! 👋 I\'m your AI Support Assistant. I can help with orders, stock levels, sales analytics, or erp guides. Ask me anything or select a shortcut below!',
+                text: 'Hello! 👋 I\'m your AI Support Assistant. I can help check stock levels, view unpaid invoices, or explain workflows.\n\n*NEW:* You can now **record sales conversationally**! Try saying:\n👉 *"Sell 5 units of Pepsi"* (I will guide you step-by-step!).',
             },
         ];
     });
@@ -421,7 +421,7 @@ const ChatbotModal = ({ isOpen, onClose }) => {
             setMessages([
                 {
                     sender: 'assistant',
-                    text: 'Hello! 👋 I\'m your AI Support Assistant. I can help with orders, stock levels, sales analytics, or erp guides. Ask me anything or select a shortcut below!',
+                    text: 'Hello! 👋 I\'m your AI Support Assistant. I can help check stock levels, view unpaid invoices, or explain workflows.\n\n*NEW:* You can now **record sales conversationally**! Try saying:\n👉 *"Sell 5 units of Pepsi"* (I will guide you step-by-step!).',
                 },
             ]);
             setError('');
@@ -432,7 +432,7 @@ const ChatbotModal = ({ isOpen, onClose }) => {
     const shortcuts = [
         { label: '📊 Revenue', query: 'What is our current revenue?' },
         { label: '📦 Low Stock', query: 'Which products are low on stock?' },
-        { label: '⚙️ ERP Guide', query: 'Explain the available modules' }
+        { label: '🛒 Record a Sale', query: 'I want to record a sale' }
     ];
 
     if (!isOpen) return null;
