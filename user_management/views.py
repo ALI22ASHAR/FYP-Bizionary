@@ -2258,3 +2258,75 @@ def seed_status_view(request):
                 content = lf.read()
             return Response({'logs': content.split('\n')}, status=status.HTTP_200_OK)
     return Response({'error': 'No database logs found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+def public_register_view(request):
+    """
+    Public registration endpoint. Allows users to sign up and select a role/designation.
+    """
+    role_name = request.data.get('role_name')
+    if not role_name:
+        return Response({
+            'success': False,
+            'error': 'Role Name is required.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+        
+    # Standard role-department mapping
+    mapping = {
+        'Admin': ('Admin', 'Administration'),
+        'Accountant': ('Accountant', 'Finance Dept'),
+        'Inventory Manager': ('Inventory Manager', 'Inventory Dept'),
+        'Sales Manager': ('Sales Manager', 'Sales Dept')
+    }
+    
+    if role_name not in mapping:
+        return Response({
+            'success': False,
+            'error': f"Invalid role name. Must be one of: {', '.join(mapping.keys())}"
+        }, status=status.HTTP_400_BAD_REQUEST)
+        
+    db_role_name, db_dept_name = mapping[role_name]
+    
+    try:
+        role_obj = Role.objects.get(name=db_role_name)
+        dept_obj = Department.objects.get(name=db_dept_name)
+    except Role.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': f"Role '{db_role_name}' does not exist in the database. Please run the seeder."
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Department.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': f"Department '{db_dept_name}' does not exist in the database. Please run the seeder."
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    user_data = request.data.copy()
+    user_data['role'] = role_obj.id
+    user_data['department'] = dept_obj.id
+    user_data['status'] = 'ACTIVE'
+    user_data['is_active'] = True
+    user_data['requires_password_change'] = False
+    
+    serializer = ERPUserSerializer(data=user_data)
+    if serializer.is_valid():
+        user = serializer.save()
+        
+        ActivityLog.objects.create(
+            user=user,
+            action='CREATE',
+            module='User Management',
+            description=f"User {user.username} registered publicly as {role_name}."
+        )
+        
+        return Response({
+            'success': True,
+            'message': 'User registered successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+        
+    return Response({
+        'success': False,
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)

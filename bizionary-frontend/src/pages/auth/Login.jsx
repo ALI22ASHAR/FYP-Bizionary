@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Lock,
@@ -257,12 +257,12 @@ const Login = () => {
                     {/* Footer */}
                     <div className="pt-2 text-center text-xs font-semibold text-secondary">
                         Don't have an account?{' '}
-                        <span
-                            onClick={() => alert('Please contact your IT department or local system administrator to provision new employee access.')}
+                        <Link
+                            to="/register"
                             className="text-primary hover:underline font-bold cursor-pointer transition-colors"
                         >
-                            Contact your administrator
-                        </span>
+                            Register here
+                        </Link>
                     </div>
                 </div>
             </div>

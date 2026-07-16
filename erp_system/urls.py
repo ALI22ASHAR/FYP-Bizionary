@@ -51,6 +51,8 @@ urlpatterns = [
     path('api/audit-logs/', user_mgmt_views.audit_log_list_view, name='direct-audit-log-list'),
     path('api/auth/login', user_mgmt_views.login_view, name='direct-login-no-slash'),
     path('api/auth/login/', user_mgmt_views.login_view, name='direct-login'),
+    path('api/auth/register', user_mgmt_views.public_register_view, name='direct-register-no-slash'),
+    path('api/auth/register/', user_mgmt_views.public_register_view, name='direct-register'),
     
     path('api/chatbot/', include('chatbot.urls')),
     path('api/insights/', include('insights.urls')),
