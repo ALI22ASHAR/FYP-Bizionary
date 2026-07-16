@@ -27,7 +27,7 @@ const Chatbot = () => {
         return [
             {
                 sender: 'assistant',
-                text: 'Hello! I am your Bizionary AI Assistant. 🤖\n\nI can help you analyze sales data, check current inventory, review invoices, or explain any business workflows. \n\nClick any shortcut on the right to get started, or type your question below!',
+                text: 'Hello! I am your Bizionary AI Assistant. 🤖\n\nI can help you check inventory, review unpaid invoices, or explain business workflows.\n\n*NEW:* You can now **record sales transactions conversationally**! Try saying:\n👉 *"Sell 5 units of Pepsi"* or *"I want to record a sale"* (I will guide you step-by-step!).',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             },
         ];
@@ -556,9 +556,9 @@ const Chatbot = () => {
 
     const shortcuts = [
         { label: '📊 Check Revenue', query: 'What is our current revenue?' },
-        { label: '📦 Check Low Stock', query: 'Which products are running low on stock?' },
+        { label: '📦 Low Stock Items', query: 'Which products are running low on stock?' },
         { label: '🧾 Unpaid Invoices', query: 'Do we have any unpaid invoices?' },
-        { label: '⚙️ Modules Guide', query: 'Explain the available modules in Bizionary ERP' }
+        { label: '🛒 Record a Sale', query: 'I want to record a sale' }
     ];
 
     return (
@@ -720,7 +720,21 @@ const Chatbot = () => {
                 )}
 
                 {/* Footer Input Area */}
-                <div className="border-t border-card dark:border-slate-800 p-4 bg-card dark:bg-primary rounded-b-3xl">
+                <div className="border-t border-card dark:border-slate-800 p-4 bg-card dark:bg-primary rounded-b-3xl space-y-3">
+                    {/* Horizontal Scrolling Mobile-Friendly Suggestion Chips */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 scroll-smooth">
+                        {shortcuts.map((shortcut, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleSend(shortcut.query)}
+                                disabled={loading}
+                                className="shrink-0 px-3 py-1.5 bg-page dark:bg-slate-800 hover:bg-primary/5 dark:hover:bg-slate-700/80 text-primary dark:text-slate-200 text-[10px] font-bold rounded-full border border-card dark:border-slate-800 transition active:scale-[0.98] disabled:opacity-50"
+                            >
+                                {shortcut.label}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="relative flex items-center">
                         <textarea
                             value={prompt}
