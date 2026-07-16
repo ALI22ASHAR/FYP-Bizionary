@@ -12,6 +12,7 @@ from user_management import views as user_mgmt_views
 import os
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 from django.urls import re_path
 
@@ -62,5 +63,5 @@ urlpatterns = [
     *static('/assets/', document_root=os.path.join(settings.BASE_DIR, 'staticfiles', 'assets') if getattr(settings, 'frozen', False) else os.path.join(settings.BASE_DIR, 'bizionary-frontend', 'dist', 'assets')),
     
     # Fallback to React Frontend
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='react-frontend'),
+    re_path(r'^.*$', never_cache(TemplateView.as_view(template_name='index.html')), name='react-frontend'),
 ]
