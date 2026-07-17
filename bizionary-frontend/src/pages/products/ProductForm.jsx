@@ -19,6 +19,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
         barcode: '',
         pack_barcode: '',
         pcs_per_pack: 12,
+        pack_price: '',
     });
 
     useEffect(() => {
@@ -35,6 +36,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     barcode: initialData.barcode || '',
                     pack_barcode: initialData.pack_barcode || '',
                     pcs_per_pack: initialData.pcs_per_pack ?? 12,
+                    pack_price: initialData.pack_price ?? '',
                 });
             } else {
                 setFormData({
@@ -49,6 +51,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     barcode: '',
                     pack_barcode: '',
                     pcs_per_pack: 12,
+                    pack_price: '',
                 });
             }
         }
@@ -79,7 +82,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
 
         setFormData((prev) => ({
             ...prev,
-            [name]: type === 'number' ? Number(value) : value,
+            [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value,
         }));
     };
 
@@ -243,6 +246,20 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                                     value={formData.pcs_per_pack}
                                     onChange={handleChange}
                                     className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                />
+                            </div>
+
+                            <div className="col-span-2 sm:col-span-1">
+                                <label className="block text-sm font-medium text-primary mb-1">Pack Price (Rs) <span className="text-[10px] text-secondary font-normal">(Optional)</span></label>
+                                <input
+                                    type="number"
+                                    name="pack_price"
+                                    min="0"
+                                    step="0.01"
+                                    value={formData.pack_price}
+                                    onChange={handleChange}
+                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                    placeholder="e.g. 600"
                                 />
                             </div>
 

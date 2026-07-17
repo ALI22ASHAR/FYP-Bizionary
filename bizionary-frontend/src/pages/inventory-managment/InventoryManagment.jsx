@@ -113,6 +113,8 @@ const InventoryManagment = () => {
                     stock_quantity: 0,
                     min_stock: Number(orderSlipData.quantity_ordered || 1),
                     status: 'ACTIVE',
+                    pcs_per_pack: customProduct.pcs_per_pack || 12,
+                    pack_price: customProduct.pack_price || null,
                 };
 
                 const createdProduct = await api.post('products/', productPayload);

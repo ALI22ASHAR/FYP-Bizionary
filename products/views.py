@@ -802,6 +802,8 @@ def bulk_create_products(request):
             barcode = p_data.get('barcode', '').strip() or None
             pack_barcode = p_data.get('pack_barcode', '').strip() or None
             pcs_per_pack = int(p_data.get('pcs_per_pack', 12) or 12)
+            pack_price_raw = p_data.get('pack_price')
+            pack_price = Decimal(str(pack_price_raw)) if pack_price_raw is not None and str(pack_price_raw).strip() != '' else None
             
             if product:
                 # Update product details
@@ -814,6 +816,8 @@ def bulk_create_products(request):
                 if pack_barcode:
                     product.pack_barcode = pack_barcode
                 product.pcs_per_pack = pcs_per_pack
+                if pack_price is not None:
+                    product.pack_price = pack_price
                 product.save()
                 
                 # Add stock quantity to existing stock via transaction only
@@ -839,7 +843,8 @@ def bulk_create_products(request):
                     min_stock=min_stock,
                     barcode=barcode,
                     pack_barcode=pack_barcode,
-                    pcs_per_pack=pcs_per_pack
+                    pcs_per_pack=pcs_per_pack,
+                    pack_price=pack_price
                 )
                 if qty > 0:
                     InventoryTransaction.objects.create(

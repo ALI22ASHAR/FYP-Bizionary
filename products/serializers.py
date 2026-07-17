@@ -40,6 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'barcode',
             'pack_barcode',
             'pcs_per_pack',
+            'pack_price',
             'is_low_stock',
             'stock_status',
             'inventory_value',

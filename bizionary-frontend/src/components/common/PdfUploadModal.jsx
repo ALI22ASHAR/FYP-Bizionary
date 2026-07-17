@@ -133,6 +133,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                             updated.matched_product_name = prod.name;
                             updated.matched_product_sku = prod.sku;
                             updated.matched_product_stock = prod.stock_quantity;
+                            updated.pcs_per_pack = prod.pcs_per_pack || 12;
                             updated.confidence = 'high';
                             // Sync raw name for easy overview in product mode
                             if (actionType === 'product') {
@@ -162,6 +163,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                 category: metadata.category || '',
                 cost_price: 0.0,
                 quantity: 1,
+                qty_unit: 'units',
                 unit_price: 0.0,
                 barcode: '',
                 pack_barcode: '',
@@ -209,7 +211,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                     delivery_location: metadata.delivery_location,
                     items: items.map((item) => ({
                         product_id: item.matched_product_id,
-                        quantity: Number(item.quantity),
+                        quantity: item.qty_unit === 'packs' ? Number(item.quantity) * Number(item.pcs_per_pack || 12) : Number(item.quantity),
                         note: `AI Invoice PDF Import (Ref: ${metadata.invoice_number || 'N/A'}, Supplier: ${metadata.company_name || 'N/A'}). ${metadata.notes || ''}`.trim()
                     }))
                 };
@@ -221,7 +223,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                         product_id: item.matched_product_id,
                         product_name: item.matched_product_name,
                         product_code: item.matched_product_sku,
-                        quantity_sold: Number(item.quantity),
+                        quantity_sold: item.qty_unit === 'packs' ? Number(item.quantity) * Number(item.pcs_per_pack || 12) : Number(item.quantity),
                         unit_price: Number(item.unit_price),
                         sale_date: metadata.invoice_date,
                         customer_name: metadata.company_name || 'Walk-in Customer',
@@ -239,11 +241,12 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                         category: item.category || metadata.category || 'Beverages',
                         cost_price: Number(item.cost_price || 0.0),
                         unit_price: Number(item.unit_price || 0.0),
-                        stock_quantity: Number(item.quantity || 0),
+                        stock_quantity: item.qty_unit === 'packs' ? Number(item.quantity || 0) * Number(item.pcs_per_pack || 12) : Number(item.quantity || 0),
                         min_stock: 5,
                         barcode: item.barcode || '',
                         pack_barcode: item.pack_barcode || '',
-                        pcs_per_pack: Number(item.pcs_per_pack || 12)
+                        pcs_per_pack: Number(item.pcs_per_pack || 12),
+                        pack_price: item.pack_price ? Number(item.pack_price) : null
                     }))
                 };
                 await api.post('products/bulk-create-products/', payload);
@@ -480,14 +483,17 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                             <th className="px-4 py-3 w-32">Category</th>
                                                             <th className="px-4 py-3 w-28">Cost Price</th>
                                                             <th className="px-4 py-3 w-28">Retail Price</th>
+                                                            <th className="px-4 py-3 w-28">Pack Price</th>
                                                             <th className="px-4 py-3 w-28">Unit Barcode</th>
                                                             <th className="px-4 py-3 w-28">Pack Barcode</th>
                                                             <th className="px-4 py-3 w-20">Multiplier</th>
+                                                            <th className="px-4 py-3 w-28">Unit Type</th>
                                                             <th className="px-4 py-3 w-20">Stock Qty</th>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <th className="px-4 py-3">Catalog Match (ERP)</th>
+                                                            <th className="px-4 py-3 w-28">Unit Type</th>
                                                             <th className="px-4 py-3 w-24">Quantity</th>
                                                             <th className="px-4 py-3 w-28">Price / Cost</th>
                                                             <th className="px-4 py-3 w-24">Disc (Rs)</th>
@@ -561,6 +567,16 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary font-mono"
                                                                     />
                                                                 </td>
+                                                                {/* Pack Price */}
+                                                                <td className="px-4 py-2.5">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={item.pack_price || ''}
+                                                                        placeholder={String(Number(item.unit_price || 0) * Number(item.pcs_per_pack || 12))}
+                                                                        onChange={(e) => handleItemChange(idx, 'pack_price', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                        className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary font-mono"
+                                                                    />
+                                                                </td>
                                                                 {/* Barcode */}
                                                                 <td className="px-4 py-2.5">
                                                                     <input
@@ -589,6 +605,17 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                         onChange={(e) => handleItemChange(idx, 'pcs_per_pack', Number(e.target.value))}
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary text-center font-bold"
                                                                     />
+                                                                </td>
+                                                                {/* Unit Type */}
+                                                                <td className="px-4 py-2.5">
+                                                                    <select
+                                                                        value={item.qty_unit || 'units'}
+                                                                        onChange={(e) => handleItemChange(idx, 'qty_unit', e.target.value)}
+                                                                        className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary text-xs"
+                                                                    >
+                                                                        <option value="units">Pieces (Units)</option>
+                                                                        <option value="packs">Packs (Cartons)</option>
+                                                                    </select>
                                                                 </td>
                                                                 {/* Initial Stock Qty */}
                                                                 <td className="px-4 py-2.5">
@@ -625,6 +652,17 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                             Current Stock: {item.matched_product_stock} units
                                                                         </span>
                                                                     )}
+                                                                </td>
+                                                                {/* Unit Type */}
+                                                                <td className="px-4 py-2.5">
+                                                                    <select
+                                                                        value={item.qty_unit || 'units'}
+                                                                        onChange={(e) => handleItemChange(idx, 'qty_unit', e.target.value)}
+                                                                        className="w-full bg-background border border-border focus:border-accent rounded-lg px-2.5 py-1 text-xs outline-none text-primary"
+                                                                    >
+                                                                        <option value="units">Pieces (Units)</option>
+                                                                        <option value="packs">Packs ({item.pcs_per_pack || 12} pcs)</option>
+                                                                    </select>
                                                                 </td>
                                                                 {/* Quantity */}
                                                                 <td className="px-4 py-2.5">

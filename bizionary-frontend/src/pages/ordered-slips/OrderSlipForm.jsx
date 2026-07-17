@@ -69,6 +69,15 @@ const mergeUniqueCompanies = (baseCompanies, customCompanies = []) => {
 
 const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting = false, errorMessage = '', title = 'Generate Order Slip', submitLabel = 'Generate Slip', initialMode = 'existing', prefill = null }) => {
     const [products, setProducts] = useState([]);
+    const [orderUnit, setOrderUnit] = useState('units'); // 'units' or 'packs'
+    const [packQty, setPackQty] = useState('');
+    const [packCost, setPackCost] = useState('');
+
+    const [customOrderUnit, setCustomOrderUnit] = useState('units'); // 'units' or 'packs'
+    const [customPackQty, setCustomPackQty] = useState('');
+    const [customPackCost, setCustomPackCost] = useState('');
+    const [customPcsPerPack, setCustomPcsPerPack] = useState(12);
+
     const [registeredCompanies, setRegisteredCompanies] = useState([]);
     const [isCustomMode, setIsCustomMode] = useState(false);
     const [isSavingCompany, setIsSavingCompany] = useState(false);
@@ -177,6 +186,13 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
         setIsCustomMode(initialMode === 'custom');
         setCompanyError('');
         setCompanyContactError('');
+        setOrderUnit('units');
+        setPackQty('');
+        setPackCost('');
+        setCustomOrderUnit('units');
+        setCustomPackQty('');
+        setCustomPackCost('');
+        setCustomPcsPerPack(12);
         setFormData({
             product: '',
             company_name: defaultCompanyName,
@@ -210,14 +226,49 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
 
     const selectedProduct = availableProducts.find((item) => item.id === Number(formData.product));
     const selectedUnitCost = Number(selectedProduct?.cost_price || 0);
-    const totalAmount = Number(formData.quantity_ordered || 0) * selectedUnitCost;
+
+    const displayQuantity = useMemo(() => {
+        if (orderUnit === 'packs') {
+            const multiplier = selectedProduct?.pcs_per_pack || 12;
+            return Number(packQty || 0) * multiplier;
+        }
+        return Number(formData.quantity_ordered || 0);
+    }, [orderUnit, packQty, formData.quantity_ordered, selectedProduct]);
+
+    const displayUnitCost = useMemo(() => {
+        if (orderUnit === 'packs') {
+            const multiplier = selectedProduct?.pcs_per_pack || 12;
+            if (packCost && Number(packCost) > 0) {
+                return Number(packCost) / multiplier;
+            }
+        }
+        return selectedUnitCost;
+    }, [orderUnit, packCost, selectedUnitCost, selectedProduct]);
+
+    const totalAmount = displayQuantity * displayUnitCost;
+
     const customResolvedCategory = customData.category_mode === 'create' ? customData.custom_category : customData.category;
     const effectiveCustomCategory = customResolvedCategory || customData.category;
     const selectedCompanyOptions = getMergedCompaniesForCategory(selectedCategory, registeredCompanies);
     const customSubcategories = customData.category_mode === 'existing' ? getSubcategoriesForCategory(effectiveCustomCategory) : [];
     const customCompanyOptions = getMergedCompaniesForCategory(effectiveCustomCategory, registeredCompanies);
-    const customQuantity = Number(customData.quantity_ordered || 0);
-    const customCostPrice = Number(customData.cost_price || 0);
+
+    const customQuantity = useMemo(() => {
+        if (customOrderUnit === 'packs') {
+            return Number(customPackQty || 0) * customPcsPerPack;
+        }
+        return Number(customData.quantity_ordered || 0);
+    }, [customOrderUnit, customPackQty, customPcsPerPack, customData.quantity_ordered]);
+
+    const customCostPrice = useMemo(() => {
+        if (customOrderUnit === 'packs') {
+            if (customPackCost && Number(customPackCost) > 0) {
+                return Number(customPackCost) / customPcsPerPack;
+            }
+        }
+        return Number(customData.cost_price || 0);
+    }, [customOrderUnit, customPackCost, customPcsPerPack, customData.cost_price]);
+
     const customTotalAmount = customQuantity * customCostPrice;
 
     useEffect(() => {
@@ -509,7 +560,7 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                 company_mode: customData.company_mode,
                 categoryId: customResolvedCategory,
                 categoryKey: normalizeCategoryKey(customResolvedCategory),
-                quantity_ordered: Number(customData.quantity_ordered || 0),
+                quantity_ordered: customQuantity,
                 unit_cost: customCostPrice,
                 notes: customData.notes,
                 delivery_location: customData.delivery_location,
@@ -518,7 +569,7 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                     categoryId: normalizeCategoryKey(customResolvedCategory),
                     subcategory: customData.subcategory_mode === 'create' ? customData.custom_subcategory : customData.subcategory,
                     product_name: customData.product_name,
-                    quantity_ordered: Number(customData.quantity_ordered || 0),
+                    quantity_ordered: customQuantity,
                     cost_price: customCostPrice,
                     sale_price: Number(customData.sale_price || 0),
                     salePrice: Number(customData.sale_price || 0),
@@ -526,6 +577,8 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                     company_mode: customData.company_mode,
                     company_contact_number: customData.company_contact_number,
                     notes: customData.notes,
+                    pcs_per_pack: customOrderUnit === 'packs' ? Number(customPcsPerPack || 12) : 12,
+                    pack_price: customOrderUnit === 'packs' && customPackCost ? Number(customPackCost) : null,
                 },
             });
             return;
@@ -539,8 +592,8 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
             mode: 'existing',
             product: selectedProduct.id,
             company_name: formData.company_name,
-            quantity_ordered: Number(formData.quantity_ordered || 0),
-            unit_cost: selectedUnitCost,
+            quantity_ordered: displayQuantity,
+            unit_cost: displayUnitCost,
             notes: formData.notes,
             delivery_location: formData.delivery_location,
         });
@@ -617,18 +670,75 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                                     </div>
                                 </div>
 
-                            <div className="col-span-2 sm:col-span-1">
-                                <label className="block text-sm font-medium text-primary mb-1">Quantity to Order</label>
-                                <input
-                                    type="number"
-                                    name="quantity_ordered"
-                                    min="1"
-                                    required
-                                    value={formData.quantity_ordered}
-                                    onChange={handleChange}
-                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                                />
-                            </div>
+                                {selectedProduct && (
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-primary mb-1">Ordering Unit</label>
+                                        <div className="flex gap-2 p-1 bg-page rounded-lg border border-card w-fit">
+                                            <button
+                                                type="button"
+                                                onClick={() => setOrderUnit('units')}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${orderUnit === 'units' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-primary'}`}
+                                            >
+                                                Pieces (Units)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setOrderUnit('packs')}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${orderUnit === 'packs' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-primary'}`}
+                                            >
+                                                Carton / Pack ({selectedProduct?.pcs_per_pack || 12} pcs)
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {orderUnit === 'packs' ? (
+                                    <>
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Number of Packs</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                required
+                                                placeholder="e.g. 5 packs"
+                                                value={packQty}
+                                                onChange={(e) => setPackQty(e.target.value)}
+                                                className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                            />
+                                            <p className="text-[10px] text-text-secondary mt-1">
+                                                Total pieces: {Number(packQty || 0) * (selectedProduct?.pcs_per_pack || 12)} units
+                                            </p>
+                                        </div>
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Pack Cost (Rs) <span className="text-[10px] text-secondary font-normal">(Optional)</span></label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder={`e.g. ${(selectedUnitCost * (selectedProduct?.pcs_per_pack || 12))}`}
+                                                value={packCost}
+                                                onChange={(e) => setPackCost(e.target.value)}
+                                                className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                            />
+                                            <p className="text-[10px] text-text-secondary mt-1">
+                                                Unit Cost: Rs {displayUnitCost.toFixed(2)} / unit
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="block text-sm font-medium text-primary mb-1">Quantity to Order</label>
+                                        <input
+                                            type="number"
+                                            name="quantity_ordered"
+                                            min="1"
+                                            required
+                                            value={formData.quantity_ordered}
+                                            onChange={handleChange}
+                                            className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                        />
+                                    </div>
+                                )}
 
                             <div className="col-span-2 sm:col-span-1">
                                 <label className="block text-sm font-medium text-primary mb-1">Delivery Destination</label>
@@ -804,32 +914,100 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                                     </div>
                                 )}
 
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-medium text-primary mb-1">Quantity to Order</label>
-                                    <input
-                                        type="number"
-                                        name="quantity_ordered"
-                                        min="1"
-                                        required
-                                        value={customData.quantity_ordered}
-                                        onChange={handleChange}
-                                        className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
-                                    />
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-primary mb-1">Ordering Unit</label>
+                                    <div className="flex gap-2 p-1 bg-page rounded-lg border border-card w-fit">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCustomOrderUnit('units')}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${customOrderUnit === 'units' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-primary'}`}
+                                        >
+                                            Pieces (Units)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCustomOrderUnit('packs')}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${customOrderUnit === 'packs' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover:text-primary'}`}
+                                        >
+                                            Carton / Pack
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="col-span-2 md:col-span-1">
-                                    <label className="block text-sm font-medium text-primary mb-1">Cost Price</label>
-                                    <input
-                                        type="number"
-                                        name="cost_price"
-                                        min="0"
-                                        step="0.01"
-                                        required
-                                        value={customData.cost_price}
-                                        onChange={handleChange}
-                                        className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
-                                        placeholder="Enter cost price"
-                                    />
-                                </div>
+
+                                {customOrderUnit === 'packs' ? (
+                                    <>
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Pieces Per Pack</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                required
+                                                value={customPcsPerPack}
+                                                onChange={(e) => setCustomPcsPerPack(Number(e.target.value))}
+                                                className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
+                                            />
+                                        </div>
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Number of Packs</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                required
+                                                placeholder="e.g. 5 packs"
+                                                value={customPackQty}
+                                                onChange={(e) => setCustomPackQty(e.target.value)}
+                                                className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
+                                            />
+                                            <p className="text-[10px] text-text-secondary mt-1">
+                                                Total pieces: {Number(customPackQty || 0) * customPcsPerPack} units
+                                            </p>
+                                        </div>
+                                        <div className="col-span-2 sm:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Pack Cost (Rs) <span className="text-[10px] text-secondary font-normal">(Optional)</span></label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="e.g. 1200"
+                                                value={customPackCost}
+                                                onChange={(e) => setCustomPackCost(e.target.value)}
+                                                className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
+                                            />
+                                            <p className="text-[10px] text-text-secondary mt-1">
+                                                Unit Cost: Rs {customCostPrice.toFixed(2)} / unit
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Quantity to Order</label>
+                                            <input
+                                                type="number"
+                                                name="quantity_ordered"
+                                                min="1"
+                                                required
+                                                value={customData.quantity_ordered}
+                                                onChange={handleChange}
+                                                className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
+                                            />
+                                        </div>
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-sm font-medium text-primary mb-1">Cost Price</label>
+                                            <input
+                                                type="number"
+                                                name="cost_price"
+                                                min="0"
+                                                step="0.01"
+                                                required
+                                                value={customData.cost_price}
+                                                onChange={handleChange}
+                                                className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
+                                                placeholder="Enter cost price"
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className="col-span-2 md:col-span-1">
                                     <label className="block text-sm font-medium text-primary mb-1">Sale Price</label>

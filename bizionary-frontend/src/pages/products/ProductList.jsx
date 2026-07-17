@@ -430,20 +430,41 @@ const ProductList = () => {
                                                         <div>{p.name}</div>
                                                     </td>
                                                     <td className="px-6 py-4 text-textMuted">{getCategoryLabel(p.category) || section.label}</td>
-                                                    <td className="px-6 py-4 font-bold text-textMain text-right">{formatPKR(p.cost_price)}</td>
-                                                    <td className="px-6 py-4 font-bold text-textMain text-right">{formatPKR(p.sale_price)}</td>
+                                                    <td className="px-6 py-4 text-right">
+                                                         <div className="font-bold text-textMain">{formatPKR(p.cost_price)}</div>
+                                                         {p.pcs_per_pack > 1 && (
+                                                             <div className="text-[10px] text-text-secondary mt-0.5">
+                                                                 Pack Cost: {formatPKR(p.cost_price * p.pcs_per_pack)}
+                                                             </div>
+                                                         )}
+                                                     </td>
+                                                     <td className="px-6 py-4 text-right">
+                                                         <div className="font-bold text-textMain">{formatPKR(p.sale_price)}</div>
+                                                         <div className="text-[10px] text-text-secondary mt-0.5">
+                                                             {p.pack_price ? formatPKR(p.pack_price) : formatPKR(p.sale_price * p.pcs_per_pack)} / pack ({p.pcs_per_pack} pcs)
+                                                         </div>
+                                                     </td>
                                                     <td className={`px-6 py-4 font-bold text-right ${profitMargin >= 0 ? 'text-status-success' : 'text-status-info'}`}>{formatPKR(profitMargin)}</td>
-                                                    {/* Supplier cell removed */}
                                                     <td className="px-6 py-4 text-center">
-                                                        <span className="text-xs font-semibold text-textMain">
-                                                            {toNumber(p.shop_stock)}
+                                                         <span className="text-xs font-semibold text-textMain block">
+                                                             {toNumber(p.shop_stock)}
                                                          </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className="text-xs font-bold text-text-primary">
-                                                            {toNumber(p.current_stock)}
-                                                        </span>
-                                                    </td>
+                                                         {p.pcs_per_pack > 1 && (
+                                                             <span className="text-[10px] text-text-secondary block mt-0.5">
+                                                                 {Math.floor(p.shop_stock / p.pcs_per_pack)} pk, {p.shop_stock % p.pcs_per_pack} pcs
+                                                             </span>
+                                                         )}
+                                                     </td>
+                                                     <td className="px-6 py-4 text-center">
+                                                         <span className="text-xs font-bold text-text-primary block">
+                                                             {toNumber(p.current_stock)}
+                                                         </span>
+                                                         {p.pcs_per_pack > 1 && (
+                                                             <span className="text-[10px] text-text-secondary block mt-0.5">
+                                                                 {Math.floor(p.current_stock / p.pcs_per_pack)} pk, {p.current_stock % p.pcs_per_pack} pcs
+                                                             </span>
+                                                         )}
+                                                     </td>
                                                     {sectionCustomCols.map(col => {
                                                         const cellValue = getCustomCellValue(p.product_code || p.sku, col);
                                                         return (
