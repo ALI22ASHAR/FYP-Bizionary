@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZIONARY ERP - Project Documentation</title>
+    <!-- Github Markdown CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+    <!-- Highlight.js for code highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <style>
+        body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 45px;
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+            position: relative;
+        }
+        @media (max-width: 767px) {
+            body {
+                padding: 15px;
+            }
+        }
+        
+        /* Cover Page Styling */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .cover-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #1f2328;
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+        .cover-subtitle {
+            font-size: 1.6rem;
+            font-weight: 400;
+            color: #57606a;
+            margin-bottom: 80px;
+        }
+        .cover-meta {
+            font-size: 1.2rem;
+            color: #24292f;
+            line-height: 2;
+            border-top: 1px solid #d0d7de;
+            padding-top: 20px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .cover-meta p {
+            margin: 5px 0;
+        }
+        
+        /* Page Break Styling */
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+        }
+        
+        /* Table of Contents Styling */
+        .toc-page {
+            padding: 40px 0;
+            min-height: 80vh;
+        }
+        .toc-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 10px;
+        }
+        .toc-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc-item-h2 {
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-size: 1.15rem;
+        }
+        .toc-item-h3 {
+            margin-left: 24px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+            font-weight: normal;
+        }
+        .toc-link {
+            color: #0969da;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .toc-link:hover {
+            color: #0550ae;
+            text-decoration: underline;
+        }
+        
+        /* Print Footer Styling */
+        .divFooter {
+            display: none;
+        }
+        
+        /* Custom print styling */
+        @media print {
+            @page {
+                margin: 20mm 15mm 25mm 15mm;
+            }
+            body {
+                padding: 0;
+                max-width: 100%;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            pre, blockquote, table, img, svg, .mermaid {
+                page-break-inside: avoid;
+            }
+            .mermaid svg {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* Print footers */
+            .divFooter {
+                display: block;
+                position: fixed;
+                bottom: 10mm;
+                left: 15mm;
+                right: 15mm;
+                height: 20px;
+                border-top: 1px solid #d0d7de;
+                font-size: 9px;
+                color: #57606a;
+                padding-top: 8px;
+                font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+            }
+            .footer-content {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            /* Margin adjusts for printing body */
+            .cover-page, .toc-page, #content {
+                margin-bottom: 40px;
+            }
+        }
+        
+        /* Floating print button */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: #2da44e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: background-color 0.2s;
+        }
+        .print-btn:hover {
+            background-color: #2c974b;
+        }
+    </style>
+</head>
+<body class="markdown-body">
+    <button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+    
+    <!-- Cover Page -->
+    <div class="cover-page page-break">
+        <h1 class="cover-title">BIZIONARY ERP SYSTEM</h1>
+        <h2 class="cover-subtitle">Final Year Project Technical Documentation</h2>
+        <div class="cover-meta">
+            <p><strong>Course:</strong> Final Year Project (FYP)</p>
+            <p><strong>Platform:</strong> Django (Railway) + React SPA (Vercel)</p>
+            <p><strong>Document:</strong> Technical Documentation</p>
+            <p><strong>Status:</strong> Ready for Presentation</p>
+        </div>
+    </div>
+    
+    <!-- Table of Contents Page -->
+    <div class="toc-page page-break">
+        <h2 class="toc-title">Table of Contents</h2>
+        <div id="toc-container"><ul class="toc-list"><li class="toc-item-h3"><a href="#final-year-project-fyp-complete-technical-documentation" class="toc-link">Final Year Project (FYP) Complete Technical Documentation</a></li>
+<li class="toc-item-h2"><a href="#1-project-overview" class="toc-link">1. Project Overview</a></li>
+<li class="toc-item-h3"><a href="#11-project-introduction" class="toc-link">1.1 Project Introduction</a></li>
+<li class="toc-item-h3"><a href="#12-problem-statement" class="toc-link">1.2 Problem Statement</a></li>
+<li class="toc-item-h3"><a href="#13-objectives" class="toc-link">1.3 Objectives</a></li>
+<li class="toc-item-h3"><a href="#14-key-features" class="toc-link">1.4 Key Features</a></li>
+<li class="toc-item-h3"><a href="#15-scope-of-the-project" class="toc-link">1.5 Scope of the Project</a></li>
+<li class="toc-item-h3"><a href="#16-technology-stack-component-purpose" class="toc-link">1.6 Technology Stack & Component Purpose</a></li>
+<li class="toc-item-h2"><a href="#2-system-architecture" class="toc-link">2. System Architecture</a></li>
+<li class="toc-item-h3"><a href="#21-high-level-architecture" class="toc-link">2.1 High-Level Architecture</a></li>
+<li class="toc-item-h3"><a href="#22-component-architecture" class="toc-link">2.2 Component Architecture</a></li>
+<li class="toc-item-h3"><a href="#23-backend-architecture" class="toc-link">2.3 Backend Architecture</a></li>
+<li class="toc-item-h3"><a href="#24-frontend-architecture" class="toc-link">2.4 Frontend Architecture</a></li>
+<li class="toc-item-h3"><a href="#25-database-architecture" class="toc-link">2.5 Database Architecture</a></li>
+<li class="toc-item-h3"><a href="#26-data-flow-diagrams" class="toc-link">2.6 Data Flow Diagrams</a></li>
+<li class="toc-item-h3"><a href="#27-requestresponse-lifecycle" class="toc-link">2.7 Request/Response Lifecycle</a></li>
+<li class="toc-item-h2"><a href="#3-complete-backend-documentation" class="toc-link">3. Complete Backend Documentation</a></li>
+<li class="toc-item-h3"><a href="#31-folder-structure-explanation" class="toc-link">3.1 Folder Structure Explanation</a></li>
+<li class="toc-item-h3"><a href="#32-module-by-module-breakdown" class="toc-link">3.2 Module-by-Module Breakdown</a></li>
+<li class="toc-item-h3"><a href="#33-business-logic-explanation" class="toc-link">3.3 Business Logic Explanation</a></li>
+<li class="toc-item-h3"><a href="#34-service-layer-flow" class="toc-link">3.4 Service Layer Flow</a></li>
+<li class="toc-item-h3"><a href="#35-database-interaction-flow" class="toc-link">3.5 Database Interaction Flow</a></li>
+<li class="toc-item-h3"><a href="#36-api-architecture" class="toc-link">3.6 API Architecture</a></li>
+<li class="toc-item-h3"><a href="#37-authentication-authorization-flow" class="toc-link">3.7 Authentication & Authorization Flow</a></li>
+<li class="toc-item-h3"><a href="#38-error-handling-strategy" class="toc-link">3.8 Error Handling Strategy</a></li>
+<li class="toc-item-h3"><a href="#39-data-validation-strategy" class="toc-link">3.9 Data Validation Strategy</a></li>
+<li class="toc-item-h2"><a href="#4-complete-frontend-documentation" class="toc-link">4. Complete Frontend Documentation</a></li>
+<li class="toc-item-h3"><a href="#41-folder-structure-explanation" class="toc-link">4.1 Folder Structure Explanation</a></li>
+<li class="toc-item-h3"><a href="#42-component-architecture" class="toc-link">4.2 Component Architecture</a></li>
+<li class="toc-item-h3"><a href="#43-state-management-flow" class="toc-link">4.3 State Management Flow</a></li>
+<li class="toc-item-h3"><a href="#44-api-integration-flow" class="toc-link">4.4 API Integration Flow</a></li>
+<li class="toc-item-h3"><a href="#45-page-by-page-explanation" class="toc-link">4.5 Page-by-Page Explanation</a></li>
+<li class="toc-item-h3"><a href="#46-dashboard-logic" class="toc-link">4.6 Dashboard Logic</a></li>
+<li class="toc-item-h3"><a href="#47-charts-and-analytics-flow" class="toc-link">4.7 Charts and Analytics Flow</a></li>
+<li class="toc-item-h3"><a href="#48-user-interaction-flow" class="toc-link">4.8 User Interaction Flow</a></li>
+<li class="toc-item-h2"><a href="#5-database-documentation" class="toc-link">5. Database Documentation</a></li>
+<li class="toc-item-h3"><a href="#51-entity-relationship-diagram" class="toc-link">5.1 Entity Relationship Diagram</a></li>
+<li class="toc-item-h3"><a href="#52-table-descriptions" class="toc-link">5.2 Table Descriptions</a></li>
+<li class="toc-item-h3"><a href="#53-constraints" class="toc-link">5.3 Constraints</a></li>
+<li class="toc-item-h3"><a href="#54-indexing-strategy" class="toc-link">5.4 Indexing Strategy</a></li>
+<li class="toc-item-h2"><a href="#6-end-to-end-data-flow" class="toc-link">6. End-to-End Data Flow</a></li>
+<li class="toc-item-h3"><a href="#61-step-1-file-storage-output-folder" class="toc-link">6.1 Step 1: File Storage (`output/` folder)</a></li>
+<li class="toc-item-h3"><a href="#62-step-2-processing-salesimportservice" class="toc-link">6.2 Step 2: Processing (`SalesImportService`)</a></li>
+<li class="toc-item-h3"><a href="#63-step-3-validation-database-storage" class="toc-link">6.3 Step 3: Validation & Database Storage</a></li>
+<li class="toc-item-h3"><a href="#64-step-4-django-signals-lifecycle" class="toc-link">6.4 Step 4: Django Signals Lifecycle</a></li>
+<li class="toc-item-h3"><a href="#65-step-5-backend-api-aggregations" class="toc-link">6.5 Step 5: Backend API Aggregations</a></li>
+<li class="toc-item-h3"><a href="#66-step-6-frontend-consumption-reports" class="toc-link">6.6 Step 6: Frontend Consumption & Reports</a></li>
+<li class="toc-item-h2"><a href="#7-dynamic-processing-logic" class="toc-link">7. Dynamic Processing Logic</a></li>
+<li class="toc-item-h3"><a href="#71-auto-detection-of-monthly-sales-files" class="toc-link">7.1 Auto-Detection of Monthly Sales Files</a></li>
+<li class="toc-item-h3"><a href="#72-automatic-database-updates" class="toc-link">7.2 Automatic Database Updates</a></li>
+<li class="toc-item-h3"><a href="#73-dynamic-month-handling-future-proof-design" class="toc-link">7.3 Dynamic Month Handling & Future-Proof Design</a></li>
+<li class="toc-item-h3"><a href="#74-dynamic-expense-ledger-integration" class="toc-link">7.4 Dynamic Expense Ledger Integration</a></li>
+<li class="toc-item-h3"><a href="#75-procurement-ordered-slip-lifecycle-and-purchase-matching" class="toc-link">7.5 Procurement Ordered Slip Lifecycle and Purchase Matching</a></li>
+<li class="toc-item-h2"><a href="#8-api-documentation" class="toc-link">8. API Documentation</a></li>
+<li class="toc-item-h3"><a href="#81-listcreate-api-keys-configuration" class="toc-link">8.1 List/Create API Keys Configuration</a></li>
+<li class="toc-item-h3"><a href="#82-add-api-key-configuration" class="toc-link">8.2 Add API Key Configuration</a></li>
+<li class="toc-item-h3"><a href="#83-test-api-key-connection" class="toc-link">8.3 Test API Key Connection</a></li>
+<li class="toc-item-h3"><a href="#84-sync-monthly-sales-files" class="toc-link">8.4 Sync Monthly Sales Files</a></li>
+<li class="toc-item-h3"><a href="#85-ask-chatbot" class="toc-link">8.5 Ask Chatbot</a></li>
+<li class="toc-item-h3"><a href="#87-download-chatbot-report" class="toc-link">8.7 Download Chatbot Report</a></li>
+<li class="toc-item-h3"><a href="#86-sales-by-period" class="toc-link">8.6 Sales by Period</a></li>
+<li class="toc-item-h2"><a href="#9-project-workflow" class="toc-link">9. Project Workflow</a></li>
+<li class="toc-item-h3"><a href="#91-step-1-backend-bootstrap" class="toc-link">9.1 Step 1: Backend Bootstrap</a></li>
+<li class="toc-item-h3"><a href="#92-step-2-database-population-sales-file-syncing" class="toc-link">9.2 Step 2: Database Population & Sales File Syncing</a></li>
+<li class="toc-item-h3"><a href="#93-step-3-frontend-mounting" class="toc-link">9.3 Step 3: Frontend Mounting</a></li>
+<li class="toc-item-h3"><a href="#94-step-4-user-authentication" class="toc-link">9.4 Step 4: User Authentication</a></li>
+<li class="toc-item-h3"><a href="#95-step-5-dashboard-loading" class="toc-link">9.5 Step 5: Dashboard Loading</a></li>
+<li class="toc-item-h3"><a href="#96-step-6-operating-the-system" class="toc-link">9.6 Step 6: Operating the System</a></li>
+<li class="toc-item-h3"><a href="#97-step-7-chatbot-querying" class="toc-link">9.7 Step 7: Chatbot Querying</a></li>
+<li class="toc-item-h2"><a href="#10-deployment-guide" class="toc-link">10. Deployment Guide</a></li>
+<li class="toc-item-h3"><a href="#101-environment-setup" class="toc-link">10.1 Environment Setup</a></li>
+<li class="toc-item-h3"><a href="#102-dependencies-installation" class="toc-link">10.2 Dependencies Installation</a></li>
+<li class="toc-item-h3"><a href="#103-configuration-env-file" class="toc-link">10.3 Configuration (`.env` file)</a></li>
+<li class="toc-item-h3"><a href="#104-build-process" class="toc-link">10.4 Build Process</a></li>
+<li class="toc-item-h3"><a href="#105-deployment-process" class="toc-link">10.5 Deployment Process</a></li>
+<li class="toc-item-h2"><a href="#11-future-enhancements" class="toc-link">11. Future Enhancements</a></li>
+<li class="toc-item-h3"><a href="#111-scalability-opportunities" class="toc-link">11.1 Scalability Opportunities</a></li>
+<li class="toc-item-h3"><a href="#112-performance-improvements" class="toc-link">11.2 Performance Improvements</a></li>
+<li class="toc-item-h3"><a href="#113-additional-features" class="toc-link">11.3 Additional Features</a></li>
+<li class="toc-item-h2"><a href="#12-recent-implementations-cloud-migration" class="toc-link">12. Recent Implementations & Cloud Migration</a></li>
+<li class="toc-item-h3"><a href="#121-cloud-deployment-architecture-railway-vercel" class="toc-link">12.1 Cloud Deployment Architecture (Railway + Vercel)</a></li>
+<li class="toc-item-h3"><a href="#122-production-stability-database-seeding-optimizations" class="toc-link">12.2 Production Stability & Database Seeding Optimizations</a></li>
+<li class="toc-item-h3"><a href="#123-dynamic-custom-columns-feature" class="toc-link">12.3 Dynamic Custom Columns Feature</a></li></ul></div>
+    </div>
+    
+    <!-- Main Content -->
+    <div id="content"><h1>PROJECT DOCUMENTATION: BIZIONARY ERP SYSTEM</h1>
+<h3 id="final-year-project-fyp-complete-technical-documentation">Final Year Project (FYP) Complete Technical Documentation</h3>
+<hr />
+<h2 id="1-project-overview">1. Project Overview</h2>
+<h3 id="11-project-introduction">1.1 Project Introduction</h3>
+<p><strong>Bizionary ERP</strong> is a full-stack, enterprise-grade Enterprise Resource Planning (ERP) and business intelligence platform designed specifically to streamline operational workflows for Small and Medium Enterprises (SMEs). Unifying core corporate operations—including product catalogs, real-time inventory ledgers, multi-channel sales tracking, procurement workflows, client invoicing, double-entry financial accounting, and user-access management—Bizionary provides a centralized, secure repository. Furthermore, Bizionary embeds an agentic AI chatbot and predictive analytics services to assist managers in executing data-driven operations.</p>
+<h3 id="12-problem-statement">1.2 Problem Statement</h3>
+<p>Traditional SMEs rely on fragmented tools such as offline spreadsheets, isolated billing systems, and paper-based ledgers to manage their businesses. This fragmentation creates several operational challenges:</p>
+<ul>
+<li><strong>Data Silos &amp; Redundancy:</strong> Product catalog updates in inventory sheets are not synchronized with billing or purchases, leading to stock discrepancies.</li>
+<li><strong>Lack of Audit Trail:</strong> Manual updates to sales logs lack immutability, making it difficult to trace accounting anomalies or unauthorized inventory adjustments.</li>
+<li><strong>No Real-Time Insights:</strong> Decision-makers lack visibility into real-time key performance indicators (KPIs), cash flow metrics, or product-level demand velocity.</li>
+<li><strong>Manual Restocking Processes:</strong> Reorder levels are typically checked manually, resulting in either costly overstocking or lost revenue due to stockouts.</li>
+</ul>
+<h3 id="13-objectives">1.3 Objectives</h3>
+<p>The primary objective of the Bizionary ERP system is to establish a secure, unified platform that automates core business workflows and supports decision-making through AI. The project aims to:</p>
+<ol>
+<li><strong>Consolidate Data:</strong> Integrate sales, purchases, inventory, invoicing, and double-entry accounting into a single relational schema.</li>
+<li><strong>Automate Ingestion:</strong> Develop a dynamic, month-flexible Excel parser that automatically processes monthly sales files from raw operational workbooks and aggregates them in the database.</li>
+<li><strong>Ensure Transactional Integrity:</strong> Implement an event-driven system using database signals to ensure that any sale, return, purchase, or expense dynamically triggers the appropriate inventory adjustments, cash flow entries, and audit logs.</li>
+<li><strong>Incorporate Conversational AI:</strong> Create an agentic chatbot using Groq and large language models (LLMs) to query the live database through dynamic function calling.</li>
+<li><strong>Expose Analytical Insights:</strong> Build predictive analytical engines that utilize live data to estimate demand velocity, generate pricing optimization suggestions, and highlight smart reordering thresholds.</li>
+<li><strong>Secure API Keys:</strong> Design a secure configuration manager allowing administrators to add, test, cache, and rotate third-party API keys dynamically through the web interface without restarting the application.</li>
+</ol>
+<h3 id="14-key-features">1.4 Key Features</h3>
+<ul>
+<li><strong>Dynamic Dashboard:</strong> Real-time KPI summaries, live cash flow metrics, period-filtered revenues, and interactive sales charts.</li>
+<li><strong>Product &amp; Stock Management:</strong> Complete CRUD capabilities, dynamic reorder warnings, automated stock ledger tracing, and bulk stock adjustments.</li>
+<li><strong>Procurement Workflow:</strong> Supplier company registry, ordered slips management, automated delivery due-date alerts, and line-item receiving tracking.</li>
+<li><strong>Sales &amp; Returns Ledger:</strong> Invoicing tracking, sales returns handling, automatic cost-of-goods-sold (COGS) snapshots, and payment-method breakdown.</li>
+<li><strong>Double-Entry Accounting:</strong> Multi-level Chart of Accounts (COA), journal entries, credit/debit balances, automated revenue/expense logging, and expense budget tracking with variance analysis.</li>
+<li><strong>AI Chatbot Assistant:</strong> RAG-enabled chatbot utilizing Groq tool-use (function calling) to list low-stock items, summarize unpaid invoices, query sales trends, and output visual charts.</li>
+<li><strong>AI Analytics Engine:</strong> Automated NLP reporting, pricing suggestions based on sales velocity, sentiment evaluation on customer feedback, and smart reordering quantity calculations.</li>
+</ul>
+<h3 id="15-scope-of-the-project">1.5 Scope of the Project</h3>
+<p>The scope of Bizionary covers the operations of a single-tenant enterprise containing multiple administrative departments and staff roles. The system is designed to run locally using an optimized SQLite database for immediate developer bootstrap and is structured to scale to production environments using MySQL or PostgreSQL. Third-party integrations are limited to Groq and OpenAI APIs.</p>
+<h3 id="16-technology-stack-amp-component-purpose">1.6 Technology Stack &amp; Component Purpose</h3>
+<p>The Bizionary ERP ecosystem is designed using modern, enterprise-grade software stacks to ensure security, transactional integrity, and scalable AI operations. The components and their specific purposes are outlined below:</p>
+<h4>1.6.1 Tech Stack Matrix</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tier</th>
+<th style="text-align: left;">Technology</th>
+<th style="text-align: left;">Specific Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Frontend Core</strong></td>
+<td style="text-align: left;">React 19.2 (Vite)</td>
+<td style="text-align: left;">Renders the single-page application (SPA) with fast hot-reloading and modular UI updates.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Styling &amp; UI</strong></td>
+<td style="text-align: left;">Tailwind CSS v4, Lucide Icons</td>
+<td style="text-align: left;">Implements a responsive, clean design system with custom utility styling.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Data Visualization</strong></td>
+<td style="text-align: left;">Recharts &amp; ECharts</td>
+<td style="text-align: left;">Renders real-time financial graphs, KPI trackers, and trend analytics.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Frontend Export</strong></td>
+<td style="text-align: left;">jsPDF + html2canvas</td>
+<td style="text-align: left;">Allows client-side generation and downloading of invoices and custom reports.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Backend Core</strong></td>
+<td style="text-align: left;">Django 4.2.7</td>
+<td style="text-align: left;">Handles secure business APIs, ORM database transactions, and signal-driven events.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>API Framework</strong></td>
+<td style="text-align: left;">Django REST Framework (DRF)</td>
+<td style="text-align: left;">Exposes stateless REST APIs, handles JWT token validation, and controls CORS middleware.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Database (Dev)</strong></td>
+<td style="text-align: left;">SQLite 3</td>
+<td style="text-align: left;">Low-overhead relational database for local development and direct bootstrapping.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Database (Prod)</strong></td>
+<td style="text-align: left;">PostgreSQL</td>
+<td style="text-align: left;">Enterprise-grade, transaction-secure database for cloud-hosted environments.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>AI Cognitive Layer</strong></td>
+<td style="text-align: left;">Groq API (Llama 3.3)</td>
+<td style="text-align: left;">Drives the natural-language chatbot engine utilizing function-calling tool schemas.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>AI Fallback/Utils</strong></td>
+<td style="text-align: left;">OpenAI GPT Models</td>
+<td style="text-align: left;">Performs complementary text summarization and semantic sentiment tasks.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Excel Parser</strong></td>
+<td style="text-align: left;">Pandas + OpenPyXL</td>
+<td style="text-align: left;">Scans and ingests monthly sales and billing sheets from raw business spreadsheets.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Hosting &amp; Cloud</strong></td>
+<td style="text-align: left;">Railway + Vercel</td>
+<td style="text-align: left;">Seamless CI/CD hosting; Vercel for frontend static builds and Railway for backend containers.</td>
+</tr>
+</tbody>
+</table>
+<h4>1.6.2 Key Architectural Choices</h4>
+<ol>
+<li><strong>Vite + React SPA vs Server-Side Rendering (SSR):</strong> A React SPA delivers an instantaneous, desktop-app-like user experience where the sidebars, tables, and analytical views update without full page refreshes.</li>
+<li><strong>Django ORM &amp; Signals vs Manual Triggers:</strong> Financial journals and inventory ledger balances must remain mathematically balanced. Django’s post-save database signals act as a centralized, transactional broker ensuring that actions (like recording a sale return) trigger balance sheets, cash flows, and inventory logs in one atomic commit.</li>
+<li><strong>Groq Llama 3.3 API vs Self-Hosted Models:</strong> Groq's high-speed inference provides sub-second responses for natural language database queries (function calling tool schema), which is essential for responsive conversational RAG chatbots.</li>
+<li><strong>Decoupled Deployment (Railway + Vercel):</strong> By separating static client distribution (Vercel edge CDN) from Python container runtime execution (Railway hosting), the system limits resource consumption and increases reliability.</li>
+</ol>
+<hr />
+<h2 id="2-system-architecture">2. System Architecture</h2>
+<h3 id="21-high-level-architecture">2.1 High-Level Architecture</h3>
+<p>Bizionary ERP follows a classic <strong>3-Tier Client-Server Architecture</strong> augmented with an external <strong>Cognitive/AI Service Layer</strong>.</p>
+<pre class="mermaid">flowchart TD
+    subgraph Client Tier [Frontend Client - React]
+        UI[Vite Single Page App]
+        State[React Context / Custom Hooks]
+        Chart[Recharts Graphics]
+        Doc[PDF / Canvas Export]
+    end
+
+    subgraph Application Tier [Backend Server - Django REST]
+        Router[API Gateway / DRF Routers]
+        Controllers[API Viewsets & Views]
+        Signals[Django Signals Event Router]
+        Services[Business Logic Service Layer]
+        Parser[Excel Ingestion Engine]
+        Cache[API Key Caching Mechanism]
+    end
+
+    subgraph Database Tier [Relational Storage - SQLite]
+        DB[(SQLite / MySQL / Postgres)]
+        COA[Ledgers & Journal Tables]
+        Inv[Product & Txn Tables]
+        Aud[Audit Log Tables]
+    end
+
+    subgraph Cognitive Tier [External AI Providers]
+        Groq[Groq Llama 3.3 API]
+        OpenAI[OpenAI GPT Models]
+    end
+
+    %% Client and Backend Connection
+    UI <-->|HTTPS REST Requests / JWT Auth| Router
+    Router <--> Controllers
+    Controllers <--> Services
+    Services <--> Parser
+
+    %% Event Signals and DB
+    Controllers <--> DB
+    Services <--> DB
+    Signals -->|Atomic Updates| DB
+    DB -.->|Signals Trigger| Signals
+
+    %% API Keys and AI Connections
+    Services <--> Cache
+    Cache <--> DB
+    Services <-->|Function Calling / JSON| Groq
+    Services <-->|Completion Prompt / Context| OpenAI
+</pre>
+<h3 id="22-component-architecture">2.2 Component Architecture</h3>
+<p>The system is divided into isolated components that interact using clear interfaces:</p>
+<ol>
+<li><strong>User Interface Component:</strong> Composed of React functional views. It communicates with the backend exclusively using an asynchronous Axios client.</li>
+<li><strong>API Gateway / Router Component:</strong> Django REST Framework routing engine that matches endpoints, handles CORS preflight requests, and validates token-based authentication headers.</li>
+<li><strong>Controller / Viewset Component:</strong> Handles request deserialization, performs query logic, and serializes responses back to the client.</li>
+<li><strong>Signals Event Broker:</strong> A synchronous event publisher-subscriber module. It captures changes in core business models (Sale, SaleReturn, Purchase, Expense, OrderedSlip) and triggers ledger updates.</li>
+<li><strong>Service Component Layer:</strong> Houses complex algorithms, including database analytics aggregations, Excel processing, and AI function calling.</li>
+<li><strong>Data Access Component:</strong> Managed by Django ORM to safely query data, enforce relational integrity, and perform transactional rollbacks.</li>
+</ol>
+<h3 id="23-backend-architecture">2.3 Backend Architecture</h3>
+<p>The backend is built using Python 3 and Django 4.2. Main architecture highlights:</p>
+<ul>
+<li><strong>Modular Applications:</strong> Features are divided into distinct Django apps (<code>products</code>, <code>sales</code>, <code>purchases</code>, <code>invoices</code>, <code>accounts</code>, <code>dashboard</code>, <code>chatbot</code>, <code>insights</code>, <code>user_management</code>) to isolate domains.</li>
+<li><strong>Django REST Framework (DRF):</strong> Utilized to construct a stateless REST API, enforcing standard JSON responses.</li>
+<li><strong>Double-Entry Synchronization:</strong> Financial entries are written using an atomic ledger logic. If any component of a transaction fails, database changes are automatically rolled back.</li>
+<li><strong>API Key Management:</strong> A service layer resolves third-party provider keys from the database, caching them in memory for 1 hour to prevent redundant DB reads.</li>
+</ul>
+<h3 id="24-frontend-architecture">2.4 Frontend Architecture</h3>
+<p>The frontend is built as a single-page application (SPA) using React 19 and Vite.</p>
+<ul>
+<li><strong>Component Modularity:</strong> UI elements are categorized into layouts (Sidebar, Navbar), shared components (Alert, Button, Modal, Spinner), and feature-specific pages.</li>
+<li><strong>State Hydration &amp; Hooks:</strong> Data is fetched using custom React hooks (e.g., <code>useSalesInsights</code>). Hooks encapsulate Axios calls, load states, error capture, and pagination contexts.</li>
+<li><strong>Responsive Design System:</strong> Rendered using Tailwind CSS with custom CSS theme tokens, supporting dynamic screens from mobile drawers to widescreen monitors.</li>
+<li><strong>Data Visualization:</strong> Utilizing Recharts to render stacked bar charts, linear trends, and pie chart breakdowns using live JSON responses.</li>
+</ul>
+<h3 id="25-database-architecture">2.5 Database Architecture</h3>
+<p>The schema follows a relational layout designed to minimize data duplication. To enforce consistency, key aggregates—such as product stock quantities, invoice outstanding balances, and cash flow totals—are managed as read-only computed properties or ledger-derived transactions.</p>
+<h3 id="26-data-flow-diagrams">2.6 Data Flow Diagrams</h3>
+<h4>2.6.1 Dynamic Sales Excel Ingestion &amp; Ledger Updates</h4>
+<p>The sequence diagram below displays the ingestion of a monthly sales workbook:</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    actor Admin as Administrator
+    participant UI as React Dashboard
+    participant View as Sales Sync View
+    participant Service as Sales Import Service
+    participant DB as SQLite DB
+    participant Signals as Django Signals
+
+    Admin->>UI: Click "Sync Sales Files"
+    UI->>View: POST /api/sales/sync-excel/ {force: true}
+    activate View
+    View->>Service: sync_monthly_sales_files(force=True)
+    activate Service
+    Service->>Service: Scan output/ directory for *.xlsx
+    Service->>Service: Match sheet & detect header rows
+    Service->>Service: Parse SKU, Name, and date-like columns
+
+    loop For each valid row with qty > 0
+        Service->>DB: Query Product matching SKU/Name
+        DB-->>Service: Return Product instance
+        Service->>DB: Sale.objects.create(product, qty, date, total_price...)
+        activate DB
+        DB->>Signals: Emit post_save signal
+        activate Signals
+
+        Note over Signals: Atomically adjust inventories & cash flow
+        Signals->>DB: Create InventoryTransaction (Stock Out)
+        Signals->>DB: Create CashTransaction (Cash In - PAID)
+        Signals->>DB: Create AuditLog (CREATE)
+
+        Signals-->>DB: Signal actions complete
+        deactivate Signals
+        DB-->>Service: Return created Sale
+        deactivate DB
+    end
+
+    Service-->>View: Ingestion statistics (created_count, skipped_count)
+    deactivate Service
+    View-->>UI: HTTP 200 OK {success: true, total_created: X}
+    deactivate View
+    UI-->>Admin: Show Success Toast "Imported X sales"
+</pre>
+<h4>2.6.2 Agentic Chatbot RAG Workflow</h4>
+<p>The sequence diagram below displays how the chatbot processes natural language questions:</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    actor User as Staff User
+    participant UI as Chatbot UI
+    participant View as Chatbot View
+    participant Service as Chatbot Response Service
+    participant Groq as Groq Llama 3.3 API
+    participant DB as Database (via ORM)
+
+    User->>UI: Type: "Find products with stock under 10"
+    UI->>View: POST /api/chatbot/ask/ {message}
+    activate View
+    View->>Service: generate_chatbot_response(message)
+    activate Service
+
+    Service->>Service: Retrieve & cache active Groq key
+    Service->>Service: Build messages list (system instructions + context)
+    Service->>Groq: Chat Completion Request (Messages + CHATBOT_TOOLS schema)
+    activate Groq
+
+    Note over Groq: LLM reasons: "I need to call get_stock_alerts(threshold=10)"
+    Groq-->>Service: Tool Call request: get_stock_alerts(threshold=10)
+    deactivate Groq
+
+    Service->>Service: Router maps tool name to execute_tool()
+    Service->>DB: Query Product where stock_quantity <= 10
+    activate DB
+    DB-->>Service: Return raw Django QuerySet
+    deactivate DB
+    Service->>Service: Serialize QuerySet to JSON string
+
+    Service->>Groq: Second Completion Request (Original query + Tool JSON result)
+    activate Groq
+    Groq-->>Service: Return synthesized text response
+    deactivate Groq
+
+    Service-->>View: Final text output
+    deactivate Service
+    View-->>UI: HTTP 200 OK {response: "..."}
+    deactivate View
+    UI-->>User: Render text & navigation links
+</pre>
+<h4>2.6.3 User Authentication &amp; Role-Based Access Control Flow</h4>
+<p>The sequence diagram below displays the user authentication process and the role validation steps during API routing:</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    actor Staff as Staff User
+    participant UI as React SPA (Vite)
+    participant Auth as Auth Router
+    participant DB as SQLite DB
+    participant RBAC as Permission Middleware
+    participant Page as Admin Portal
+
+    Staff->>UI: Input credentials (username, password)
+    UI->>Auth: POST /api/user-management/login/ {username, password}
+    activate Auth
+    Auth->>DB: Query ERPUser matching username
+    DB-->>Auth: Return user record & hashed password
+    Auth->>Auth: Verify password match
+    Auth-->>UI: Return JWT Token & User Profile (Role: MANAGER)
+    deactivate Auth
+
+    UI->>UI: Store Token in Context & sessionStorage
+    Staff->>UI: Click "Manage Users" Link
+    UI->>RBAC: GET /api/user-management/users/ (Bearer Token)
+    activate RBAC
+    RBAC->>DB: Verify Token & check permission level
+    Note over RBAC, DB: Verify user has active ADMIN or MANAGER permission
+    DB-->>RBAC: Return authorized role settings
+    RBAC-->>UI: Return list of users (HTTP 200 OK)
+    deactivate RBAC
+    UI-->>Staff: Render User list dashboard
+</pre>
+<h4>2.6.4 Double-Entry Ledger Posting Flow</h4>
+<p>The sequence diagram below displays the accounting transaction posting logic when a customer records a payment against a pending invoice:</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    actor Accountant as Accountant User
+    participant UI as React Accounts Page
+    participant View as Invoice View
+    participant Service as Accounting Service
+    participant DB as SQLite DB
+    participant Ledger as Ledger Accounts
+
+    Accountant->>UI: Record payment on invoice (Rs. 50,000)
+    UI->>View: POST /api/accounts/invoice-payments/ {invoice_id, amount: 50000}
+    activate View
+    View->>DB: Query Invoice balance_due & total
+    DB-->>View: Return Invoice details
+    View->>Service: post_double_entry_payment(invoice, amount)
+    activate Service
+
+    Service->>DB: Create JournalEntry ("Payment received against Invoice X")
+    activate DB
+    DB-->>Service: Return JournalEntry instance
+    deactivate DB
+
+    Note over Service, Ledger: Post balancing entries (Debit Cash, Credit Receivables)
+    Service->>DB: Create JournalItem (Account: "Cash", Debit: 50000, Credit: 0)
+    Service->>DB: Create JournalItem (Account: "Accounts Receivable", Debit: 0, Credit: 50000)
+
+    Service->>DB: Create CashTransaction (txn_type='IN', amount=50000, source='invoice')
+
+    Service->>DB: Update Invoice status and balance_due
+    Service-->>View: Confirm posting balanced transaction
+    deactivate Service
+
+    View-->>UI: HTTP 201 Created {status: "PAID", balance_due: 0}
+    deactivate View
+    UI-->>Accountant: Refresh ledger grid & show success toast
+</pre>
+<h4>2.6.5 Procurement Ordered Slip Lifecycle</h4>
+<p>The sequence diagram below displays the lifecycle of a supplier purchase request slip from initial generation to final inventory receiving:</p>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    actor Buyer as Procurement Manager
+    participant UI as React Stock Portal
+    participant View as OrderedSlip View
+    participant Mail as Email Mailer Service
+    participant DB as Database (SQLite)
+    participant Supplier as Supplier Company
+
+    Buyer->>UI: Fill order form (Product: Refrigerator, Qty: 20)
+    UI->>View: POST /api/purchases/ordered-slips/ {product_id, quantity: 20}
+    activate View
+    View->>DB: Save OrderedSlip (Status: PENDING, due_date: creation + 2 days)
+    activate DB
+    DB-->>View: Return OrderedSlip instance
+    deactivate DB
+
+    View->>Mail: send_procurement_email(slip_id)
+    activate Mail
+    Mail->>Supplier: Send Email (Details: product, quantity, unit_cost)
+    Supplier-->>Mail: SMTP 250 OK (Received)
+    Mail->>DB: Update OrderedSlip (email_status='SENT', email_sent_at=now)
+    Mail-->>View: Email sent successfully
+    deactivate Mail
+
+    View-->>UI: HTTP 201 Created {slip_id, status: 'PENDING'}
+    deactivate View
+    UI-->>Buyer: Show "Order slip sent to supplier"
+
+    Note over Buyer, Supplier: Stock arrives at warehouse 2 days later
+    Buyer->>UI: Enter stock receipt (Received Qty: 20)
+    UI->>View: POST /api/purchases/ordered-slips/{id}/receive/ {received_qty: 20}
+    activate View
+    View->>DB: Update OrderedSlip (status: COMPLETED, quantity_received: 20)
+
+    Note over View, DB: Signals trigger inventory adjustment automatically
+    View->>DB: Create InventoryTransaction (txn_type: 'IN', qty: 20, source: 'ordered_slip')
+    View->>DB: Create Purchase record (to track financial payable)
+
+    View-->>UI: HTTP 200 OK {status: 'COMPLETED'}
+    deactivate View
+    UI-->>Buyer: Display updated stock levels and closed slip
+</pre>
+<h3 id="27-requestresponse-lifecycle">2.7 Request/Response Lifecycle</h3>
+<ol>
+<li><strong>Action Trigger:</strong> User triggers an event (e.g., records an expense).</li>
+<li><strong>API Call:</strong> React component constructs a request payload and sends it via Axios: <code>POST /api/accounts/expenses/</code>.</li>
+<li><strong>Routing &amp; Middleware:</strong> Router captures the route. CORS middleware checks headers. Token authentication checks validity.</li>
+<li><strong>View Processing:</strong> View validates parameters via DRF Serializers.</li>
+<li><strong>ORM Execution:</strong> If valid, the serializer performs database insertion: <code>instance.save()</code>.</li>
+<li><strong>Signal Fire:</strong> Database hooks catch the insertion, triggering post-save signals. Signals create <code>CashTransaction</code> (outflow) and <code>AuditLog</code> records in the database.</li>
+<li><strong>Response Return:</strong> The view returns serialised JSON representation of the created expense with status <code>201 Created</code>.</li>
+<li><strong>Frontend Update:</strong> React components catch the HTTP 201 response, update the local state array, recalculate totals, and clear loaders.</li>
+</ol>
+<hr />
+<h2 id="3-complete-backend-documentation">3. Complete Backend Documentation</h2>
+<h3 id="31-folder-structure-explanation">3.1 Folder Structure Explanation</h3>
+<p>The Django project root is situated in <code>c:\Users\Dell\Desktop\Fyp</code> and contains the following files and directories:</p>
+<ul>
+<li><code>manage.py</code>: Django command-line execution entry point.</li>
+<li><code>requirements.txt</code>: Python package dependency list.</li>
+<li><code>erp_system/</code>: Configuration root directory. Contains <code>settings.py</code> (configuration values, installed apps, middleware, DB connections), <code>urls.py</code> (root API routing mapping to apps), and <code>wsgi.py</code>/<code>asgi.py</code> (application server interfaces).</li>
+<li><code>accounts/</code>: Handles Chart of Accounts (COA), Revenues, Expenses, Invoices (Finance App), budgets, and dynamic API Key configuration.</li>
+<li><code>chatbot/</code>: Handles the AI RAG conversational service, including Groq wrappers, tool-calling maps, and system-prompt context.</li>
+<li><code>dashboard/</code>: Exposes general analytical metrics, KPIs, and the system reset/seeding endpoint.</li>
+<li><code>insights/</code>: Core analytical engine handling pricing suggestions, demand spikes, stock warnings, reviews sentiment, and smart reordering velocity.</li>
+<li><code>invoices/</code>: Main billing application, tracking client data, payment statuses, balances, and invoice records.</li>
+<li><code>products/</code>: Controls the central inventory product catalog, SKU matching, and inventory transaction ledger.</li>
+<li><code>purchases/</code>: Manages procurement operations, supplier records, ordered slips, and receive workflows.</li>
+<li><code>sales/</code>: Stores sales transactions, handles sales returns, and contains the Excel ingestion parser.</li>
+<li><code>screen_2_sales_items/</code>: Exposes legacy views and analytical configurations matching specific screen grids.</li>
+<li><code>user_management/</code>: Handles authentication policies, security limits, activity audit trails, and user role provisioning.</li>
+</ul>
+<h3 id="32-module-by-module-breakdown">3.2 Module-by-Module Breakdown</h3>
+<h4>3.2.1 <code>accounts</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>, <code>models_api_config.py</code>):</strong></li>
+<li><code>Account</code>: Chart of Accounts hierarchy.</li>
+<li><code>JournalEntry</code> &amp; <code>JournalItem</code>: Double-entry accounting system tracking debits and credits.</li>
+<li><code>Revenue</code> &amp; <code>Expense</code>: Financial registries.</li>
+<li><code>SalaryPayment</code>: For payroll details, linked to the <code>ERPUser</code> model.</li>
+<li><code>UtilityBill</code>: For tracking utility payments (Electricity, Water, Gas, etc.) including tax breakdown.</li>
+<li><code>RecurringCost</code>: For software subscriptions, office rent, ads, etc.</li>
+<li><code>ExpenseBudget</code>: Category-specific budgets comparing planned vs actual spend.</li>
+<li><code>InvoicePayment</code>: Instalment tracking against invoices to automatically calculate balance dues.</li>
+<li><code>APIConfiguration</code>: Encrypted database model storing API keys (OpenAI/Groq) for dynamic rotation.</li>
+<li><strong>Signals (<code>signals.py</code>):</strong> Auto-creates cash outflow ledgers when an expense is recorded, and processes reversal records upon expense voiding.</li>
+<li><strong>Services (<code>services.py</code>):</strong> Calculates gross profit, net profit, revenue margins, budget variance analysis, and accounts trends.</li>
+<li><strong>Views (<code>views.py</code>, <code>views_api_config.py</code>):</strong> Serializes CRUD views and connection testing routes.</li>
+</ul>
+<h4>3.2.2 <code>chatbot</code> Module</h4>
+<ul>
+<li><strong>Services (<code>services.py</code>):</strong></li>
+<li><strong>Groq Wrapper &amp; Schema:</strong> Integrates function mapping definitions and LLM query orchestration.</li>
+<li><strong>Fuzzy Matching Engine:</strong> Employs <code>difflib.get_close_matches</code> when exact queries fail (cutoff of <code>0.4</code> for search queries and <code>0.5</code> for sales creation) to map user input typos to active catalog names/SKUs.</li>
+<li><strong>Conversational Confirmation Flow:</strong> Implements multi-turn state rules in system prompts to draft orders first and request explicit user confirmation before executing transactional tools.</li>
+<li><strong>History Memory Compression:</strong> Implements background summary compilation using the Groq API model; when history exceeds <code>10</code> turns, older logs are compressed into a single system recap message while preserving the latest <code>4</code> turns.</li>
+<li><strong>Views (<code>views.py</code>):</strong></li>
+<li>Exposes chatbot message querying endpoint (<code>/api/chatbot/query/</code>).</li>
+<li>Exposes the NLP generated document streaming view (<code>download_report</code>) to generate and export dynamic CSV spreadsheets of sales, expenses, and inventory catalog.</li>
+</ul>
+<h4>3.2.3 <code>dashboard</code> Module</h4>
+<ul>
+<li><strong>Views (<code>views.py</code>):</strong> Dynamic calculations of operational metrics (low-stock counts, pending payables, KPI totals) and database seeding scripts (<code>reset_system</code>).</li>
+</ul>
+<h4>3.2.4 <code>insights</code> Module</h4>
+<ul>
+<li><strong>Services (<code>services.py</code>):</strong> Analytics computation:</li>
+<li><code>get_product_performance()</code>: Computes product velocity trends (hot vs cold products).</li>
+<li><code>get_pricing_suggestions()</code>: Calculates demand price optimizations.</li>
+<li><code>get_stock_warnings()</code>: Generates priority warnings for low items.</li>
+<li><code>get_smart_reorder_recommendations()</code>: Computes daily demand rates and reorder amounts.</li>
+<li><code>analyze_review_sentiment()</code>: Lexical evaluation of customer reviews.</li>
+</ul>
+<h4>3.2.5 <code>invoices</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>):</strong> Outlines client billing invoices, payment statuses, and tax rates.</li>
+</ul>
+<h4>3.2.6 <code>products</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>):</strong> Includes the primary <code>Product</code> table and the <code>InventoryTransaction</code> ledger.</li>
+<li><strong>Signals (<code>signals.py</code>):</strong> Updates product stock quantities when inventory transactions are saved or deleted.</li>
+</ul>
+<h4>3.2.7 <code>purchases</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>):</strong> Procurement registries: <code>Purchase</code>, <code>SupplierCompany</code>, <code>OrderedSlip</code>, <code>PurchaseLineItem</code>.</li>
+<li><strong>Signals (<code>signals.py</code>):</strong> Updates stock and cash outflow logs on purchase item saves.</li>
+</ul>
+<h4>3.2.8 <code>sales</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>):</strong> Outlines <code>Sale</code> records, cost margins, and <code>SaleReturn</code> transactions.</li>
+<li><strong>Services (<code>services.py</code>):</strong> Houses <code>SalesImportService</code> to ingest monthly Excel files.</li>
+</ul>
+<h4>3.2.9 <code>user_management</code> Module</h4>
+<ul>
+<li><strong>Models (<code>models.py</code>):</strong> Department layouts, Roles (ADMIN to VIEWER levels), ERP Users, and granular permission tables.</li>
+</ul>
+<h3 id="33-business-logic-explanation">3.3 Business Logic Explanation</h3>
+<p>The business logic enforces the <strong>Relational Ledger Principle</strong>: no monetary or stock balance should be directly mutable. Instead:</p>
+<ol>
+<li><strong>Inventory Stock Balance:</strong> The <code>Product.stock_quantity</code> is modified only by writing an <code>InventoryTransaction</code> ledger row (either type <code>IN</code> or <code>OUT</code>). Signals capture transaction savings and adjust the cached product count.</li>
+<li><strong>Cash Flow Balance:</strong> Net cash flow is derived from the sum of inflows and outflows recorded in <code>CashTransaction</code>. Sales, returns, purchases, and expenses automatically publish transactions to this ledger via backend signals.</li>
+<li><strong>Accounts Receivable (AR) &amp; Invoice Balances:</strong> An invoice's balance is dynamically computed by subtracting the sum of associated <code>InvoicePayment</code> installments from the invoice total. When balance due hits zero, the status changes to <code>PAID</code>.</li>
+</ol>
+<h3 id="34-service-layer-flow">3.4 Service Layer Flow</h3>
+<p>The service layer implements specialized, non-CRUD algorithms:</p>
+<pre><code>[HTTP Request]
+      ↓
+[DRF View / Controller] (Validates parameters)
+      ↓
+[Service Class] (Executes business calculations, spreadsheet parses, or API calls)
+      ↓
+[Django ORM / Transactions / Third-Party APIs]
+</code></pre>
+<h3 id="35-database-interaction-flow">3.5 Database Interaction Flow</h3>
+<p>To prevent partial execution errors, complex operational sequences (such as importing Excel records) are wrapped inside Django's <code>transaction.atomic()</code> context. If any exception is raised, all database modifications in that block are rolled back.</p>
+<h3 id="36-api-architecture">3.6 API Architecture</h3>
+<p>The API is a stateful-authenticated REST API. It uses standard HTTP verbs:</p>
+<ul>
+<li><code>GET</code>: Query and retrieve lists or detailed resources.</li>
+<li><code>POST</code>: Create new resources or trigger actions (like file syncing).</li>
+<li><code>PUT</code>/<code>PATCH</code>: Modify existing database rows.</li>
+<li><code>DELETE</code>: Delete records from the system.</li>
+</ul>
+<h3 id="37-authentication-amp-authorization-flow">3.7 Authentication &amp; Authorization Flow</h3>
+<p>Authentication is managed via HTTP Authorization headers.</p>
+<ol>
+<li><strong>Authentication Middleware:</strong> Verifies the user credentials.</li>
+<li><strong>Permission Authorization:</strong> Controls menu items and API access using role hierarchies:<ul>
+<li><code>ADMIN</code>: Unrestricted system access, including API Key management and user administration.</li>
+<li><code>MANAGER</code>, <code>SUPERVISOR</code>, <code>STAFF</code>: Standard data logging access.</li>
+<li><code>VIEWER</code>: Read-only access across modules.</li>
+</ul>
+</li>
+</ol>
+<h3 id="38-error-handling-strategy">3.8 Error Handling Strategy</h3>
+<p>Exceptions are caught at the controller level using Python try-except blocks. They translate backend exceptions into clean, user-friendly JSON payloads:</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;Failed to compile sales insights: [detailed message]&quot;
+}
+</code></pre>
+<h3 id="39-data-validation-strategy">3.9 Data Validation Strategy</h3>
+<p>Validation is handled across three tiers:</p>
+<ol>
+<li><strong>Serializer Validation:</strong> DRF serializers enforce data type structures, string limits, and decimal ranges.</li>
+<li><strong>Custom Format Checks:</strong> For instance, <code>validate_api_key_format()</code> in <code>accounts/api_config_utils.py</code> ensures that keys start with the correct provider prefix (e.g., <code>sk-</code> for OpenAI/Groq).</li>
+<li><strong>Model Database Constraints:</strong> Primary keys, foreign key protection, unique parameters, and field validators (e.g., quantities must be <code>MinValueValidator(1)</code>).</li>
+</ol>
+<hr />
+<h2 id="4-complete-frontend-documentation">4. Complete Frontend Documentation</h2>
+<h3 id="41-folder-structure-explanation">4.1 Folder Structure Explanation</h3>
+<p>The frontend resides in <code>c:\Users\Dell\Desktop\Fyp\bizionary-frontend</code> and follows a structured tree layout:</p>
+<ul>
+<li><code>src/main.jsx</code>: System bootloader mounting the React application.</li>
+<li><code>src/App.jsx</code>: Global router layout.</li>
+<li><code>src/api/</code>: Placeholder for custom network utilities.</li>
+<li><code>src/services/api.js</code>: Instantiates the Axios client, defines the base backend URL, and injects authentication headers.</li>
+<li><code>src/context/</code>: Stores user session settings and authorization state.</li>
+<li><code>src/hooks/</code>: Contains custom hooks that connect components to backend services.</li>
+<li><code>useSalesInsights.js</code>: Manages dashboard sales analytics periods and available months filter.</li>
+<li><code>src/routes/AppRoutes.jsx</code>: Controls route mappings, mounting private routes based on roles.</li>
+<li><code>src/components/</code>: Modular widgets.</li>
+<li><code>layout/</code>: Core UI architecture (Navbar, Sidebar).</li>
+<li><code>dashboard/</code>: Visual metrics components (KPI cards, SalesPerformanceChart).</li>
+<li><code>src/pages/</code>: Main application portals (Dashboard, Accounts, Products, Stock, Sales, Create Order, Chatbot, Settings, User Management).</li>
+<li><code>src/styles/</code>: Contains global reset files and Tailwind directives (<code>index.css</code>).</li>
+<li><code>src/utils/</code>: Common formatting utilities (e.g., <code>currency.js</code> mapping Pakistani Rupee symbols <code>Rs.</code>).</li>
+</ul>
+<h3 id="42-component-architecture">4.2 Component Architecture</h3>
+<p>The visual system utilizes <strong>Container-Presenter Architecture</strong>. Page containers (e.g., <code>Dashboard.jsx</code>) fetch state using hooks and manage modal actions. They pass datasets to pure presentation components (e.g., <code>SalesPerformanceChart.jsx</code>) as read-only React properties (<code>props</code>), making charts easy to update and test.</p>
+<h3 id="43-state-management-flow">4.3 State Management Flow</h3>
+<p>Frontend state is managed locally via React hooks:</p>
+<ul>
+<li><code>useState</code>: Controls modal visibilities, active filters, form inputs, and fetch loadings.</li>
+<li><code>useEffect</code>: Synchronizes backend state. For instance, the Dashboard queries the backend every 10 seconds to keep KPIs fresh.</li>
+<li><code>useMemo</code>: Optimizes rendering of category maps and sorting results to avoid recalculations.</li>
+</ul>
+<h3 id="44-api-integration-flow">4.4 API Integration Flow</h3>
+<p>The Axios interface executes asynchronous operations:</p>
+<pre><code class="language-javascript">import axios from &quot;axios&quot;;
+const api = axios.create({
+  baseURL: &quot;http://localhost:8000/api/&quot;,
+});
+</code></pre>
+<p>It handles response structures, intercepting failures and bubbling error details up to the React components.</p>
+<h3 id="45-page-by-page-explanation">4.5 Page-by-Page Explanation</h3>
+<ul>
+<li><strong>Auth Portal:</strong> Handles user login and registration, storing session details in state.</li>
+<li><strong>Dashboard Page:</strong> Renders KPI summary cards and mounts quick operation forms.</li>
+<li><strong>Accounts Portal:</strong> Features tab interfaces for Revenues, Expenses, Invoices, and Financial Reports (Income Statement, Cash Flow, Balance Sheets).</li>
+<li><strong>Products Page:</strong> Displays the product catalog, handles search queries, and controls inventory updates.</li>
+<li><strong>Stock Ledger:</strong> Tracks stock transactions, low stock items, and triggers reorder slips.</li>
+<li><strong>Sales Page:</strong> Lists sales logs, handles product returns, and filters transactions by period.</li>
+<li><strong>Create Order Page:</strong> Manages procurement ordered slips, updates received stock levels, and logs supplier payables.</li>
+<li><strong>AI Chatbot Portal:</strong> Provides a conversational interface, compiling message histories and rendering tables or charts using structured JSON responses.</li>
+<li><strong>Settings Portal (API Keys Page):</strong> Allows administrators to add, update, delete, and test OpenAI and Groq API keys dynamically.</li>
+<li><strong>User Management Portal:</strong> Displays user accounts, provisions staff, assigns security rules, and audits activity logs.</li>
+</ul>
+<h3 id="46-dashboard-logic">4.6 Dashboard Logic</h3>
+<p>The dashboard consolidates operational KPIs, displaying current numbers for total revenue, product quantities, ordered slips, and inventory values. Clicking KPI action buttons opens edit portals (e.g., <code>RecordModal</code>, <code>ProductForm</code>) to modify database tables without redirecting.</p>
+<h3 id="47-charts-and-analytics-flow">4.7 Charts and Analytics Flow</h3>
+<p>The Sales Performance Chart is driven by a dropdown period filter (Daily, Weekly, Last 10 Days, Monthly, All Data):</p>
+<ol>
+<li><strong>Filter Change:</strong> The user updates the dropdown selector.</li>
+<li><strong>API Trigger:</strong> The <code>useSalesInsights</code> hook detects the filter change and calls the backend: <code>GET /api/dashboard/sales-by-period/?period=monthly</code>.</li>
+<li><strong>Dropdown Hydration:</strong> In the Monthly view, the backend returns a list of unique months (<code>availableMonths</code>) found in the database. The frontend renders a secondary dropdown to select the specific month (e.g., "April 2026"), triggering a sub-query.</li>
+<li><strong>Chart Render:</strong> Once the dataset loads, the frontend parses the categories and renders Recharts bar or area graphs.</li>
+</ol>
+<h3 id="48-user-interaction-flow">4.8 User Interaction Flow</h3>
+<pre><code>[User Action] ──&gt; [State Set: loading=true] ──&gt; [Axios Fetch API]
+                                                      │
+                                           ┌──────────┴──────────┐
+                                           ▼                     ▼
+                                    [HTTP 200/201]         [HTTP 400/500]
+                                           │                     │
+                                   [Update State Data]    [Set Error Message]
+                                           │                     │
+                                           └──────────┬──────────┘
+                                                      ▼
+                                         [State Set: loading=false]
+</code></pre>
+<hr />
+<h2 id="5-database-documentation">5. Database Documentation</h2>
+<h3 id="51-entity-relationship-diagram">5.1 Entity Relationship Diagram</h3>
+<pre class="mermaid">erDiagram
+    Product ||--o{ Sale : "sells"
+    Product ||--o{ SaleReturn : "returns"
+    Product ||--o{ InventoryTransaction : "tracks"
+    Product ||--o{ Purchase : "purchases"
+    Product ||--o{ PurchaseLineItem : "contains"
+    Product ||--o{ OrderedSlip : "procures"
+
+    Sale ||--o{ SaleReturn : "reverses"
+    Purchase ||--o{ PurchaseLineItem : "lines"
+    Invoice ||--o{ InvoicePayment : "receives"
+
+    Account ||--o{ JournalItem : "records"
+    JournalEntry ||--o{ JournalItem : "contains"
+    JournalEntry ||--o{ Revenue : "general"
+    JournalEntry ||--o{ Expense : "general"
+    JournalEntry ||--o{ Invoice : "general"
+
+    SupplierCompany ||--o{ Product : "supplies"
+
+    ERPUser ||--o{ ActivityLog : "logs"
+    ERPUser ||--o{ UserInvite : "invites"
+    ERPUser ||--o{ Permission : "has"
+    ERPUser ||--o{ SecuritySetting : "secures"
+    Department ||--o{ ERPUser : "employs"
+    Role ||--o{ ERPUser : "assigns"
+    Module ||--o{ Permission : "modules"
+</pre>
+<h3 id="52-table-descriptions">5.2 Table Descriptions</h3>
+<h4>5.2.1 Core Inventory &amp; Sales Tables</h4>
+<ul>
+<li><strong><code>products</code> Table:</strong></li>
+<li><code>id</code> (Integer, Primary Key)</li>
+<li><code>name</code> (Varchar, Product description name)</li>
+<li><code>sku</code> (Varchar, Unique item SKU code, Indexed)</li>
+<li><code>cost_price</code> (Decimal, Procurement unit price)</li>
+<li><code>unit_price</code> (Decimal, Sale retail unit price)</li>
+<li><code>stock_quantity</code> (Integer, Current stock level)</li>
+<li><code>min_stock</code> (Integer, Reorder alert threshold)</li>
+<li><code>supplier_id</code> (FK to <code>supplier_companies</code>, Nullable)</li>
+<li><code>status</code> (Varchar, ACTIVE or INACTIVE)</li>
+<li><strong><code>sales</code> Table:</strong></li>
+<li><code>id</code> (Integer, Primary Key)</li>
+<li><code>product_id</code> (FK to <code>products</code>)</li>
+<li><code>customer_name</code> (Varchar)</li>
+<li><code>quantity_sold</code> (Integer)</li>
+<li><code>unit_price</code> (Decimal)</li>
+<li><code>unit_cost_price</code> (Decimal, snapshot of product cost at time of sale)</li>
+<li><code>total_price</code> (Decimal, total revenue)</li>
+<li><code>sale_date</code> (Date, Indexed)</li>
+<li><code>invoice_number</code> (Varchar, unique transaction reference)</li>
+<li><code>payment_status</code> (Varchar, PAID/PENDING/FAILED)</li>
+<li><code>payment_method</code> (Varchar, CASH/CARD/etc.)</li>
+<li><strong><code>sales_returns</code> Table:</strong></li>
+<li><code>id</code> (Integer, Primary Key)</li>
+<li><code>sale_id</code> (FK to <code>sales</code>)</li>
+<li><code>product_id</code> (FK to <code>products</code>)</li>
+<li><code>quantity_returned</code> (Integer)</li>
+<li><code>refund_amount</code> (Decimal)</li>
+<li><code>return_date</code> (Date)</li>
+<li><strong><code>inventory_transactions</code> Table:</strong></li>
+<li><code>id</code> (Integer, Primary Key)</li>
+<li><code>product_id</code> (FK to <code>products</code>)</li>
+<li><code>txn_type</code> (Varchar, IN/OUT/ADJUSTMENT)</li>
+<li><code>quantity</code> (Integer)</li>
+<li><code>reference_type</code> (Varchar, e.g., 'sale', 'purchase', 'adjustment')</li>
+<li><code>reference_id</code> (Integer, ID of reference row)</li>
+<li><code>date</code> (Date)</li>
+</ul>
+<h4>5.2.2 Procurement Tables</h4>
+<ul>
+<li><strong><code>supplier_companies</code> Table:</strong> Holds vendor business records (<code>name</code>, <code>category</code>, <code>contact_number</code>, <code>email</code>).</li>
+<li><strong><code>purchases</code> Table:</strong> Records procurement items received from suppliers (<code>product_id</code>, <code>quantity_purchased</code>, <code>unit_cost</code>, <code>total_cost</code>, <code>purchase_date</code>, <code>payment_status</code>).</li>
+<li><strong><code>purchase_line_items</code> Table:</strong> Maps items inside a multi-product purchase order.</li>
+<li><strong><code>ordered_slips</code> Table:</strong> Tracks purchase order requests sent to suppliers (<code>product_id</code>, <code>quantity_ordered</code>, <code>quantity_received</code>, <code>unit_cost</code>, <code>total_cost</code>, <code>status</code>, <code>due_date</code>).</li>
+</ul>
+<h4>5.2.3 Finance &amp; Invoicing Tables</h4>
+<ul>
+<li><strong><code>invoices</code> Table (Billing App):</strong> Client billing ledger details (<code>invoice_number</code>, <code>customer_name</code>, <code>invoice_date</code>, <code>due_date</code>, <code>subtotal</code>, <code>total_amount</code>, <code>amount_paid</code>, <code>status</code>).</li>
+<li><strong><code>accounts_coa_account</code> Table:</strong> Stores the Chart of Accounts hierarchy.</li>
+<li><strong><code>accounts_journal_entry</code> &amp; <code>accounts_journal_item</code> Tables:</strong> Double-entry journal entries recording credits and debits.</li>
+<li><strong><code>screen4_revenue</code> &amp; <code>screen4_expense</code> Tables:</strong> Income and expense tracking.</li>
+<li><strong><code>cash_transactions</code> Table:</strong> Immutable cash flow transactions ledger (<code>txn_type</code> IN/OUT, <code>amount</code>, <code>source_type</code>, <code>source_id</code>, <code>date</code>).</li>
+<li><strong><code>audit_log</code> Table:</strong> Tracks database operations (CREATE, UPDATE, DELETE, VOID).</li>
+<li><strong><code>expense_budgets</code> Table:</strong> Departmental expense category budgets (<code>category</code>, <code>period_type</code>, <code>year</code>, <code>month</code>, <code>budgeted_amount</code>).</li>
+<li><strong><code>invoice_payments</code> Table:</strong> Logs invoice payment installments.</li>
+</ul>
+<h4>5.2.4 User Management Tables</h4>
+<ul>
+<li><strong><code>user_mgmt_department</code> &amp; <code>user_mgmt_role</code> Tables:</strong> Organizational departments and roles.</li>
+<li><strong><code>user_mgmt_erpuser</code> Table:</strong> User profiles extending Django's auth model.</li>
+<li><strong><code>user_mgmt_permission</code> Table:</strong> Module-level access rights.</li>
+<li><strong><code>user_mgmt_activitylog</code> Table:</strong> Logs system activities (LOGIN, LOGOUT, EXPORT).</li>
+<li><strong><code>user_mgmt_userinvite</code> Table:</strong> Manages pending user invitations.</li>
+</ul>
+<h4>5.2.5 Configuration Tables</h4>
+<ul>
+<li><strong><code>accounts_apiconfiguration</code> Table:</strong> Stores API settings (<code>provider</code> OpenAI/Groq, <code>api_key</code>, <code>is_active</code>).</li>
+</ul>
+<h3 id="53-constraints">5.3 Constraints</h3>
+<ul>
+<li><strong>Uniqueness:</strong> Unique SKU codes in <code>products</code>, unique invoice numbers in <code>invoices</code>, and unique provider designations in <code>apiconfiguration</code>.</li>
+<li><strong>Foreign Key Actions:</strong> Uses <code>on_delete=models.PROTECT</code> on critical operational models (such as products in sales or purchases) to prevent deleting items with transactional history.</li>
+</ul>
+<h3 id="54-indexing-strategy">5.4 Indexing Strategy</h3>
+<p>To optimize query performance, database indexes are set on columns frequently used in search queries, sorting operations, and join clauses:</p>
+<ul>
+<li><code>products</code>: Index on <code>sku</code>, <code>category</code>, and <code>stock_quantity</code>.</li>
+<li><code>sales</code>: Index on <code>sale_date</code> (for chronological filtering) and <code>product</code>.</li>
+<li><code>cash_transactions</code>: Compound index on <code>(txn_type, date)</code> to accelerate cash flow queries.</li>
+<li><code>audit_log</code>: Index on <code>(entity_type, entity_id)</code> to speed up change history searches.</li>
+</ul>
+<hr />
+<h2 id="6-end-to-end-data-flow">6. End-to-End Data Flow</h2>
+<p>The operational data flow follows a structured path from import ingestion to frontend visualization:</p>
+<pre><code>[Excel File Uploaded]
+        │
+        ▼
+[SalesImportService parses rows] ──(Validates SKU &amp; non-zero Qty)──&gt; [Insert Sale Row]
+                                                                          │
+                                                                 (Signal Triggers)
+                                                                          │
+                                           ┌──────────────────────────────┴──────────────────────────────┐
+                                           ▼                                                             ▼
+                             [InventoryTransaction Created]                                 [CashTransaction Created]
+                                           │                                                             │
+                                   (Updates Stock)                                               (Logs Cash flow)
+                                           │                                                             │
+                                           └──────────────────────────────┬──────────────────────────────┘
+                                                                          ▼
+                                                            [Database Stores Transaction]
+                                                                          │
+                                                                    (REST Query)
+                                                                          │
+                                                                          ▼
+                                                            [API: sales-by-period/]
+                                                                          │
+                                                                    (JSON Payload)
+                                                                          │
+                                                                          ▼
+                                                             [Frontend Hook Renders UI]
+</code></pre>
+<h3 id="61-step-1-file-storage-output-folder">6.1 Step 1: File Storage (<code>output/</code> folder)</h3>
+<ul>
+<li><strong>Action:</strong> A monthly sales Excel workbook (e.g., <code>AlNoor_April_2026.xlsx</code>) is dropped in the <code>output/</code> directory.</li>
+</ul>
+<h3 id="62-step-2-processing-salesimportservice">6.2 Step 2: Processing (<code>SalesImportService</code>)</h3>
+<ul>
+<li><strong>Detection:</strong> The import view scans the directory and runs the parser service.</li>
+<li><strong>Target Selection:</strong> The parser identifies columns matching parameters (e.g., <code>sku</code>, <code>qty</code>, <code>sale price</code>).</li>
+<li><strong>Column Reading:</strong> It scans row values, identifying columns containing date values.</li>
+</ul>
+<h3 id="63-step-3-validation-amp-database-storage">6.3 Step 3: Validation &amp; Database Storage</h3>
+<ul>
+<li><strong>Product Matching:</strong> For each row, the parser queries the database by SKU: <code>Product.objects.get(sku=sku_val)</code>. If not found, it checks by name, skipping the row if no match exists.</li>
+<li><strong>Data Validation:</strong> The parser validates the row metrics:</li>
+<li>Quantity must be an integer &gt; 0.</li>
+<li>Unit price must be a valid decimal.</li>
+<li>The date column header is parsed into a <code>YYYY-MM-DD</code> date object.</li>
+<li><strong>Transactional Ingestion:</strong> Verified rows are written to the database using <code>Sale.objects.create()</code>.</li>
+</ul>
+<h3 id="64-step-4-django-signals-lifecycle">6.4 Step 4: Django Signals Lifecycle</h3>
+<p>Saving the <code>Sale</code> object triggers the post-save signal <code>sale_post_save</code>:</p>
+<ul>
+<li><strong>Inventory Ledgers:</strong> Automatically records a stock deduction transaction: <code>InventoryTransaction(txn_type='OUT', quantity=quantity_sold)</code>. This action dynamically updates <code>Product.stock_quantity</code>.</li>
+<li><strong>Cash Ledgers:</strong> If marked <code>PAID</code>, a cash receipt is logged: <code>CashTransaction(txn_type='IN', amount=total_price)</code>.</li>
+<li><strong>Audit Trail:</strong> Logs the database operation: <code>AuditLog(action='CREATE', entity_type='Sale')</code>.</li>
+</ul>
+<h3 id="65-step-5-backend-api-aggregations">6.5 Step 5: Backend API Aggregations</h3>
+<p>When the user visits the Dashboard, the frontend queries: <code>GET /api/dashboard/sales-by-period/?period=monthly&amp;month=2026-04</code>.</p>
+<ul>
+<li><strong>Database Query:</strong> The view retrieves the transactions: <code>Sale.objects.filter(sale_date__range=(start_date, end_date))</code>.</li>
+<li><strong>Data Aggregation:</strong> The view aggregates the monthly sales statistics:</li>
+<li><code>total_sales_amount</code> = <code>Sum('total_price')</code></li>
+<li><code>total_quantity</code> = <code>Sum('quantity_sold')</code></li>
+<li><code>total_profit</code> = <code>Sum('total_price' - ('quantity_sold' * 'product__cost_price'))</code></li>
+<li><strong>Grouping:</strong> Categorizes sales by product category, returning structured JSON containing chart points and summaries.</li>
+</ul>
+<h3 id="66-step-6-frontend-consumption-amp-reports">6.6 Step 6: Frontend Consumption &amp; Reports</h3>
+<ul>
+<li><strong>State Update:</strong> The frontend hook catches the JSON payload, updating the React state.</li>
+<li><strong>Chart Render:</strong> Recharts processes the JSON, rendering interactive graphs.</li>
+<li><strong>Document Export:</strong> Users can export invoice receipts by clicking "Export PDF", which triggers jsPDF to render print-ready documents.</li>
+</ul>
+<hr />
+<h2 id="7-dynamic-processing-logic">7. Dynamic Processing Logic</h2>
+<h3 id="71-auto-detection-of-monthly-sales-files">7.1 Auto-Detection of Monthly Sales Files</h3>
+<p>The Excel parsing system in <code>SalesImportService.sync_monthly_sales_files()</code> eliminates the need for manual file uploads:</p>
+<ul>
+<li><strong>Directory Scan:</strong> The backend uses Pathlib to scan the <code>output/</code> directory for Excel workbooks: <code>output_dir.glob('*.xlsx')</code>.</li>
+<li><strong>Temp Filter:</strong> Filter checks exclude temporary or hidden files starting with <code>~$</code> to prevent read errors.</li>
+<li><strong>Incremental Imports:</strong> For each file, the system checks for existing invoice numbers starting with a prefix derived from the filename (e.g., <code>XLSX-ALNOOR-ALNOOR_JANUARY_2026-</code>). If a match is found, the file is skipped unless the <code>force</code> parameter is set to true.</li>
+</ul>
+<h3 id="72-automatic-database-updates">7.2 Automatic Database Updates</h3>
+<p>The parser parses the sheets, identifies the correct headers, and updates the database:</p>
+<ul>
+<li><strong>Sheet Autoconfig:</strong> The parser searches for sheets named 'Sales Data', or containing 'sales' or 'data', falling back to the first sheet if none are found.</li>
+<li><strong>Header Scanning:</strong> The parser scans row rows, looking for index headers containing keywords like SKU or Product Code.</li>
+<li><strong>Dynamic Data Ingestion:</strong> Sales figures are matched dynamically by scanning column headers for date formats (e.g., <code>2026-04-01</code>). The system reads column values, creating corresponding database records for values &gt; 0.</li>
+</ul>
+<h3 id="73-dynamic-month-handling-amp-future-proof-design">7.3 Dynamic Month Handling &amp; Future-Proof Design</h3>
+<p>The system uses <strong>Time-Aware Column Mapping</strong> rather than relying on static structures:</p>
+<ul>
+<li><strong>No Hardcoded Months:</strong> The parser reads date values directly from the column headers, adapting dynamically to new workbooks.</li>
+<li><strong>Auto-Syncing:</strong> Ingested files are assigned a unique prefix derived from their filename. If an import is forced, the system clears old records matching the prefix before re-importing, preventing duplicate entries.</li>
+</ul>
+<h3 id="74-dynamic-expense-ledger-integration">7.4 Dynamic Expense Ledger Integration</h3>
+<p>To support salaries, utilities, and operating overheads dynamically:</p>
+<ul>
+<li><strong>Domain-Specific Models:</strong> <code>SalaryPayment</code>, <code>UtilityBill</code>, and <code>RecurringCost</code> are modeled independently to track field-specific inputs (e.g., payroll departments, utility tax breaks, recurring intervals).</li>
+<li><strong>Generic Relations:</strong> These domain tables link back to the core central <code>Expense</code> table using Django's Generic Foreign Keys (<code>content_type</code>, <code>object_id</code>) and a <code>metadata</code> JSON field.</li>
+<li><strong>Status-Driven Synchronization:</strong> Django database signals monitor saving/deletion of domain rows:</li>
+<li>On transitions to <code>PAID</code>, they dynamically compile matching central <code>Expense</code> entries, cash flow transactions (<code>CashTransaction</code> type <code>OUT</code>), and ledger journal entries (balanced debit/credits).</li>
+<li>On reversion to <code>PENDING</code> or <code>UNPAID</code> (or deletion), the signal logic dynamically cleans up and reverses all ledger debit/credits and cash outflows.</li>
+</ul>
+<h3 id="75-procurement-ordered-slip-lifecycle-and-purchase-matching">7.5 Procurement Ordered Slip Lifecycle and Purchase Matching</h3>
+<p>To keep inventory and financial statements in sync without duplicate or premature ledger entries:</p>
+<ul>
+<li><strong>Decoupled Ordered Slips:</strong> Purchase order request slips are logged as <code>OrderedSlip</code> instances. Seeding processes do not contain static purchase records.</li>
+<li><strong>Dynamic Purchase Creation:</strong> Financial <code>Purchase</code> entries are created dynamically in the database <em>only</em> when the warehouse completes receiving the inventory (i.e. the <code>OrderedSlip</code> transitions to <code>COMPLETED</code> status).</li>
+<li><strong>Event-Driven Stock Ledger:</strong> The completion event dynamically triggers the stock ledger (<code>InventoryTransaction</code> type <code>IN</code>) and logs the financial payable record in the central ledger accounts automatically.</li>
+<li><strong>Normalized Category-Based Supplier Matching:</strong> In the order slip creation UI, supplier companies are dynamically filtered and matched to product categories. Since database category naming structures (e.g., <code>'Computers'</code>, <code>'Electronics'</code>, <code>'Pharma'</code>) might differ from user-facing category options (e.g., <code>'Tech'</code>, <code>'Medicines'</code>), a robust normalization layer (<code>companyMatchesCategoryId</code> using <code>normalizeProductCategory</code>) maps related categories to their respective suppliers seamlessly, supporting both seeded and custom user-created categories.</li>
+</ul>
+<hr />
+<h2 id="8-api-documentation">8. API Documentation</h2>
+<h3 id="81-listcreate-api-keys-configuration">8.1 List/Create API Keys Configuration</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>GET /api/accounts/api-configuration/</code></li>
+<li><strong>Purpose:</strong> Retrieves a list of active API keys.</li>
+<li><strong>Parameters:</strong> None (requires Admin status).</li>
+<li><strong>Response Structure (200 OK):</strong>
+  <code>json
+  [
+    {
+      "id": 1,
+      "provider": "groq",
+      "api_key": "******************tile",
+      "is_active": true,
+      "created_at": "2026-06-19T18:56:00Z",
+      "updated_at": "2026-06-19T18:56:00Z"
+    }
+  ]</code></li>
+</ul>
+<h3 id="82-add-api-key-configuration">8.2 Add API Key Configuration</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>POST /api/accounts/api-configuration/</code></li>
+<li><strong>Purpose:</strong> Adds a new API key to the database.</li>
+<li><strong>Request Parameters:</strong>
+  <code>json
+  {
+    "provider": "groq",
+    "api_key": "sk-proj-...",
+    "is_active": true
+  }</code></li>
+<li><strong>Validation Rules:</strong> The key is checked using <code>validate_api_key_format()</code>, ensuring it starts with the correct provider prefix.</li>
+<li><strong>Response Structure (201 Created):</strong>
+  <code>json
+  {
+    "id": 2,
+    "provider": "groq",
+    "api_key": "*****************proj",
+    "is_active": true,
+    "created_at": "2026-06-20T00:44:00Z",
+    "updated_at": "2026-06-20T00:44:00Z"
+  }</code></li>
+<li><strong>Error Response (400 Bad Request):</strong>
+  <code>json
+  {
+    "api_key": ["API key must start with 'sk-'"]
+  }</code></li>
+</ul>
+<h3 id="83-test-api-key-connection">8.3 Test API Key Connection</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>POST /api/accounts/api-configuration/test_connection/</code></li>
+<li><strong>Purpose:</strong> Tests the validity of an API key configuration.</li>
+<li><strong>Request Parameters:</strong> None.</li>
+<li><strong>Response Structure (200 OK):</strong>
+  <code>json
+  {
+    "status": "success",
+    "message": "API connection successful",
+    "models_available": ["llama-3.3-70b-versatile"]
+  }</code></li>
+</ul>
+<h3 id="84-sync-monthly-sales-files">8.4 Sync Monthly Sales Files</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>POST /api/sales/sync-excel/</code></li>
+<li><strong>Purpose:</strong> Triggers a scan of the <code>output/</code> folder and imports monthly sales data.</li>
+<li><strong>Request Parameters:</strong>
+  <code>json
+  {
+    "force": true
+  }</code></li>
+<li><strong>Response Structure (200 OK):</strong>
+  <code>json
+  {
+    "success": true,
+    "total_created": 150,
+    "total_skipped": 450,
+    "details": [
+      {
+        "filename": "AlNoor_April_2026.xlsx",
+        "status": "SUCCESS",
+        "created_records": 150,
+        "skipped_zero_quantity": 450,
+        "missing_products": [],
+        "deleted_previous": 150
+      }
+    ]
+  }</code></li>
+</ul>
+<h3 id="85-ask-chatbot">8.5 Ask Chatbot</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>POST /api/chatbot/query/</code></li>
+<li><strong>Purpose:</strong> Sends a question to the chatbot.</li>
+<li><strong>Request Parameters:</strong>
+  <code>json
+  {
+    "message": "What is the total value of products in stock?",
+    "history": []
+  }</code></li>
+<li><strong>Response Structure (200 OK):</strong>
+  <code>json
+  {
+    "response": "The total value of products in stock is Rs 1,450,000 across 31 registered items."
+  }</code></li>
+</ul>
+<h3 id="87-download-chatbot-report">8.7 Download Chatbot Report</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>GET /api/chatbot/download-report/</code></li>
+<li><strong>Purpose:</strong> Streams a dynamically generated CSV spreadsheet of requested business data.</li>
+<li><strong>Request Parameters (Query Params):</strong></li>
+<li><code>type</code> (string, required, e.g., <code>sales</code>, <code>expenses</code>, or <code>inventory</code>)</li>
+<li><strong>Response Structure (200 OK):</strong></li>
+<li>Returns a direct CSV file stream:
+  <code>text
+  Sale ID,Customer Name,Product Name,SKU,Quantity Sold,Unit Price,Total Price,Discount,Payment Status,Payment Method,Sale Date
+  97706,AlNoor Trading,Calculator Scientific,CALCSC,4,2700.0,10800.0,0.0,PAID,CASH,2026-06-30</code></li>
+</ul>
+<h3 id="86-sales-by-period">8.6 Sales by Period</h3>
+<ul>
+<li><strong>Endpoint:</strong> <code>GET /api/dashboard/sales-by-period/</code></li>
+<li><strong>Purpose:</strong> Retrieves sales data aggregated by period (daily, weekly, monthly, last10Days).</li>
+<li><strong>Request Parameters:</strong></li>
+<li><code>period</code> (string, optional, e.g., "monthly")</li>
+<li><code>month</code> (string, optional, YYYY-MM format, e.g., "2026-04")</li>
+<li><strong>Response Structure (200 OK):</strong>
+  <code>json
+  {
+    "period": "monthly",
+    "periodLabel": "Monthly (April 2026)",
+    "dateContext": "April 01 - April 30, 2026",
+    "xAxisType": "week",
+    "xAxisLabel": "Weeks of the month",
+    "totalSalesAmount": 1250000.0,
+    "totalProfit": 350000.0,
+    "totalQuantity": 450,
+    "categories": [
+      {
+        "name": "Electronics &amp; Applications",
+        "key": "electronics_appliances",
+        "color": "#0A6ED1",
+        "quantitySold": 200,
+        "revenue": 800000.0,
+        "profit": 224000.0,
+        "subcategories": []
+      }
+    ],
+    "chartData": [
+      {
+        "period": "Week 1",
+        "electronics_appliances": 50,
+        "electronics_appliances_revenue": 200000.0,
+        "revenue": 200000.0,
+        "profit": 56000.0
+      }
+    ],
+    "availableMonths": [
+      {
+        "key": "2026-04",
+        "label": "April 2026"
+      }
+    ]
+  }</code></li>
+</ul>
+<hr />
+<h2 id="9-project-workflow">9. Project Workflow</h2>
+<p>The following steps outline the complete operational workflow from startup to user interaction:</p>
+<pre><code>[1. Backend Bootstrapped] ──&gt; [2. Database Migrated] ──&gt; [3. Real Data Populated]
+                                                                 │
+                                                       (Start Web Servers)
+                                                                 │
+                                                                 ▼
+[4. Frontend Mounted] ──(Axios Queries KPIs)──&gt; [5. Dashboard Renders UI]
+                                                         │
+                                                  (User Input)
+                                                         │
+                                                         ▼
+[6. Add Product / Sync Excel] ──(Triggers Signals)──&gt; [7. Ledgers Updated]
+                                                         │
+                                                 (Chatbot Request)
+                                                         │
+                                                         ▼
+[8. Ask Assistant] ──(Dynamic Tool Call)──&gt; [9. Synthesised Answer Returned]
+</code></pre>
+<h3 id="91-step-1-backend-bootstrap">9.1 Step 1: Backend Bootstrap</h3>
+<ul>
+<li>The developer starts the virtual environment and installs dependencies: <code>pip install -r requirements.txt</code>.</li>
+<li>The database is initialized by running migrations: <code>python manage.py migrate</code>.</li>
+<li>API tables, accounts, products, and procurement modules are initialized.</li>
+</ul>
+<h3 id="92-step-2-database-population-amp-sales-file-syncing">9.2 Step 2: Database Population &amp; Sales File Syncing</h3>
+<ul>
+<li>The developer runs the database populator script: <code>python populate_real_data.py</code>.</li>
+<li>This script seeds supplier records, registers products, adds sample invoices, and calls the Excel parser service to process workbooks in the <code>output/</code> directory.</li>
+</ul>
+<h3 id="93-step-3-frontend-mounting">9.3 Step 3: Frontend Mounting</h3>
+<ul>
+<li>The developer starts the development server: <code>npm run dev</code>.</li>
+<li>Vite compiles assets, mounts routes, and serves the UI on port 5173.</li>
+</ul>
+<h3 id="94-step-4-user-authentication">9.4 Step 4: User Authentication</h3>
+<ul>
+<li>The user accesses the portal and logs in. Successful login returns an authentication token and role information (e.g., <code>ADMIN</code>).</li>
+</ul>
+<h3 id="95-step-5-dashboard-loading">9.5 Step 5: Dashboard Loading</h3>
+<ul>
+<li>React loads the page container, calling hooks to query the APIs:</li>
+<li><code>GET /api/dashboard/kpis/</code>: Fetches KPI values.</li>
+<li><code>GET /api/dashboard/sales-by-period/?period=last10Days</code>: Fetches analytical metrics.</li>
+<li>The screen updates, rendering KPI cards and graphs.</li>
+</ul>
+<h3 id="96-step-6-operating-the-system">9.6 Step 6: Operating the System</h3>
+<ul>
+<li><strong>Adding a Product:</strong> An administrator clicks "+ Add Product". The backend checks role permissions, validates parameters, inserts the row, and updates dashboard metrics.</li>
+<li><strong>Syncing Excel:</strong> A manager drops a new workbook in the <code>output/</code> folder and clicks "Sync Sales Files". The backend processes the file, updating inventory levels and accounting ledgers dynamically.</li>
+</ul>
+<h3 id="97-step-7-chatbot-querying">9.7 Step 7: Chatbot Querying</h3>
+<ul>
+<li>The user opens the chatbot and asks: <em>"Which products are low on stock?"</em></li>
+<li>The chatbot service routes the request to Groq, triggers the <code>get_stock_alerts</code> tool, queries the database, and returns the list of low-stock items.</li>
+</ul>
+<hr />
+<h2 id="10-deployment-guide">10. Deployment Guide</h2>
+<h3 id="101-environment-setup">10.1 Environment Setup</h3>
+<p>Deployment requires the following minimum system specifications:</p>
+<ul>
+<li><strong>Operating System:</strong> Windows Server 2019+ or Linux (Ubuntu 22.04 LTS recommended).</li>
+<li><strong>Python:</strong> Version 3.10 or 3.11.</li>
+<li><strong>NodeJS:</strong> Version 18 or 20 (with npm package manager).</li>
+<li><strong>Database:</strong> SQLite (default for development/testing), MySQL 8.0+ or PostgreSQL 15+ (recommended for production).</li>
+</ul>
+<h3 id="102-dependencies-installation">10.2 Dependencies Installation</h3>
+<ol>
+<li>Clone the repository to the production server.</li>
+<li>Install backend dependencies:
+    <code>bash
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt</code></li>
+<li>Install frontend dependencies:
+    <code>bash
+    cd bizionary-frontend
+    npm install</code></li>
+</ol>
+<h3 id="103-configuration-env-file">10.3 Configuration (<code>.env</code> file)</h3>
+<p>Create a <code>.env</code> configuration file in the project root:</p>
+<pre><code class="language-ini">DEBUG=False
+SECRET_KEY=production-secret-hash-value
+ALLOWED_HOSTS=erp.bizionary.com,127.0.0.1
+DATABASE_URL=mysql://db_user:password@localhost:3306/bizionary_db
+GROQ_MODEL=llama-3.3-70b-versatile
+</code></pre>
+<h3 id="104-build-process">10.4 Build Process</h3>
+<p>Build the frontend distribution files:</p>
+<pre><code class="language-bash">cd bizionary-frontend
+npm run build
+</code></pre>
+<p>This command compiles the source code into static assets inside <code>bizionary-frontend/dist/</code>.</p>
+<h3 id="105-deployment-process">10.5 Deployment Process</h3>
+<ol>
+<li><strong>Run Database Migrations:</strong>
+    <code>bash
+    python manage.py migrate</code></li>
+<li><strong>Collect Static Assets:</strong>
+    <code>bash
+    python manage.py collectstatic --noinput</code></li>
+<li><strong>Configure Application Server:</strong>
+    Configure a WSGI application server (such as Gunicorn) to serve the backend.</li>
+<li><strong>Configure Reverse Proxy (Nginx):</strong>
+    Configure Nginx to route traffic, serving frontend assets directly and proxying API calls to Gunicorn.</li>
+<li><strong>Enable SSL (HTTPS):</strong>
+    Install Certbot to secure API endpoints and user sessions:
+    <code>bash
+    sudo certbot --nginx -d erp.bizionary.com</code></li>
+</ol>
+<hr />
+<h2 id="11-future-enhancements">11. Future Enhancements</h2>
+<h3 id="111-scalability-opportunities">11.1 Scalability Opportunities</h3>
+<ul>
+<li><strong>Database Migration:</strong> Swap the local SQLite instance to a clustered PostgreSQL database to support high-concurrency writes.</li>
+<li><strong>Asynchronous Tasks (Celery + Redis):</strong> Move Excel file parsing and AI processing to background worker queues to prevent HTTP timeouts.</li>
+<li><strong>Microservices Routing:</strong> Isolate analytical reporting modules and AI chatbot microservices into separate containers to balance server loads.</li>
+</ul>
+<h3 id="112-performance-improvements">11.2 Performance Improvements</h3>
+<ul>
+<li><strong>Caching Layer (Redis):</strong> Cache expensive analytics queries (such as sales by period and category breakdowns) in Redis, invalidating cache keys only when new sales records are created.</li>
+<li><strong>Database Index Tuning:</strong> Optimize search indexes on historical transaction tables to prevent slowdowns as row counts scale.</li>
+<li><strong>Paginated APIs:</strong> Implement server-side pagination across list views (Sales, Invoices, Expenses) to reduce network payload sizes.</li>
+</ul>
+<h3 id="113-additional-features">11.3 Additional Features</h3>
+<ul>
+<li><strong>Multi-Currency Support:</strong> Support multi-currency transactions, logging conversion rates in purchase orders and invoices.</li>
+<li><strong>Automated Email Reports:</strong> Add scheduler cron jobs to email PDF invoice copies and weekly financial reports to clients and managers automatically.</li>
+<li><strong>Granular Row-Level Access:</strong> Implement row-level security rules, restricting staff access to department-specific transaction logs.</li>
+<li><strong>Machine Learning Forecasting:</strong> Train localized linear regression models using sales trends to forecast stock demand and suggest purchase quantities automatically.</li>
+</ul>
+<hr />
+<h2 id="12-recent-implementations-amp-cloud-migration">12. Recent Implementations &amp; Cloud Migration</h2>
+<h3 id="121-cloud-deployment-architecture-railway-vercel">12.1 Cloud Deployment Architecture (Railway + Vercel)</h3>
+<p>The system was migrated from a local SQLite setup to a fully cloud-hosted environment:
+- <strong>Backend Deployment (Railway):</strong> Django application hosted on Railway, utilizing a managed PostgreSQL database. Environment configuration includes <code>DATABASE_URL</code> for PostgreSQL connectivity, <code>CORS_ALLOWED_ORIGINS</code> pointing to the Vercel app, and production flags (<code>DEBUG=False</code>).
+- <strong>Frontend Deployment (Vercel):</strong> The Vite SPA is compiled and served statically on Vercel. Communication is routed to the Railway endpoints via the <code>VITE_API_URL</code> environment variable.</p>
+<h3 id="122-production-stability-amp-database-seeding-optimizations">12.2 Production Stability &amp; Database Seeding Optimizations</h3>
+<p>To handle production limits and database engine constraints, the following backend refactors were completed:
+- <strong>Asynchronous Database Seeding via Threads:</strong> The database seeding/restore endpoint (<code>seed_view</code>) was refactored to run the data restoration routine in a background thread. This returns an immediate <code>200 OK</code> response to the client, preventing Railway proxy request timeout aborts (30s limit) during heavy dataset imports.
+- <strong>PostgreSQL IDENTITY Sequence Synchronization:</strong> Integrated Django's native <code>connection.ops.sequence_reset_sql</code> to dynamically reset PostgreSQL database sequence counters. This resolves primary key integrity constraint conflicts (e.g., in <code>user_mgmt_activitylog</code>) when users attempt to log in after fresh database loads.
+- <strong>HTTPX Dependency Pinning for Chatbot Engine:</strong> Pinned <code>httpx==0.27.2</code> in <code>requirements.txt</code> to maintain compatibility with the older <code>groq==0.4.1</code> client version, resolving a <code>TypeError</code> in the chatbot's LLM connection constructor.</p>
+<h3 id="123-dynamic-custom-columns-feature">12.3 Dynamic Custom Columns Feature</h3>
+<p>To allow flexible data structures without complex schema migrations, we implemented a custom columns engine:
+- <strong>Section/Category Isolation:</strong> Enabled custom columns to be scoped by category section key (e.g., <code>clothing</code>, <code>electronics</code>). Columns added or removed inside one category table section do not affect others.
+- <strong>Dynamic Sales Category Filtering:</strong> Integrated category-specific custom columns into the sales page. The columns displayed and modified update reactively according to the selected dropdown category filter.
+- <strong>Bulk CSV Upload Auto-Detection:</strong> The bulk product upload parses extra non-standard CSV columns on the client-side, maps them to the appropriate category, and persists their cell values by SKU in <code>localStorage</code>.
+- <strong>Relaxed Backend Validation Constraints:</strong> Removed strict phone/email regex constraints from the <code>supplier_contact</code> upload validation. This permits flexible contact string values (such as names, custom notes, websites) without failing rows during bulk uploads.</p></div>
+
+    <!-- Print Footer -->
+    <div class="divFooter">
+        <div class="footer-content">
+            <span>BIZIONARY ERP — Technical Documentation</span>
+            <span>Final Year Project (FYP) Submission</span>
+        </div>
+    </div>
+
+    <!-- Load Mermaid.js (Diagram renderer) -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <!-- Load Highlight.js (Syntax highlighting) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <script>
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+
+        // Initialize and run Mermaid
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: false, htmlLabels: false },
+            sequence: { useMaxWidth: false, htmlLabels: false }
+        });
+        
+        // Wait a small moment to ensure DOM is ready, then compile diagrams
+        setTimeout(() => {
+            mermaid.run().catch(err => console.error("Mermaid run error:", err));
+        }, 100);
+    </script>
+</body>
+</html>

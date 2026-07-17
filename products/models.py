@@ -59,6 +59,12 @@ class Product(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
     order_from_warehouse = models.BooleanField(default=False)
+    barcode = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    pack_barcode = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    pcs_per_pack = models.IntegerField(
+        default=12,
+        validators=[MinValueValidator(1)]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

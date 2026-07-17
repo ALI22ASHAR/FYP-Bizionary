@@ -1,14 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/ui/PageHeader';
 import Skeleton from '../../components/ui/Skeleton';
 import { formatPKR } from '../../utils/currency';
 import api from '../../services/api';
 import { Dialog } from '@headlessui/react';
-import { ArrowUpRight, AlertTriangle, CircleDollarSign, Package, Plus, Receipt, Trash2, ChevronDown, ArrowRight, X } from 'lucide-react';
+import { ArrowUpRight, AlertTriangle, CircleDollarSign, Package, Plus, Receipt, Trash2, ChevronDown, ArrowRight, X, Scan, Camera, CameraOff, Upload } from 'lucide-react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import OrderSlipForm from '../ordered-slips/OrderSlipForm';
 import { buildIncomingQuantityMap, buildInventoryRows, normalizeProductRecord, toNumber } from '../../utils/productInventoryTransforms';
 import { getCategoryPrefix } from '../../utils/productCategories';
+import PdfUploadModal from '../../components/common/PdfUploadModal';
 
 const InventoryManagment = () => {
     const navigate = useNavigate();
@@ -17,6 +19,9 @@ const InventoryManagment = () => {
     const [orderedSlips, setOrderedSlips] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isWarehouseBreakdownOpen, setIsWarehouseBreakdownOpen] = useState(false);
+    const [isIncomingBreakdownOpen, setIsIncomingBreakdownOpen] = useState(false);
+    const [isScanStockInOpen, setIsScanStockInOpen] = useState(false);
+    const [isPdfUploadOpen, setIsPdfUploadOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState('');
     const [formSuccess, setFormSuccess] = useState('');
@@ -229,7 +234,7 @@ const InventoryManagment = () => {
         { title: 'Total Shop Stock Value', value: formatPKR(dashboardMetrics.totalShopStockValue), icon: CircleDollarSign, sub: 'Value at retail outlet', iconBg: 'bg-purple-500/15 text-purple-400' },
         { title: 'Total Warehouse Stock Value', value: formatPKR(dashboardMetrics.totalWarehouseStockValue), icon: CircleDollarSign, interactive: 'warehouse', sub: 'Warehouse storage value', iconBg: 'bg-blue-500/15 text-blue-400' },
         { title: 'Low Stock Items', value: lowStockRows.length, icon: AlertTriangle, interactive: 'low-stock', colSpan: 'xl:col-span-2', iconBg: 'bg-amber-500/15 text-amber-400' },
-        { title: 'Incoming Stock', value: dashboardMetrics.incomingStock, icon: ArrowUpRight, colSpan: 'xl:col-span-2', sub: 'Pending deliveries', iconBg: 'bg-sky-500/15 text-sky-400' },
+        { title: 'Incoming Stock', value: dashboardMetrics.incomingStock, icon: ArrowUpRight, interactive: 'incoming', colSpan: 'xl:col-span-2', sub: 'Pending deliveries', iconBg: 'bg-sky-500/15 text-sky-400' },
     ];
 
     if (loading) {
@@ -253,6 +258,20 @@ const InventoryManagment = () => {
                     />
 
                     <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                            onClick={() => setIsScanStockInOpen(true)}
+                            className="inline-flex items-center justify-center px-5 py-2 bg-accent/15 text-accent border border-accent/25 rounded-full text-sm font-bold transition-all hover:bg-accent/25 shadow-sm cursor-pointer"
+                        >
+                            <Scan className="h-4 w-4 mr-2" />
+                            Scan Stock In
+                        </button>
+                        <button
+                            onClick={() => setIsPdfUploadOpen(true)}
+                            className="inline-flex items-center justify-center px-5 py-2 bg-accent/15 text-accent border border-accent/25 rounded-full text-sm font-bold transition-all hover:bg-accent/25 shadow-sm cursor-pointer"
+                        >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Invoice PDF
+                        </button>
                         <button
                             onClick={() => navigate('/ordered-slips')}
                             className="inline-flex items-center justify-center px-5 py-2 bg-card text-primary rounded-full text-sm font-bold transition-all hover:bg-active-pill/30 border border-card shadow-sm cursor-pointer"
@@ -400,11 +419,12 @@ const InventoryManagment = () => {
                             );
                         }
 
-                        if (card.interactive === 'warehouse') {
+                        if (card.interactive === 'warehouse' || card.interactive === 'incoming') {
+                            const isIncoming = card.interactive === 'incoming';
                             return (
                                 <div 
                                     key={card.title} 
-                                    onClick={() => setIsWarehouseBreakdownOpen(true)}
+                                    onClick={() => isIncoming ? setIsIncomingBreakdownOpen(true) : setIsWarehouseBreakdownOpen(true)}
                                     className={`bg-surface border border-border p-4.5 rounded-xl shadow-sm hover:shadow-md hover:border-accent transition-all duration-200 cursor-pointer h-[132px] flex flex-col justify-between group ${card.colSpan || ''}`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -483,6 +503,28 @@ const InventoryManagment = () => {
                 isOpen={isWarehouseBreakdownOpen}
                 onClose={() => setIsWarehouseBreakdownOpen(false)}
                 products={products}
+            />
+
+            {/* Incoming Stock Breakdown Modal */}
+            <IncomingBreakdownModal
+                isOpen={isIncomingBreakdownOpen}
+                onClose={() => setIsIncomingBreakdownOpen(false)}
+                orderedSlips={orderedSlips}
+            />
+
+            {/* Scan Stock In Modal */}
+            <ScanStockInModal
+                isOpen={isScanStockInOpen}
+                onClose={() => setIsScanStockInOpen(false)}
+                onSuccess={fetchInventoryData}
+            />
+
+            {/* AI PDF Invoice Upload Modal */}
+            <PdfUploadModal
+                isOpen={isPdfUploadOpen}
+                onClose={() => setIsPdfUploadOpen(false)}
+                onSuccess={fetchInventoryData}
+                actionType="stock_in"
             />
         </div>
     );
@@ -616,5 +658,478 @@ const WarehouseBreakdownModal = ({ isOpen, onClose, products }) => {
         </Dialog>
     );
 };
+
+
+// Helper Component for Scan Stock In Modal
+const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
+    const [scannedItems, setScannedItems] = useState([]);
+    const [scanBarcode, setScanBarcode] = useState('');
+    const [scanError, setScanError] = useState('');
+    const [scanSuccess, setScanSuccess] = useState('');
+    const [cameraOpen, setCameraOpen] = useState(false);
+    const [deliveryLocation, setDeliveryLocation] = useState('WAREHOUSE');
+    const [submitting, setSubmitting] = useState(false);
+    const scannerRef = useRef(null);
+
+    const handleBarcodeScanSubmit = async (barcodeText) => {
+        const code = barcodeText || scanBarcode;
+        if (!code.trim()) return;
+
+        setScanError('');
+        setScanSuccess('');
+        try {
+            const res = await api.get(`products/scan/?barcode=${encodeURIComponent(code.trim())}`);
+            const { product: scannedProduct, scanned_as, multiplier } = res.data;
+
+            const existingIndex = scannedItems.findIndex(
+                (item) => Number(item.product_id) === Number(scannedProduct.id)
+            );
+
+            if (existingIndex > -1) {
+                setScannedItems((prev) =>
+                    prev.map((item, idx) =>
+                        idx === existingIndex
+                            ? { ...item, quantity: item.quantity + multiplier }
+                            : item
+                    )
+                );
+                setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
+            } else {
+                const newItem = {
+                    product_id: scannedProduct.id,
+                    name: scannedProduct.name,
+                    sku: scannedProduct.sku,
+                    quantity: multiplier,
+                    scanned_as: scanned_as
+                };
+                setScannedItems((prev) => [...prev, newItem]);
+                setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}).`);
+            }
+            setScanBarcode('');
+        } catch (err) {
+            const msg = err.response?.data?.error || `Product with code "${code}" not found.`;
+            setScanError(msg);
+        }
+    };
+
+    // Camera scanner hook
+    useEffect(() => {
+        if (cameraOpen) {
+            const timer = setTimeout(() => {
+                try {
+                    const html5QrcodeScanner = new Html5QrcodeScanner(
+                        'inventory-reader',
+                        {
+                            fps: 10,
+                            qrbox: { width: 350, height: 280 },
+                            experimentalFeatures: {
+                                useBarCodeDetectorIfSupported: true
+                            }
+                        },
+                        false
+                    );
+                    scannerRef.current = html5QrcodeScanner;
+                    html5QrcodeScanner.render(
+                        (decodedText) => {
+                            handleBarcodeScanSubmit(decodedText);
+                            setCameraOpen(false);
+                        },
+                        (error) => {}
+                    );
+                } catch (e) {
+                    console.error('Error initializing inventory scanner:', e);
+                }
+            }, 300);
+
+            return () => {
+                clearTimeout(timer);
+                if (scannerRef.current) {
+                    scannerRef.current.clear().catch(err => console.error('Failed to clear scanner', err));
+                    scannerRef.current = null;
+                }
+            };
+        }
+    }, [cameraOpen]);
+
+    const handleQuantityChange = (product_id, qty) => {
+        const value = Math.max(1, parseInt(qty) || 1);
+        setScannedItems((prev) =>
+            prev.map((item) => (item.product_id === product_id ? { ...item, quantity: value } : item))
+        );
+    };
+
+    const handleRemoveItem = (product_id) => {
+        setScannedItems((prev) => prev.filter((item) => item.product_id !== product_id));
+    };
+
+    const handleSubmit = async () => {
+        if (scannedItems.length === 0) {
+            setScanError('Please scan at least one product before submitting.');
+            return;
+        }
+
+        setSubmitting(true);
+        setScanError('');
+        try {
+            await api.post('products/bulk-scan-stock-in/', {
+                items: scannedItems,
+                delivery_location: deliveryLocation
+            });
+            setScanSuccess('Stock updated successfully.');
+            setScannedItems([]);
+            setTimeout(() => {
+                onSuccess();
+                onClose();
+            }, 1000);
+        } catch (err) {
+            const msg = err.response?.data?.error || 'Failed to update stock. Please try again.';
+            setScanError(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Clean up states on close
+    useEffect(() => {
+        if (!isOpen) {
+            setScannedItems([]);
+            setScanBarcode('');
+            setScanError('');
+            setScanSuccess('');
+            setCameraOpen(false);
+        }
+    }, [isOpen]);
+
+    return (
+        <Dialog open={isOpen} onClose={submitting ? () => {} : onClose} className="relative z-50">
+            <div className="fixed inset-0 bg-primary/30" aria-hidden="true" />
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+                <Dialog.Panel className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[85vh]">
+                    <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
+                        <div>
+                            <Dialog.Title className="text-lg font-bold text-primary">
+                                Scan Stock In / Inventory Addition
+                            </Dialog.Title>
+                            <p className="text-xs text-secondary mt-0.5">
+                                Add products directly to inventory by scanning barcodes/SKUs
+                            </p>
+                        </div>
+                        <button onClick={onClose} disabled={submitting} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="block text-sm font-semibold text-primary mb-1">Destination Location</label>
+                                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-page p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeliveryLocation('WAREHOUSE')}
+                                        className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                                            deliveryLocation === 'WAREHOUSE'
+                                                ? 'bg-primary text-card shadow-xs'
+                                                : 'text-secondary hover:bg-card'
+                                        }`}
+                                    >
+                                        Warehouse
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeliveryLocation('SHOP')}
+                                        className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                                            deliveryLocation === 'SHOP'
+                                                ? 'bg-primary text-card shadow-xs'
+                                                : 'text-secondary hover:bg-card'
+                                        }`}
+                                    >
+                                        Shop Outlet
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-semibold text-primary mb-1">Quick Scan (Barcode / SKU)</label>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            value={scanBarcode}
+                                            onChange={(e) => setScanBarcode(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleBarcodeScanSubmit();
+                                                }
+                                            }}
+                                            className="w-full rounded-lg border border-border bg-page p-2.5 pl-9 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-primary"
+                                            placeholder="Focus here & scan barcode/SKU..."
+                                        />
+                                        <Scan className="absolute left-3 top-3 w-4.5 h-4.5 text-secondary" />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCameraOpen(!cameraOpen)}
+                                        className={`px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                            cameraOpen
+                                                ? 'bg-status-info/10 text-status-info border-status-info/30 hover:bg-status-info/20'
+                                                : 'bg-primary text-card border-primary hover:bg-primary/95'
+                                        }`}
+                                    >
+                                        {cameraOpen ? <CameraOff className="w-4.5 h-4.5" /> : <Camera className="w-4.5 h-4.5" />}
+                                        {cameraOpen ? 'Close Camera' : 'Camera Scan'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {cameraOpen && (
+                            <div className="flex flex-col items-center justify-center p-3 bg-page border border-border rounded-xl">
+                                <div id="inventory-reader" className="w-full max-w-sm overflow-hidden rounded-lg shadow-inner"></div>
+                                <p className="text-[10px] text-secondary mt-1.5">Hold QR/Barcode in front of the camera</p>
+                            </div>
+                        )}
+
+                        {(scanSuccess || scanError) && (
+                            <div className="flex flex-col gap-1.5">
+                                {scanSuccess && (
+                                    <div className="px-3 py-2 rounded-lg border border-emerald-100 bg-status-success/5 text-status-success text-xs font-semibold">
+                                        {scanSuccess}
+                                    </div>
+                                )}
+                                {scanError && (
+                                    <div className="px-3 py-2 rounded-lg border border-rose-100 bg-status-info/5 text-status-info text-xs font-semibold">
+                                        {scanError}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Scanned Items list */}
+                        <div className="border border-border rounded-xl overflow-hidden bg-background">
+                            <div className="bg-page px-4 py-2 border-b border-border text-xs font-bold text-secondary uppercase grid grid-cols-[1fr_100px_40px] gap-4">
+                                <div>Product</div>
+                                <div className="text-center">Quantity</div>
+                                <div className="text-right">Action</div>
+                            </div>
+                            <div className="divide-y divide-border max-h-48 overflow-y-auto">
+                                {scannedItems.length === 0 ? (
+                                    <div className="p-6 text-center text-xs text-textMuted italic">
+                                        No items scanned yet. Scan barcodes to build stock-in list.
+                                    </div>
+                                ) : (
+                                    scannedItems.map((item) => (
+                                        <div key={item.product_id} className="px-4 py-2.5 grid grid-cols-[1fr_100px_40px] gap-4 items-center text-xs">
+                                            <div className="min-w-0">
+                                                <div className="font-bold text-primary truncate">{item.name}</div>
+                                                <div className="text-[10px] text-secondary mt-0.5 font-mono">{item.sku}</div>
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
+                                                    className="w-full text-center border border-border rounded p-1 outline-none text-primary font-semibold"
+                                                />
+                                            </div>
+                                            <div className="text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveItem(item.product_id)}
+                                                    className="p-1.5 text-status-info hover:bg-status-info/10 rounded-lg transition-colors cursor-pointer"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-border">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={submitting}
+                            className="px-4 py-2 text-xs font-medium text-primary bg-card border border-border rounded-xl hover:bg-page transition-colors cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={submitting || scannedItems.length === 0}
+                            className="px-4 py-2 text-xs font-medium text-card bg-primary rounded-xl hover:bg-secondary transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            {submitting ? 'Saving...' : 'Confirm Stock In'}
+                        </button>
+                    </div>
+                </Dialog.Panel>
+            </div>
+        </Dialog>
+    );
+};
+
+
+// Helper Component for Incoming Stock Breakdown Modal
+const IncomingBreakdownModal = ({ isOpen, onClose, orderedSlips }) => {
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+
+    // Reset filter when modal is opened/closed
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedCategoryFilter('All');
+        }
+    }, [isOpen]);
+
+    // Filter active (non-completed) slips and compute remaining quantities
+    const pendingItems = useMemo(() => {
+        return orderedSlips
+            .map(slip => {
+                const ordered = toNumber(slip?.quantity_ordered ?? 0);
+                const received = toNumber(slip?.quantity_received ?? 0);
+                const pendingQty = Math.max(ordered - received, 0);
+                return {
+                    ...slip,
+                    pendingQty,
+                    category: slip.product_category || 'Uncategorized',
+                    name: slip.product_name || 'Unnamed Product',
+                    code: slip.product_code || 'N/A'
+                };
+            })
+            .filter(item => item.pendingQty > 0);
+    }, [orderedSlips]);
+
+    const categoriesList = useMemo(() => {
+        const cats = new Set();
+        pendingItems.forEach(item => {
+            cats.add(item.category);
+        });
+        return ['All', ...Array.from(cats)].sort((a, b) => {
+            if (a === 'All') return -1;
+            if (b === 'All') return 1;
+            return a.localeCompare(b);
+        });
+    }, [pendingItems]);
+
+    const categoryGroups = useMemo(() => {
+        const groups = {};
+        pendingItems.forEach(item => {
+            const cat = item.category;
+            if (selectedCategoryFilter !== 'All' && cat !== selectedCategoryFilter) {
+                return;
+            }
+            if (!groups[cat]) {
+                groups[cat] = [];
+            }
+            groups[cat].push(item);
+        });
+        return groups;
+    }, [pendingItems, selectedCategoryFilter]);
+
+    return (
+        <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+            {/* Backdrop overlay */}
+            <div className="fixed inset-0 bg-primary/30 backdrop-blur-xs transition-opacity duration-300 ease-out" aria-hidden="true" />
+
+            {/* Centered Panel */}
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+                <Dialog.Panel className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[80vh] transform scale-100 opacity-100 transition-all duration-300 ease-out">
+                    <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
+                        <div>
+                            <Dialog.Title className="text-lg font-bold text-primary">
+                                Pending Incoming Stock Breakdown
+                            </Dialog.Title>
+                            <p className="text-xs text-secondary mt-0.5">
+                                Pending orders waiting for delivery
+                            </p>
+                        </div>
+                        <button onClick={onClose} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {/* Category Filter Buttons */}
+                    {categoriesList.length > 1 && (
+                        <div className="flex flex-wrap gap-1.5 mb-4 border-b border-border pb-3">
+                            {categoriesList.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategoryFilter(cat)}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                                        selectedCategoryFilter === cat
+                                            ? 'bg-accent/15 text-accent border-accent/40 shadow-xs'
+                                            : 'bg-background hover:bg-page text-text-secondary border-border hover:text-text-primary'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex-1 overflow-y-auto pr-1">
+                        {Object.keys(categoryGroups).length === 0 ? (
+                            <div className="py-12 text-center text-sm text-textMuted">
+                                No pending incoming stock items.
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {Object.entries(categoryGroups).map(([category, items]) => {
+                                    const totalCatQty = items.reduce((sum, item) => sum + item.pendingQty, 0);
+                                    return (
+                                        <div key={category} className="border border-border rounded-xl overflow-hidden bg-background/50">
+                                            {/* Category Header */}
+                                            <div className="bg-background px-4 py-2.5 flex items-center justify-between border-b border-border">
+                                                <span className="text-xs font-black uppercase text-primary tracking-wider">{category}</span>
+                                                <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                                                    {totalCatQty} pending units
+                                                </span>
+                                            </div>
+                                            {/* Category Products list */}
+                                            <div className="divide-y divide-border/60">
+                                                {items.map((item) => (
+                                                    <div key={item.id} className="px-4 py-3 flex items-center justify-between text-xs hover:bg-page/40 transition-colors">
+                                                        <div className="flex flex-col min-w-0 pr-4">
+                                                            <span className="font-bold text-primary truncate">{item.name}</span>
+                                                            <span className="text-[10px] text-secondary font-mono mt-0.5">{item.code}</span>
+                                                            {item.company_name && (
+                                                                <span className="text-[10px] text-accent/80 font-medium mt-1">
+                                                                    Supplier: {item.company_name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-right shrink-0">
+                                                            <div className="flex items-center gap-1.5 justify-end">
+                                                                <span className="font-extrabold text-primary">{item.pendingQty}</span>
+                                                                <span className="text-[10px] text-secondary">units</span>
+                                                            </div>
+                                                            <span className={`inline-block text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md mt-1.5 ${
+                                                                item.status === 'PARTIAL'
+                                                                    ? 'bg-status-info/10 text-status-info border border-status-info/20'
+                                                                    : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                                            }`}>
+                                                                {item.status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </Dialog.Panel>
+            </div>
+        </Dialog>
+    );
+};
+
 
 export default InventoryManagment;

@@ -16,6 +16,9 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
         supplier: '',
         status: 'ACTIVE',
         order_from_warehouse: false,
+        barcode: '',
+        pack_barcode: '',
+        pcs_per_pack: 12,
     });
 
     useEffect(() => {
@@ -29,6 +32,9 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     supplier: initialData.supplier_id || initialData.supplier || '',
                     status: initialData.status || 'ACTIVE',
                     order_from_warehouse: initialData.order_from_warehouse ?? false,
+                    barcode: initialData.barcode || '',
+                    pack_barcode: initialData.pack_barcode || '',
+                    pcs_per_pack: initialData.pcs_per_pack ?? 12,
                 });
             } else {
                 setFormData({
@@ -40,6 +46,9 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     supplier: '',
                     status: 'ACTIVE',
                     order_from_warehouse: false,
+                    barcode: '',
+                    pack_barcode: '',
+                    pcs_per_pack: 12,
                 });
             }
         }
@@ -198,6 +207,43 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                                     <option value="ACTIVE">Active</option>
                                     <option value="INACTIVE">Inactive</option>
                                 </select>
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-primary mb-1">Unit Barcode</label>
+                                <input
+                                    type="text"
+                                    name="barcode"
+                                    value={formData.barcode || ''}
+                                    onChange={handleChange}
+                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                    placeholder="Scan or enter single unit barcode"
+                                />
+                            </div>
+
+                            <div className="col-span-2 sm:col-span-1">
+                                <label className="block text-sm font-medium text-primary mb-1">Pack Barcode</label>
+                                <input
+                                    type="text"
+                                    name="pack_barcode"
+                                    value={formData.pack_barcode || ''}
+                                    onChange={handleChange}
+                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                    placeholder="Scan or enter package barcode"
+                                />
+                            </div>
+
+                            <div className="col-span-2 sm:col-span-1">
+                                <label className="block text-sm font-medium text-primary mb-1">Pieces Per Pack</label>
+                                <input
+                                    type="number"
+                                    name="pcs_per_pack"
+                                    min="1"
+                                    required
+                                    value={formData.pcs_per_pack}
+                                    onChange={handleChange}
+                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
+                                />
                             </div>
 
                             <div className="col-span-2 flex items-center gap-2 py-2">

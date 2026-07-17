@@ -581,11 +581,11 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                                 <label className="block text-sm font-medium text-primary mb-1">Company</label>
                                 <select
                                     name="company_name"
-                                    required
                                     value={formData.company_name}
                                     onChange={handleChange}
                                     className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card"
                                 >
+                                    <option value="">No company/supplier selected</option>
                                     {selectedCompanyOptions.map((company) => (
                                         <option key={company.name} value={company.name}>{company.name}</option>
                                     ))}
@@ -743,12 +743,11 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                                     <label className="block text-sm font-medium text-primary mb-1">Company / Supplier</label>
                                     <select
                                         name="custom_company_select"
-                                        required
                                         value={customData.company_mode === 'create' ? REGISTER_NEW_COMPANY_VALUE : customData.company_name}
                                         onChange={handleChange}
                                         className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"
                                     >
-                                        <option value="" disabled>Select a company...</option>
+                                        <option value="">No company/supplier selected</option>
                                         {customCompanyOptions.map((company) => (
                                             <option key={`${company.name}-${company.category || ''}`} value={company.name}>{company.name}</option>
                                         ))}
@@ -764,7 +763,6 @@ const OrderSlipForm = ({ isOpen, onClose, onSubmit, onCompanySaved, submitting =
                                                 <input
                                                     type="text"
                                                     name="custom_company_name"
-                                                    required
                                                     value={customData.company_name}
                                                     onChange={handleChange}
                                                     className="w-full rounded-lg border border-card bg-card p-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-primary"

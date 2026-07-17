@@ -15,6 +15,7 @@
     "echarts": "^5.4.2",
     "echarts-for-react": "^3.0.2",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",

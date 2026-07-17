@@ -13,6 +13,10 @@ app_name = 'products'
 urlpatterns = [
     # ==================== Product CRUD ====================
     path('', views.product_list, name='product-list'),
+    path('scan/', views.scan_product, name='scan-product'),
+    path('bulk-scan-stock-in/', views.bulk_scan_stock_in, name='bulk-scan-stock-in'),
+    path('parse-invoice-pdf/', views.parse_invoice_pdf, name='parse-invoice-pdf'),
+    path('bulk-create-products/', views.bulk_create_products, name='bulk-create-products'),
     path('bulk-upload/', views.bulk_upload_products, name='bulk-upload'),
     path('<int:pk>/', views.product_detail, name='product-detail'),
 

@@ -151,6 +151,7 @@ class OrderedSlipSerializer(serializers.ModelSerializer):
     product_category = serializers.CharField(source='product.category', read_only=True)
     current_unit_price = serializers.DecimalField(source='product.unit_price', read_only=True, max_digits=10, decimal_places=2)
     company_email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    company_name = serializers.CharField(required=False, allow_blank=True, default='N/A')
 
     class Meta:
         model = OrderedSlip

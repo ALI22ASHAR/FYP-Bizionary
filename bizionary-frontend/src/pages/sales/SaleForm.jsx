@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, Scan, Camera, CameraOff } from 'lucide-react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '../../services/api';
 import { PRODUCT_CATEGORIES, normalizeProductCategory } from '../../utils/productCategories';
 
@@ -23,6 +24,101 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
         sale_date: new Date().toISOString().split('T')[0],
         payment_method: 'CARD',
     });
+
+    const [scanBarcode, setScanBarcode] = useState('');
+    const [scanError, setScanError] = useState('');
+    const [scanSuccess, setScanSuccess] = useState('');
+    const [cameraOpen, setCameraOpen] = useState(false);
+    const scannerRef = useRef(null);
+    const handleBarcodeScanSubmit = async (barcodeText) => {
+        const code = barcodeText || scanBarcode;
+        if (!code.trim()) return;
+
+        setScanError('');
+        setScanSuccess('');
+        try {
+            const res = await api.get(`products/scan/?barcode=${encodeURIComponent(code.trim())}`);
+            const { product: scannedProduct, scanned_as, multiplier } = res.data;
+            
+            // Check if product is already in line items
+            const existingIndex = lineItems.findIndex(
+                (item) => Number(item.product) === Number(scannedProduct.id)
+            );
+
+            if (existingIndex > -1) {
+                // Increment quantity
+                setLineItems((prev) =>
+                    prev.map((item, idx) =>
+                        idx === existingIndex
+                            ? { ...item, quantity: item.quantity + multiplier }
+                            : item
+                    )
+                );
+                setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
+            } else {
+                // Add new line item
+                const newItem = {
+                    category: normalizeProductCategory(scannedProduct.category) || 'Tech',
+                    product: Number(scannedProduct.id),
+                    quantity: multiplier,
+                    unitPrice: Number(scannedProduct.sale_price || scannedProduct.unit_price || 0),
+                };
+                
+                // If the only line item is empty, replace it. Otherwise append.
+                if (lineItems.length === 1 && !lineItems[0].product) {
+                    setLineItems([newItem]);
+                } else {
+                    setLineItems((prev) => [...prev, newItem]);
+                }
+                setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}) to sale.`);
+            }
+            setScanBarcode('');
+        } catch (err) {
+            const msg = err.response?.data?.error || `Product with code "${code}" not found.`;
+            setScanError(msg);
+        }
+    };
+
+    // Camera scanner lifecycle hook
+    useEffect(() => {
+        if (cameraOpen) {
+            const timer = setTimeout(() => {
+                try {
+                    const html5QrcodeScanner = new Html5QrcodeScanner(
+                        'sales-reader',
+                        {
+                            fps: 10,
+                            qrbox: { width: 350, height: 280 },
+                            experimentalFeatures: {
+                                useBarCodeDetectorIfSupported: true
+                            }
+                        },
+                        false
+                    );
+                    scannerRef.current = html5QrcodeScanner;
+                    html5QrcodeScanner.render(
+                        (decodedText) => {
+                            handleBarcodeScanSubmit(decodedText);
+                            setCameraOpen(false); // Close camera on successful scan
+                        },
+                        (error) => {
+                            // Ignored: scanner polls frame-by-frame and triggers this constantly
+                        }
+                    );
+                } catch (e) {
+                    console.error('Error initializing html5-qrcode scanner:', e);
+                }
+            }, 300);
+
+            return () => {
+                clearTimeout(timer);
+                if (scannerRef.current) {
+                    scannerRef.current.clear().catch(err => console.error('Failed to clear scanner', err));
+                    scannerRef.current = null;
+                }
+            };
+        }
+    }, [cameraOpen]);
 
     const paymentMethodOptions = [
         { value: 'CARD', label: 'Card' },
@@ -324,6 +420,71 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
                                     </div>
                                 </div>
 
+                                <div className="flex flex-col sm:flex-row items-end gap-3 p-4 bg-card border border-card rounded-xl shadow-xs">
+                                    <div className="flex-1 w-full">
+                                        <label className="block text-xs font-bold text-primary mb-1.5 uppercase tracking-wider">Quick Add by Barcode / SKU</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={scanBarcode}
+                                                onChange={(e) => setScanBarcode(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleBarcodeScanSubmit();
+                                                    }
+                                                }}
+                                                className="w-full rounded-lg border border-card bg-page p-2.5 pl-9 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-primary"
+                                                placeholder="Focus here & scan barcode, type SKU, then press Enter..."
+                                            />
+                                            <Scan className="absolute left-3 top-3 w-4.5 h-4.5 text-secondary" />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCameraOpen(!cameraOpen)}
+                                        className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
+                                            cameraOpen 
+                                                ? 'bg-status-info/10 text-status-info border-status-info/30 hover:bg-status-info/20' 
+                                                : 'bg-primary text-card border-primary hover:bg-primary/95 active:scale-[0.98]'
+                                        }`}
+                                    >
+                                        {cameraOpen ? (
+                                            <>
+                                                <CameraOff className="w-4.5 h-4.5" />
+                                                Close Camera
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Camera className="w-4.5 h-4.5" />
+                                                Camera Scanner
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {cameraOpen && (
+                                    <div className="flex flex-col items-center justify-center p-4 bg-card border border-card rounded-xl">
+                                        <div id="sales-reader" className="w-full max-w-sm overflow-hidden rounded-lg shadow-inner"></div>
+                                        <p className="text-xs text-secondary mt-2">Hold QR/Barcode in front of the camera</p>
+                                    </div>
+                                )}
+
+                                {(scanSuccess || scanError) && (
+                                    <div className="flex flex-col gap-1.5">
+                                        {scanSuccess && (
+                                            <div className="px-4 py-2.5 rounded-lg border border-emerald-100 bg-status-success/10 text-status-success text-xs font-semibold">
+                                                {scanSuccess}
+                                            </div>
+                                        )}
+                                        {scanError && (
+                                            <div className="px-4 py-2.5 rounded-lg border border-rose-100 bg-status-info/10 text-status-info text-xs font-semibold">
+                                                {scanError}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     {lineItems.map((item, index) => {
                                         const rowProducts = getAvailableProducts(item.category);
@@ -465,7 +626,7 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                 <div className="flex items-center justify-between rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 lg:min-w-[18rem]">
                                     <span className="text-sm font-semibold text-sky-800">Total Price:</span>
-                                    <span className="text-xl font-bold text-primary">Rs {totalPrice.toLocaleString()}</span>
+                                    <span className="text-xl font-extrabold text-sky-900">Rs {totalPrice.toLocaleString()}</span>
                                 </div>
 
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

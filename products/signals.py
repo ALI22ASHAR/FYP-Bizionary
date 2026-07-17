@@ -31,8 +31,10 @@ def update_product_stock_on_save(sender, instance, created, **kwargs):
                         product.warehouse_stock += delta
                     else:
                         product.shop_stock += delta
-            elif instance.reference_type in ('sale', 'sale_return'):
+            elif instance.reference_type in ('sale', 'sale_return', 'scan_stock_in_shop'):
                 product.shop_stock += delta
+            elif instance.reference_type == 'scan_stock_in_warehouse':
+                product.warehouse_stock += delta
             else:
                 if instance.txn_type == 'IN':
                     product.warehouse_stock += delta
@@ -67,8 +69,10 @@ def update_product_stock_on_delete(sender, instance, **kwargs):
                     product.warehouse_stock += delta
                 else:
                     product.shop_stock += delta
-        elif instance.reference_type in ('sale', 'sale_return'):
+        elif instance.reference_type in ('sale', 'sale_return', 'scan_stock_in_shop'):
             product.shop_stock += delta
+        elif instance.reference_type == 'scan_stock_in_warehouse':
+            product.warehouse_stock += delta
         else:
             if instance.txn_type == 'IN':
                 product.warehouse_stock += delta

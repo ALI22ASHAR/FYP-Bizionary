@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Upload, X, FileText } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
 import Skeleton from '../../components/ui/Skeleton';
 import { formatPKR } from '../../utils/currency';
 import api from '../../services/api';
 import ProductForm from './ProductForm';
+import PdfUploadModal from '../../components/common/PdfUploadModal';
 import { getCategoryPrefix, normalizeProductCategory, getCategoryLabel } from '../../utils/productCategories';
 import { normalizeProductRecord, toNumber } from '../../utils/productInventoryTransforms';
 import { useAuth } from '../../context/AuthContext';
@@ -57,6 +58,7 @@ const ProductList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSection, setSelectedSection] = useState('ALL');
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isPdfUploadOpen, setIsPdfUploadOpen] = useState(false);
     const [currentProduct, setCurrentProduct] = useState(null);
 
     useEffect(() => {
@@ -243,13 +245,22 @@ const ProductList = () => {
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     {isAdminOrManager && (
-                        <button
-                            onClick={() => navigate('/products/bulk-upload')}
-                            className="flex items-center justify-center px-5 py-2 bg-surface hover:bg-background text-textMain border border-card rounded-full text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
-                        >
-                            <Upload className="h-4 w-4 mr-2 text-primary" />
-                            Bulk Products
-                        </button>
+                        <>
+                            <button
+                                onClick={() => navigate('/products/bulk-upload')}
+                                className="flex items-center justify-center px-5 py-2 bg-surface hover:bg-background text-textMain border border-card rounded-full text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
+                            >
+                                <Upload className="h-4 w-4 mr-2 text-primary" />
+                                Bulk CSV
+                            </button>
+                            <button
+                                onClick={() => setIsPdfUploadOpen(true)}
+                                className="flex items-center justify-center px-5 py-2 bg-surface hover:bg-background text-textMain border border-card rounded-full text-sm font-bold transition-all shadow-sm w-full sm:w-auto cursor-pointer"
+                            >
+                                <FileText className="h-4 w-4 mr-2 text-accent" />
+                                Upload Products PDF
+                            </button>
+                        </>
                     )}
                     <button
                         onClick={openAddForm}
@@ -498,6 +509,14 @@ const ProductList = () => {
                 errorMessage={formError}
                 getNextProductCode={getNextProductCode}
                 supplierOptions={supplierOptions}
+            />
+
+            {/* AI PDF Product Upload Modal */}
+            <PdfUploadModal
+                isOpen={isPdfUploadOpen}
+                onClose={() => setIsPdfUploadOpen(false)}
+                onSuccess={fetchProducts}
+                actionType="product"
             />
         </div>
     );

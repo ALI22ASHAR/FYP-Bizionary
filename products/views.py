@@ -633,3 +633,232 @@ def bulk_upload_products(request):
         "warningRows": warning_rows_details,
     }, status=status.HTTP_201_CREATED if inserted > 0 else status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+def scan_product(request):
+    """
+    GET /api/products/scan/?barcode=<barcode>
+    Looks up a product by barcode, pack_barcode, or sku.
+    Returns serialized product, scanned_as ('unit' or 'pack'), and multiplier.
+    """
+    barcode = request.query_params.get('barcode', '').strip()
+    if not barcode:
+        return Response({'error': 'Barcode parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Try unit barcode
+    product = Product.objects.filter(barcode=barcode).first()
+    scanned_as = 'unit'
+    multiplier = 1
+    
+    if not product:
+        # Try pack barcode
+        product = Product.objects.filter(pack_barcode=barcode).first()
+        if product:
+            scanned_as = 'pack'
+            multiplier = product.pcs_per_pack
+            
+    if not product:
+        # Fallback to sku/product_code
+        product = Product.objects.filter(sku=barcode).first()
+        if product:
+            scanned_as = 'unit'
+            multiplier = 1
+            
+    if not product:
+        return Response({'error': f'Product with barcode or SKU "{barcode}" not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+    serializer = ProductSerializer(product)
+    return Response({
+        'product': serializer.data,
+        'scanned_as': scanned_as,
+        'multiplier': multiplier
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@restrict_accountant_modifications
+def bulk_scan_stock_in(request):
+    """
+    POST /api/products/bulk-scan-stock-in/
+    Receives list of items: [{product_id: int, quantity: int}]
+    Creates InventoryTransactions of type 'IN' (which triggers stock updates).
+    """
+    items = request.data.get('items', [])
+    delivery_location = request.data.get('delivery_location', 'WAREHOUSE').upper()
+    
+    if delivery_location not in ['SHOP', 'WAREHOUSE']:
+        return Response({'error': 'Invalid delivery location.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    if not items or not isinstance(items, list):
+        return Response({'error': 'A list of items is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    created_txns = []
+    today = date.today()
+    
+    with transaction.atomic():
+        for index, item in enumerate(items):
+            product_id = item.get('product_id')
+            quantity = int(item.get('quantity', 0))
+            note = item.get('note', '').strip()
+            
+            if not product_id or quantity <= 0:
+                return Response({'error': f'Invalid item at index {index}.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            product = get_object_or_404(Product, pk=product_id)
+            
+            loc_display = 'Direct to Shop' if delivery_location == 'SHOP' else 'Warehouse'
+            final_note = note or f'Barcode scan stock-in ({quantity} units) (Delivered to: {loc_display})'
+            ref_type = 'scan_stock_in_shop' if delivery_location == 'SHOP' else 'scan_stock_in_warehouse'
+            
+            # Creating the transaction will trigger update_product_stock_on_save signal
+            # and automatically allocate it to shop_stock or warehouse_stock
+            txn = InventoryTransaction.objects.create(
+                product=product,
+                txn_type=InventoryTransaction.TYPE_IN,
+                quantity=quantity,
+                reference_type=ref_type,
+                reference_id=None,
+                note=final_note,
+                date=today,
+            )
+            created_txns.append(txn.id)
+            
+            # Log action to Audit Logs/Activity Log
+            log_action(request, 'CREATE', f"Stock in via barcode scan: {quantity} units of '{product.name}' (SKU: {product.sku}) to {loc_display}.", module='Products')
+
+    return Response({
+        'success': True,
+        'message': f'Successfully updated stock for {len(created_txns)} products.',
+        'transaction_ids': created_txns
+    }, status=status.HTTP_201_CREATED)
+
+
+import logging
+logger = logging.getLogger(__name__)
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def parse_invoice_pdf(request):
+    """
+    POST /api/products/parse-invoice-pdf/
+    Receives an uploaded PDF file in 'file' and optional parameter 'action_type'.
+    Extracts text, uses Groq to structure it, and matches with catalog products.
+    """
+    pdf_file = request.FILES.get('file')
+    action_type = request.data.get('action_type', 'stock_in')
+    if not pdf_file:
+        return Response({'error': 'No file was uploaded.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    if not pdf_file.name.lower().endswith('.pdf'):
+        return Response({'error': 'Only PDF files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    try:
+        from .invoice_parser import process_invoice_pdf
+        # process_invoice_pdf accepts a file-like stream and action_type
+        parsed_result = process_invoice_pdf(pdf_file, action_type=action_type)
+        return Response(parsed_result, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error in parse_invoice_pdf view: {e}")
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@restrict_to_admin_or_manager
+@restrict_accountant_modifications
+def bulk_create_products(request):
+    """
+    POST /api/products/bulk-create-products/
+    Receives list of products: { products: [{name, sku, category, cost_price, unit_price, stock_quantity, min_stock, barcode, pack_barcode, pcs_per_pack}] }
+    Creates or updates products in bulk.
+    """
+    products_data = request.data.get('products', [])
+    if not products_data or not isinstance(products_data, list):
+        return Response({'error': 'A list of products is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    created_count = 0
+    updated_count = 0
+    today = date.today()
+    
+    with transaction.atomic():
+        for index, p_data in enumerate(products_data):
+            name = p_data.get('name', '').strip()
+            sku = p_data.get('sku', '').strip()
+            
+            if not name:
+                return Response({'error': f'Product name is required for item at index {index}.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Find existing by SKU (or Name if SKU is empty)
+            product = None
+            if sku:
+                product = Product.objects.filter(sku=sku).first()
+            if not product:
+                product = Product.objects.filter(name__iexact=name).first()
+                
+            cost_price = Decimal(str(p_data.get('cost_price', 0.0) or 0.0))
+            unit_price = Decimal(str(p_data.get('unit_price', 0.0) or 0.0))
+            qty = int(p_data.get('stock_quantity', 0) or 0)
+            min_stock = int(p_data.get('min_stock', 5) or 5)
+            category = p_data.get('category', 'Beverages').strip() or 'Beverages'
+            barcode = p_data.get('barcode', '').strip() or None
+            pack_barcode = p_data.get('pack_barcode', '').strip() or None
+            pcs_per_pack = int(p_data.get('pcs_per_pack', 12) or 12)
+            
+            if product:
+                # Update product details
+                product.cost_price = cost_price
+                product.unit_price = unit_price
+                product.min_stock = min_stock
+                product.category = category
+                if barcode:
+                    product.barcode = barcode
+                if pack_barcode:
+                    product.pack_barcode = pack_barcode
+                product.pcs_per_pack = pcs_per_pack
+                product.save()
+                
+                # Add stock quantity to existing stock via transaction only
+                if qty > 0:
+                    InventoryTransaction.objects.create(
+                        product=product,
+                        txn_type=InventoryTransaction.TYPE_IN,
+                        quantity=qty,
+                        reference_type='scan_stock_in_warehouse', # default to warehouse
+                        note=f'Catalog PDF import stock addition (+{qty} units)',
+                        date=today
+                    )
+                updated_count += 1
+            else:
+                # Create new product with stock_quantity=0, transaction signal will increment it to qty
+                product = Product.objects.create(
+                    name=name,
+                    sku=sku or f"SKU-{name[:3].upper()}-{index}",
+                    category=category,
+                    cost_price=cost_price,
+                    unit_price=unit_price,
+                    stock_quantity=0,
+                    min_stock=min_stock,
+                    barcode=barcode,
+                    pack_barcode=pack_barcode,
+                    pcs_per_pack=pcs_per_pack
+                )
+                if qty > 0:
+                    InventoryTransaction.objects.create(
+                        product=product,
+                        txn_type=InventoryTransaction.TYPE_IN,
+                        quantity=qty,
+                        reference_type='opening_stock',
+                        note=f'Opening stock balance from Catalog PDF import ({qty} units)',
+                        date=today
+                    )
+                created_count += 1
+                
+        log_action(request, 'CREATE', f"AI PDF import: Created {created_count} and updated {updated_count} products.", module='Products')
+        
+    return Response({
+        'success': True,
+        'message': f'Import successful. Created {created_count} products and updated {updated_count} products.',
+        'created': created_count,
+        'updated': updated_count
+    }, status=status.HTTP_201_CREATED)
+
+

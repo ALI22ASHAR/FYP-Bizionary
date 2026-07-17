@@ -9,6 +9,7 @@ import SaleForm from './SaleForm';
 import SalesCharts from './SalesCharts';
 import SaleSlipModal from './SaleSlipModal';
 import { PRODUCT_CATEGORIES, normalizeProductCategory } from '../../utils/productCategories';
+import PdfUploadModal from '../../components/common/PdfUploadModal';
 import { useAuth } from '../../context/AuthContext';
 import { useDynamicColumns } from '../../hooks/useDynamicColumns';
 
@@ -93,6 +94,7 @@ const SalesList = () => {
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isPdfUploadOpen, setIsPdfUploadOpen] = useState(false);
     const [currentSale, setCurrentSale] = useState(null);
     const [saleSlipOpen, setSaleSlipOpen] = useState(false);
     const [selectedSlipSale, setSelectedSlipSale] = useState(null);
@@ -429,6 +431,13 @@ const SalesList = () => {
                     >
                         <Upload className="h-4 w-4 mr-2" />
                         Bulk Upload
+                    </button>
+                    <button
+                        onClick={() => setIsPdfUploadOpen(true)}
+                        className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-white via-slate-50 to-white bg-[length:200%_auto] hover:bg-[100%_0] border border-card text-textMain hover:border-primary hover:text-primary rounded-full text-sm font-bold transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] hover:-translate-y-[4px] hover:shadow-[0_12px_24px_-4px_rgba(0,0,0,0.08)] active:scale-[0.98] w-full sm:w-auto animate-pulse-once"
+                    >
+                        <FileText className="h-4 w-4 mr-2 text-accent" />
+                        Upload Sales PDF
                     </button>
                     <button
                         onClick={openAddForm}
@@ -771,6 +780,14 @@ const SalesList = () => {
                 title="Delete Sale?"
                 message="This will permanently remove the sale record and reverse the inventory change. This cannot be undone."
                 confirmLabel="Delete Sale"
+            />
+
+            {/* AI PDF Sales Upload Modal */}
+            <PdfUploadModal
+                isOpen={isPdfUploadOpen}
+                onClose={() => setIsPdfUploadOpen(false)}
+                onSuccess={() => fetchSales(1)}
+                actionType="sale"
             />
         </div>
     );
