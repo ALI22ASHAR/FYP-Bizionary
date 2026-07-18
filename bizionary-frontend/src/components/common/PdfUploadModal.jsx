@@ -529,7 +529,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                         <td className="px-4 py-2.5">
                                                             <input
                                                                 type="text"
-                                                                value={item.sku}
+                                                                value={item.sku || ''}
                                                                 onChange={(e) => handleItemChange(idx, 'sku', e.target.value)}
                                                                 className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary font-mono text-xs"
                                                                 placeholder="e.g. SKU-123"
@@ -543,7 +543,7 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                 <td className="px-4 py-2.5">
                                                                     <input
                                                                         type="text"
-                                                                        value={item.category}
+                                                                        value={item.category || ''}
                                                                         onChange={(e) => handleItemChange(idx, 'category', e.target.value)}
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary"
                                                                         placeholder="Beverages"
@@ -553,8 +553,8 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                 <td className="px-4 py-2.5">
                                                                     <input
                                                                         type="number"
-                                                                        value={item.cost_price}
-                                                                        onChange={(e) => handleItemChange(idx, 'cost_price', Number(e.target.value))}
+                                                                        value={item.cost_price ?? ''}
+                                                                        onChange={(e) => handleItemChange(idx, 'cost_price', e.target.value === '' ? '' : Number(e.target.value))}
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary font-mono"
                                                                     />
                                                                 </td>
@@ -562,8 +562,8 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                 <td className="px-4 py-2.5">
                                                                     <input
                                                                         type="number"
-                                                                        value={item.unit_price}
-                                                                        onChange={(e) => handleItemChange(idx, 'unit_price', Number(e.target.value))}
+                                                                        value={item.unit_price ?? ''}
+                                                                        onChange={(e) => handleItemChange(idx, 'unit_price', e.target.value === '' ? '' : Number(e.target.value))}
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary font-mono"
                                                                     />
                                                                 </td>
@@ -621,8 +621,8 @@ const PdfUploadModal = ({ isOpen, onClose, onSuccess, actionType = 'stock_in' })
                                                                 <td className="px-4 py-2.5">
                                                                     <input
                                                                         type="number"
-                                                                        value={item.quantity}
-                                                                        onChange={(e) => handleItemChange(idx, 'quantity', Number(e.target.value))}
+                                                                        value={item.quantity ?? ''}
+                                                                        onChange={(e) => handleItemChange(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
                                                                         className="w-full bg-background border border-border focus:border-accent rounded-lg px-2 py-1 outline-none text-primary text-center font-bold"
                                                                     />
                                                                 </td>
