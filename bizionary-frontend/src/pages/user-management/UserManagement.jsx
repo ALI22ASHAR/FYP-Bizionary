@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PageHeader from '../../components/ui/PageHeader';
-import { Users, UserPlus, Shield, Building2, Search, RotateCcw, AlertCircle, Calculator } from 'lucide-react';
+import { Users, UserPlus, Shield, Building2, Search, RotateCcw, AlertCircle } from 'lucide-react';
 import { userManagementApi } from '../../services/userManagementApi';
 import UsersTable from './components/UsersTable';
 import AuditLogsTable from './components/AuditLogsTable';
 import AddEditUserModal from './components/AddEditUserModal';
-import PackCalculator from './components/PackCalculator';
 
 const UserManagement = () => {
     // Data lists
@@ -202,17 +201,6 @@ const UserManagement = () => {
                     <Shield className="w-4 h-4" />
                     Security Audit Logs
                 </button>
-                <button
-                    onClick={() => setActiveTab('calculator')}
-                    className={`user-mgmt-tab flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-sm -mb-px bg-transparent ${
-                        activeTab === 'calculator'
-                            ? 'user-mgmt-tab-active'
-                            : 'user-mgmt-tab-inactive'
-                    }`}
-                >
-                    <Calculator className="w-4 h-4" />
-                    Pack Price Calculator
-                </button>
             </div>
 
             {activeTab === 'users' ? (
@@ -350,10 +338,8 @@ const UserManagement = () => {
                         )}
                     </div>
                 </>
-            ) : activeTab === 'audit_logs' ? (
-                <AuditLogsTable />
             ) : (
-                <PackCalculator />
+                <AuditLogsTable />
             )}
 
             {/* Modal Dialog */}

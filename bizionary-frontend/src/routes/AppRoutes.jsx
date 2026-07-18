@@ -14,6 +14,7 @@ import InvoicesList from '../pages/invoices/InvoicesList';
 import UserManagement from '../pages/user-management/UserManagement';
 import AccountsManager from '../pages/accounts/AccountsManager';
 import Settings from '../pages/settings/Settings';
+import CalculatorPage from '../pages/calculator/CalculatorPage';
 import InventoryManagment from '../pages/inventory-managment/InventoryManagment';
 import OrderedSlips from '../pages/ordered-slips/OrderedSlips';
 import AIInsights from '../pages/insights/AIInsights';
@@ -103,6 +104,7 @@ const AppRoutes = () => {
                 />
                 <Route path="accounts" element={<AccountsManager />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="calculator" element={<CalculatorPage />} />
                 <Route 
                     path="user-management" 
                     element={

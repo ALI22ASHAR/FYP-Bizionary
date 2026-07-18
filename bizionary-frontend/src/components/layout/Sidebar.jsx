@@ -13,7 +13,8 @@ import {
     ChevronsLeft,
     ChevronDown,
     User,
-    LogOut
+    LogOut,
+    Calculator
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../context/SidebarContext';
@@ -28,7 +29,8 @@ const NAV_ITEMS = [
     { name: 'Sales', href: '/sales', icon: ShoppingCart },
     { name: 'Create Order', href: '/ordered-slips', icon: ClipboardList },
     { name: 'AI Chatbot', href: '/chatbot', icon: Bot },
-    { name: 'Admin', href: '/user-management', icon: Lock, adminOnly: true }
+    { name: 'Admin', href: '/user-management', icon: Lock, adminOnly: true },
+    { name: 'Calculator', href: '/calculator', icon: Calculator }
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
