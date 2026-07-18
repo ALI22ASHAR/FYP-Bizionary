@@ -146,6 +146,11 @@ const ProductList = () => {
                 unit_price: sellingPrice,   // belt-and-suspenders: also send unit_price directly
                 supplier: productData.supplier || null,
                 status: productData.status || 'ACTIVE',
+                pcs_per_pack: Number(productData.pcs_per_pack || 12),
+                pack_price: productData.pack_price ? Number(productData.pack_price) : null,
+                barcode: productData.barcode || '',
+                pack_barcode: productData.pack_barcode || '',
+                order_from_warehouse: productData.order_from_warehouse || false,
             };
 
             if (!currentProduct && !payload.product_code) {

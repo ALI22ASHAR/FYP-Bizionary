@@ -129,9 +129,8 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                                     required
                                     value={formData.product_code}
                                     onChange={handleChange}
-                                    readOnly={!isEditing}
-                                    className={`w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm ${!isEditing ? 'bg-page text-secondary' : ''}`}
-                                    placeholder="Auto-generated from category"
+                                    className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card text-primary"
+                                    placeholder="Enter or auto-generate SKU"
                                 />
                             </div>
 

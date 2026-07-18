@@ -334,6 +334,11 @@ const Dashboard = () => {
                 unit_price: Number(productData.sale_price || 0),
                 supplier: productData.supplier || null,
                 status: 'ACTIVE',
+                pcs_per_pack: Number(productData.pcs_per_pack || 12),
+                pack_price: productData.pack_price ? Number(productData.pack_price) : null,
+                barcode: productData.barcode || '',
+                pack_barcode: productData.pack_barcode || '',
+                order_from_warehouse: productData.order_from_warehouse || false,
             };
 
             await api.post('products/', payload);
