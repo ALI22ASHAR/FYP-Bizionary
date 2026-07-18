@@ -3,7 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum, Count, F, Q, ExpressionWrapper, DecimalField, Avg
+from django.db.models import Sum, Count, F, Q, ExpressionWrapper, DecimalField, Avg, ProtectedError
 from django.db.models.functions import TruncMonth
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
@@ -93,9 +93,15 @@ def product_detail(request, pk):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    log_action(request, 'DELETE', f"Product '{product.name}' (SKU: {product.sku}) permanently deleted.", module='Products')
-    product.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    try:
+        product.delete()
+        log_action(request, 'DELETE', f"Product '{product.name}' (SKU: {product.sku}) permanently deleted.", module='Products')
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except ProtectedError:
+        return Response({
+            'success': False,
+            'error': f"Cannot delete Product '{product.name}': It has active transaction records (sales, purchases, or inventory tracking logs) in the database."
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -61,38 +61,72 @@ def categories_list(request):
 @api_view(['DELETE'])
 def delete_category(request):
     """
-    DELETE /api/purchases/categories/delete/?name=<category_name>
+    DELETE /api/purchases/categories/delete/?name=<category_name>&force=<true|false>
     Removes a category from the screen2 Category table.
-    Rejected if any products or suppliers are assigned to this category.
+    If force=true, deletes all safe products under this category, archives products
+    with transaction logs, and clears supplier category associations.
     """
     from products.models import Product
     from purchases.models import SupplierCompany
     from screen_2_sales_items.items_management.models import Category as S2Category
+    from django.db.models import ProtectedError
 
     name = request.query_params.get('name', '').strip()
     if not name:
         return Response({'error': 'Provide ?name=<category_name>'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Safety: refuse deletion if products use this category
+    force = request.query_params.get('force', 'false').lower() == 'true'
+
     product_count = Product.objects.filter(category__iexact=name).count()
-    if product_count > 0:
-        return Response(
-            {'error': f'Cannot delete "{name}": {product_count} product(s) still assigned to this category.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # Safety: refuse deletion if suppliers use this category
     supplier_count = SupplierCompany.objects.filter(category__iexact=name).count()
-    if supplier_count > 0:
+
+    if (product_count > 0 or supplier_count > 0) and not force:
+        rejection_reason = []
+        if product_count > 0:
+            rejection_reason.append(f"{product_count} product(s)")
+        if supplier_count > 0:
+            rejection_reason.append(f"{supplier_count} supplier(s)")
+        
         return Response(
-            {'error': f'Cannot delete "{name}": {supplier_count} supplier(s) still assigned to this category.'},
+            {
+                'error': f'Cannot delete "{name}": {" and ".join(rejection_reason)} still assigned to this category.',
+                'needs_force': True
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Delete from screen2 Category table (if exists)
+    deleted_products = 0
+    archived_products = 0
+    cleared_suppliers = 0
+
+    if force:
+        # 1. Clear category from suppliers
+        suppliers = SupplierCompany.objects.filter(category__iexact=name)
+        cleared_suppliers = suppliers.count()
+        suppliers.update(category="Uncategorized")
+
+        # 2. Delete or archive products
+        products = Product.objects.filter(category__iexact=name)
+        for product in products:
+            try:
+                product.delete()
+                deleted_products += 1
+            except ProtectedError:
+                product.category = "Uncategorized"
+                product.status = Product.STATUS_INACTIVE
+                product.save()
+                archived_products += 1
+
+    # 3. Delete from screen2 Category table (if exists)
     deleted_count, _ = S2Category.objects.filter(name__iexact=name).delete()
 
-    return Response({'deleted': deleted_count, 'name': name}, status=status.HTTP_200_OK)
+    return Response({
+        'deleted': deleted_count,
+        'name': name,
+        'deleted_products': deleted_products,
+        'archived_products': archived_products,
+        'cleared_suppliers': cleared_suppliers
+    }, status=status.HTTP_200_OK)
 
 
 def restrict_accountant_modifications(view_func):

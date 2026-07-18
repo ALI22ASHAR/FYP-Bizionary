@@ -103,15 +103,16 @@ export function useCategories() {
          * Delete a category by value. Only works for categories with no products.
          * Returns { ok: true } on success or { ok: false, error: string } on failure.
          */
-        deleteCategory: async (categoryValue) => {
+        deleteCategory: async (categoryValue, force = false) => {
             try {
-                await api.delete(`purchases/categories/delete/?name=${encodeURIComponent(categoryValue)}`);
+                await api.delete(`purchases/categories/delete/?name=${encodeURIComponent(categoryValue)}${force ? '&force=true' : ''}`);
                 invalidateCategoriesCache();
                 load();
                 return { ok: true };
             } catch (err) {
                 const msg = err?.response?.data?.error || 'Failed to delete category.';
-                return { ok: false, error: msg };
+                const needsForce = err?.response?.data?.needs_force || false;
+                return { ok: false, error: msg, needsForce };
             }
         },
     };

@@ -42,15 +42,27 @@ const ProductList = () => {
     const [formSuccess, setFormSuccess] = useState('');
 
     const handleDeleteCategory = async (categoryValue, categoryLabel) => {
-        if (!window.confirm(`Delete category "${categoryLabel}"?\n\nThis only removes the category record. If any products are assigned to it, deletion will be blocked.`)) return;
+        if (!window.confirm(`Are you sure you want to delete the category "${categoryLabel}"?`)) return;
+        
         setDeletingCategory(categoryValue);
-        const result = await deleteCategory(categoryValue);
+        let result = await deleteCategory(categoryValue, false);
+        
+        if (!result.ok && result.needsForce) {
+            const forceConfirm = window.confirm(
+                `${result.error}\n\nDo you want to FORCE delete this category?\n\nThis will permanently delete any products that have no sales/purchase records, and automatically archive/inactivate products that have transactional logs under "Uncategorized".`
+            );
+            if (forceConfirm) {
+                result = await deleteCategory(categoryValue, true);
+            }
+        }
+        
         setDeletingCategory(null);
         if (!result.ok) {
             setFormError(result.error);
         } else {
-            setFormSuccess(`Category "${categoryLabel}" deleted.`);
+            setFormSuccess(`Category "${categoryLabel}" processed successfully.`);
             if (selectedSection === categoryValue) setSelectedSection('ALL');
+            fetchProducts();
         }
     };
 

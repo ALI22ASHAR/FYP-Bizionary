@@ -1240,3 +1240,107 @@ To allow flexible data structures without complex schema migrations, we implemen
 - **Dynamic Sales Category Filtering:** Integrated category-specific custom columns into the sales page. The columns displayed and modified update reactively according to the selected dropdown category filter.
 - **Bulk CSV Upload Auto-Detection:** The bulk product upload parses extra non-standard CSV columns on the client-side, maps them to the appropriate category, and persists their cell values by SKU in `localStorage`.
 - **Relaxed Backend Validation Constraints:** Removed strict phone/email regex constraints from the `supplier_contact` upload validation. This permits flexible contact string values (such as names, custom notes, websites) without failing rows during bulk uploads.
+
+
+## 13. User Interface & System Walkthrough
+
+This section provides a visual walkthrough of the BIZIONARY ERP single-page React application, mapping each interface to its corresponding backend services, data structures, and operational workflows.
+
+### 13.1 Executive Dashboard Module
+
+#### 13.1.1 Enterprise Statistics Overview
+The main Dashboard landing page provides executive-level summaries of the organization's real-time financial health and inventory assets.
+
+![Executive Dashboard Overview](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012114.png)
+
+- **Interface Features**: The interface displays aggregate KPIs including total revenue (Rs. 212,960,857), total operational expenses (Rs. 8,109,970), and net profit (Rs. 57,180,928), alongside total active catalog items, pending supplier ordered slips, total sales transaction volume, and the current valuation of inventory assets. It also provides quick operation buttons for adding customers, products, ledger records, and inventory adjustments.
+- **Data Integration**: The React frontend executes a consolidated API query to the `/api/dashboard/summary/` view. The Django backend uses aggregate queries (`Sum`, `Count`) over the database to compute metrics. These metrics are cached using Django's in-memory cache to optimize page-load speed.
+- **Workflow Connections**: Actions initiated here (e.g., clicking "Add Product" or "Record Payment") trigger overlay forms that directly update the database, instantly recalculating the statistics shown on the metrics cards.
+
+#### 13.1.2 Sales Performance Insights Dashboard
+For in-depth analysis, the Dashboard features an advanced interactive data visualization suite.
+
+![Dashboard Performance Insights](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012111.png)
+
+- **Interface Features**: Features a dual-axis chart. The left vertical axis measures quantities sold (represented by stacked vertical bars showing individual categories like Clothing & Textiles, Grocery & Food, Pharmaceuticals, and Stationery). The right vertical axis measures PKR values (solid and dashed trend lines representing daily revenue and profits over a 10-day period).
+- **Data Integration**: Powered by Recharts on the frontend, which fetches time-series data from the `/api/dashboard/insights/?period=10` endpoint. The backend queries transactions, grouping items by category and date, returning a JSON array of aggregated daily records.
+- **Workflow Connections**: This screen updates in real time as sales are recorded in the POS or bulk uploaded, providing store managers with visual sales dynamics.
+
+### 13.2 Accounts & Financial Ledger Module
+
+#### 13.2.1 Financial Summary & Ledger Rollup
+The Accounts screen serves as the core of the financial ledger module, ensuring double-entry compliance and transparency.
+
+![Accounts and Finance Dashboard](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012108.png)
+
+- **Interface Features**: Displays monthly financial aggregates (Gross Profit, Expenses, Net Profit, Cash Flow) for custom date ranges. A tabbed interface organizes the ledger by Revenues, Expenses, Salaries, Utility Bills, Operating Costs, Receivables, Chart of Accounts, and Financial Statements. The lower panel shows an expandable rollup list of transaction records.
+- **Data Integration**: Calls `/api/accounts/ledger-summary/` with `start_date` and `end_date` parameters. Clicking "Reconcile Ledger" executes `/api/accounts/reconcile/` which verifies that the sum of debits equals the sum of credits.
+- **Workflow Connections**: Recording a sale in the POS or marking a procurement slip as received automatically triggers backend signals that generate ledger entries under the respective Revenue or Expense categories.
+
+### 13.3 Product Catalog Module
+
+#### 13.3.1 Sectioned Products Grid & Dynamic Columns
+The Products interface allows catalog managers to view and organize the company's items.
+
+![Products Catalog Grid](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012102.png)
+
+- **Interface Features**: Organizes products by sections (e.g., Beverages, Books, Clothing). Tables display SKU, Product Name, Category, Purchase Price, Selling Price, Profit Margin, Shop Stock, Total Stock, Status, and edit/delete actions. It includes buttons for bulk CSV upload, product PDF ingestion, and adding products.
+- **Data Integration**: Frontend components render section tables dynamically. Clicking `+ Column` calls `/api/products/custom-columns/` to create extra metadata fields for that category section.
+- **Workflow Connections**: Updates to stock numbers or pricing here are instantly reflected across the POS scan form, inventory statistics, and the executive dashboard.
+
+### 13.4 Stock & Warehouse Module
+
+#### 13.4.1 Stock Management Control Center
+Provides inventory supervisors with real-time operational views of stock levels.
+
+![Stock Management Control Center](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012055.png)
+
+- **Interface Features**: Displays KPIs including Total Products, Total Stock Value, Retail Shop Value, and Warehouse Value. It features a "Low Stock Items" alert card (displaying 19 items matching a user-configured rule of stock quantity <= 5) and an "Incoming Stock" status card.
+- **Data Integration**: Fetches data from `/api/stock/status/`. The threshold for low-stock warnings is editable and sends updates to `/api/stock/settings/`.
+- **Workflow Connections**: The "Scan Stock In" button opens a scanner component that updates quantity levels in the DB. The "View Breakdown" link under Warehouse Stock opens the detail modal.
+
+#### 13.4.2 Warehouse Stock & Incoming Details
+Detail modals overlay the stock dashboard to show granular breakdown reports.
+
+![Warehouse Stock Breakdown Modal](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012058.png)
+
+![Pending Incoming Stock Modal](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012050.png)
+
+- **Interface Features**: The Warehouse Stock Breakdown modal (Figure 13) displays product lists filtered by category (Beverages, Uncategorized, Stationery) with exact unit locations. The Pending Incoming Stock breakdown (Figure 14) lists products ordered from suppliers that are waiting for delivery, showing quantities and supplier names.
+- **Data Integration**: React custom hooks query the `/api/stock/warehouse-breakdown/` and `/api/procurement/pending-breakdown/` views.
+- **Workflow Connections**: Once a supplier shipment arrives and is scanned, these details are cleared from the "Pending Incoming" list and added to the "Warehouse Stock" totals.
+
+### 13.5 Sales Module & Analytics
+
+#### 13.5.1 Sales Performance & Ingestion Suite
+This screen acts as the operational hub for tracking customer invoices and sales trends.
+
+![Sales Performance Dashboard](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012046.png)
+
+![Sales Transaction Log Table](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012043.png)
+
+- **Interface Features**: The upper page displays the **Sales Performance chart** comparing daily sales trends with monthly goals. The lower section houses the **Sales Transaction Log**, a searchable table containing transaction reference numbers, dates, customer names, product categories, quantities sold, current stock levels, and total invoice prices.
+- **Data Integration**: The table uses pagination and server-side search querying `/api/sales/transactions/`. Excel imports trigger the `/api/sales/bulk-upload/` REST service on the backend.
+- **Workflow Connections**: Ingesting a PDF invoice via "Upload Sales PDF" parses the document using OCR/AI and populates the Sales Transaction Log list, updating dashboard charts and stock values automatically.
+
+### 13.6 Supplier Procurement Module
+
+#### 13.6.1 Supplier Ordered Slips Management
+Procurement managers utilize this screen to generate and trace supplier slip lifecycles.
+
+![Ordered Slips Dashboard](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012037.png)
+
+- **Interface Features**: Displays active slips (e.g., `OS-0468`) indicating supplier details (Gul Ahmed), ordered quantities (5/5), unit costs, total amounts (Rs. 2,750), and status (Completed, Partial, or Pending). Users can download generated slip PDFs or register partial receipts.
+- **Data Integration**: Integrates with `/api/procurement/slips/`. Clicking "Mark Partial Received" sends a PUT request updating quantity states.
+- **Workflow Connections**: Creating a new slip adds a "Pending" record to the Stock Incoming card. Completing a slip moves the items into the active warehouse stock.
+
+### 13.7 AI Chatbot Module
+
+#### 13.7.1 Intelligent Agent and Live Statistics
+The AI Chatbot interface provides users with an intelligent, natural language search assistant.
+
+![AI Chatbot Interface](file:///c:/Users/Dell/Desktop/Fyp/ui pics/Screenshot 2026-07-19 012026.png)
+
+- **Interface Features**: The left panel houses a chat interface powered by Groq Llama 3.3. The right side displays "Quick Shortcuts" (e.g., Check Revenue, Low Stock Items) and a "Live Statistics" card cached in the chatbot context.
+- **Data Integration**: Integrates the Groq API via `/api/chatbot/query/` using Retrieval-Augmented Generation (RAG). The chatbot query checks cached statistics automatically.
+- **Workflow Connections**: Chatbot shortcuts allow users to execute queries without manual navigation, fetching data from appropriate modules.

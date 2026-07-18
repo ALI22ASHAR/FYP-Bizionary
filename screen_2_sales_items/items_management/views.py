@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.db.models import Sum, F, Q, OuterRef, Subquery
+from django.db.models import Sum, F, Q, OuterRef, Subquery, ProtectedError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -100,8 +100,13 @@ def product_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
-        product.delete()
-        return Response({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        try:
+            product.delete()
+            return Response({'message': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response({
+                'error': f"Cannot delete Product '{product.name}': It has active transaction records (sales, purchases, or inventory tracking logs) in the database."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
