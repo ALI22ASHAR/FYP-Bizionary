@@ -339,6 +339,7 @@ const Dashboard = () => {
                 barcode: productData.barcode || '',
                 pack_barcode: productData.pack_barcode || '',
                 order_from_warehouse: productData.order_from_warehouse || false,
+                stock_quantity: Number(productData.initial_packs || 0) * Number(productData.pcs_per_pack || 12)
             };
 
             await api.post('products/', payload);

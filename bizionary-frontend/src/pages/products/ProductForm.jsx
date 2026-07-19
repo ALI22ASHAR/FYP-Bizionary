@@ -20,6 +20,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
         pack_barcode: '',
         pcs_per_pack: 12,
         pack_price: '',
+        initial_packs: 0,
     });
 
     useEffect(() => {
@@ -37,6 +38,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     pack_barcode: initialData.pack_barcode || '',
                     pcs_per_pack: initialData.pcs_per_pack ?? 12,
                     pack_price: initialData.pack_price ?? '',
+                    initial_packs: 0,
                 });
             } else {
                 setFormData({
@@ -52,6 +54,7 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                     pack_barcode: '',
                     pcs_per_pack: 12,
                     pack_price: '',
+                    initial_packs: 0,
                 });
             }
         }
@@ -261,6 +264,24 @@ const ProductForm = ({ isOpen, onClose, onSubmit, initialData, submitting = fals
                                     placeholder="e.g. 600"
                                 />
                             </div>
+
+                            {!isEditing && (
+                                <div className="col-span-2 sm:col-span-1">
+                                    <label className="block text-sm font-medium text-primary mb-1 font-bold">Initial Stock (Packs)</label>
+                                    <input
+                                        type="number"
+                                        name="initial_packs"
+                                        min="0"
+                                        value={formData.initial_packs}
+                                        onChange={handleChange}
+                                        className="w-full border border-card rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-card text-primary font-bold text-center"
+                                        placeholder="e.g. 10"
+                                    />
+                                    <span className="text-[10px] text-secondary block mt-1 font-semibold text-center">
+                                        Total units: {Number(formData.initial_packs || 0) * Number(formData.pcs_per_pack || 12)} pcs
+                                    </span>
+                                </div>
+                            )}
 
                             <div className="col-span-2 flex items-center gap-2 py-2">
                                 <input
