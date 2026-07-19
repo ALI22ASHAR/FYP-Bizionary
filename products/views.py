@@ -805,8 +805,10 @@ def bulk_create_products(request):
             qty = int(p_data.get('stock_quantity', 0) or 0)
             min_stock = int(p_data.get('min_stock', 5) or 5)
             category = p_data.get('category', 'Beverages').strip() or 'Beverages'
-            barcode = p_data.get('barcode', '').strip() or None
-            pack_barcode = p_data.get('pack_barcode', '').strip() or None
+            barcode_val = p_data.get('barcode')
+            barcode = barcode_val.strip() if isinstance(barcode_val, str) and barcode_val.strip() else None
+            pack_barcode_val = p_data.get('pack_barcode')
+            pack_barcode = pack_barcode_val.strip() if isinstance(pack_barcode_val, str) and pack_barcode_val.strip() else None
             pcs_per_pack = int(p_data.get('pcs_per_pack', 12) or 12)
             pack_price_raw = p_data.get('pack_price')
             pack_price = Decimal(str(pack_price_raw)) if pack_price_raw is not None and str(pack_price_raw).strip() != '' else None
