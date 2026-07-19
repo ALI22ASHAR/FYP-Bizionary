@@ -2,6 +2,7 @@ import os
 from decimal import Decimal
 
 from groq import Groq
+import httpx
 from django.conf import settings
 from django.db.models import Sum
 
@@ -73,7 +74,7 @@ def compress_history(history):
         if not api_key:
             return history
             
-        client = Groq(api_key=api_key)
+        client = Groq(api_key=api_key, http_client=httpx.Client())
         model = _get_groq_model()
         
         summary_prompt = (
@@ -1712,7 +1713,7 @@ def generate_chatbot_response(message, history=None):
             raise RuntimeError('Groq API key not configured. Please set GROQ_API_KEY environment variable.')
         
         print(f'[Chatbot] Creating Groq client with API key: {api_key[:20]}...')
-        client = Groq(api_key=api_key)
+        client = Groq(api_key=api_key, http_client=httpx.Client())
         print('[Chatbot] Groq client created successfully')
         
         messages = build_chat_messages(message, history)

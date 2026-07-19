@@ -164,8 +164,9 @@ def generate_ai_insights(sales_data, product_performance):
         if not api_key:
             return "AI insights unavailable: OpenAI API key not configured. Please set it in the Admin Panel under Settings > API Configuration."
         
+        import httpx
         from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key, http_client=httpx.Client())
         
         total_sales = len(sales_data)
         total_revenue = sum(float(s.get('total_price', 0) or 0) for s in sales_data)

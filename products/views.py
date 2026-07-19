@@ -645,39 +645,106 @@ def scan_product(request):
     """
     GET /api/products/scan/?barcode=<barcode>
     Looks up a product by barcode, pack_barcode, or sku.
-    Returns serialized product, scanned_as ('unit' or 'pack'), and multiplier.
+    Supports exact, case-insensitive, and partial contains matches.
+    If multiple matches are found on partial contains, returns a list of matching choices.
     """
     barcode = request.query_params.get('barcode', '').strip()
     if not barcode:
         return Response({'error': 'Barcode parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # Try unit barcode
+    # 1. Try unit barcode (exact match)
     product = Product.objects.filter(barcode=barcode).first()
     scanned_as = 'unit'
     multiplier = 1
     
     if not product:
-        # Try pack barcode
+        # Try pack barcode (exact match)
         product = Product.objects.filter(pack_barcode=barcode).first()
         if product:
             scanned_as = 'pack'
             multiplier = product.pcs_per_pack
             
     if not product:
-        # Fallback to sku/product_code
+        # Try sku/product_code (exact match)
         product = Product.objects.filter(sku=barcode).first()
         if product:
             scanned_as = 'unit'
             multiplier = 1
-            
+
+    # 2. Try exact case-insensitive matches
     if not product:
+        product = Product.objects.filter(barcode__iexact=barcode).first()
+        if product:
+            scanned_as = 'unit'
+            multiplier = 1
+
+    if not product:
+        product = Product.objects.filter(pack_barcode__iexact=barcode).first()
+        if product:
+            scanned_as = 'pack'
+            multiplier = product.pcs_per_pack
+
+    if not product:
+        product = Product.objects.filter(sku__iexact=barcode).first()
+        if product:
+            scanned_as = 'unit'
+            multiplier = 1
+
+    # If we found a single exact match, return it directly
+    if product:
+        serializer = ProductSerializer(product)
+        return Response({
+            'product': serializer.data,
+            'scanned_as': scanned_as,
+            'multiplier': multiplier,
+            'multiple_matches': False
+        }, status=status.HTTP_200_OK)
+
+    # 3. Try partial contains matches (use Q objects to gather all matching products)
+    from django.db.models import Q
+    matches = Product.objects.filter(
+        Q(sku__icontains=barcode) |
+        Q(barcode__icontains=barcode) |
+        Q(pack_barcode__icontains=barcode) |
+        Q(name__icontains=barcode)
+    ).distinct()
+
+    if not matches.exists():
         return Response({'error': f'Product with barcode or SKU "{barcode}" not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-    serializer = ProductSerializer(product)
+
+    if matches.count() == 1:
+        single_product = matches.first()
+        p_scanned_as = 'unit'
+        p_multiplier = 1
+        if single_product.pack_barcode and barcode.lower() in single_product.pack_barcode.lower():
+            p_scanned_as = 'pack'
+            p_multiplier = single_product.pcs_per_pack
+            
+        serializer = ProductSerializer(single_product)
+        return Response({
+            'product': serializer.data,
+            'scanned_as': p_scanned_as,
+            'multiplier': p_multiplier,
+            'multiple_matches': False
+        }, status=status.HTTP_200_OK)
+
+    # Multiple matches found
+    serialized_matches = []
+    for p in matches[:15]:  # limit to 15 results
+        p_scanned_as = 'unit'
+        p_multiplier = 1
+        if p.pack_barcode and barcode.lower() in p.pack_barcode.lower():
+            p_scanned_as = 'pack'
+            p_multiplier = p.pcs_per_pack
+        serialized_matches.append({
+            'product': ProductSerializer(p).data,
+            'scanned_as': p_scanned_as,
+            'multiplier': p_multiplier
+        })
+
     return Response({
-        'product': serializer.data,
-        'scanned_as': scanned_as,
-        'multiplier': multiplier
+        'multiple_matches': True,
+        'matches': serialized_matches
     }, status=status.HTTP_200_OK)
 
 

@@ -40,6 +40,14 @@ class Purchase(models.Model):
         default='UNPAID'
     )
     notes = models.TextField(blank=True, null=True)
+    delivery_location = models.CharField(
+        max_length=50,
+        choices=[
+            ('WAREHOUSE', 'Warehouse'),
+            ('SHOP', 'Shop'),
+        ],
+        default='WAREHOUSE'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

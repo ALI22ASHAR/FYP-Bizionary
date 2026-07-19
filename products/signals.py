@@ -31,6 +31,19 @@ def update_product_stock_on_save(sender, instance, created, **kwargs):
                         product.warehouse_stock += delta
                     else:
                         product.shop_stock += delta
+            elif instance.reference_type == 'purchase' and instance.reference_id:
+                try:
+                    from purchases.models import Purchase
+                    purchase = Purchase.objects.get(pk=instance.reference_id)
+                    if getattr(purchase, 'delivery_location', 'WAREHOUSE') == 'SHOP':
+                        product.shop_stock += delta
+                    else:
+                        product.warehouse_stock += delta
+                except Exception:
+                    if instance.txn_type == 'IN':
+                        product.warehouse_stock += delta
+                    else:
+                        product.shop_stock += delta
             elif instance.reference_type in ('sale', 'sale_return', 'scan_stock_in_shop'):
                 product.shop_stock += delta
             elif instance.reference_type == 'scan_stock_in_warehouse':
@@ -61,6 +74,19 @@ def update_product_stock_on_delete(sender, instance, **kwargs):
                 from purchases.models import OrderedSlip
                 slip = OrderedSlip.objects.get(pk=instance.reference_id)
                 if slip.delivery_location == 'SHOP':
+                    product.shop_stock += delta
+                else:
+                    product.warehouse_stock += delta
+            except Exception:
+                if instance.txn_type == 'IN':
+                    product.warehouse_stock += delta
+                else:
+                    product.shop_stock += delta
+        elif instance.reference_type == 'purchase' and instance.reference_id:
+            try:
+                from purchases.models import Purchase
+                purchase = Purchase.objects.get(pk=instance.reference_id)
+                if getattr(purchase, 'delivery_location', 'WAREHOUSE') == 'SHOP':
                     product.shop_stock += delta
                 else:
                     product.warehouse_stock += delta

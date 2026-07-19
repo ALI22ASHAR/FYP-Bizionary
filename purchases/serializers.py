@@ -66,6 +66,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
             'payment_status',
             'notes',
             'line_items',
+            'delivery_location',
             'created_at',
             'updated_at',
         )

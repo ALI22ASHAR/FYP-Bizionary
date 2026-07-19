@@ -28,8 +28,46 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
     const [scanBarcode, setScanBarcode] = useState('');
     const [scanError, setScanError] = useState('');
     const [scanSuccess, setScanSuccess] = useState('');
+    const [multipleMatches, setMultipleMatches] = useState([]);
     const [cameraOpen, setCameraOpen] = useState(false);
     const scannerRef = useRef(null);
+    const handleSelectProduct = (scannedProduct, scanned_as, multiplier) => {
+        // Check if product is already in line items
+        const existingIndex = lineItems.findIndex(
+            (item) => Number(item.product) === Number(scannedProduct.id)
+        );
+
+        if (existingIndex > -1) {
+            // Increment quantity
+            setLineItems((prev) =>
+                prev.map((item, idx) =>
+                    idx === existingIndex
+                        ? { ...item, quantity: item.quantity + multiplier }
+                        : item
+                )
+            );
+            setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
+        } else {
+            // Add new line item
+            const newItem = {
+                category: normalizeProductCategory(scannedProduct.category) || 'Tech',
+                product: Number(scannedProduct.id),
+                quantity: multiplier,
+                unitPrice: Number(scannedProduct.sale_price || scannedProduct.unit_price || 0),
+            };
+            
+            // If the only line item is empty, replace it. Otherwise append.
+            if (lineItems.length === 1 && !lineItems[0].product) {
+                setLineItems([newItem]);
+            } else {
+                setLineItems((prev) => [...prev, newItem]);
+            }
+            setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}) to sale.`);
+        }
+        setScanBarcode('');
+        setMultipleMatches([]);
+    };
+
     const handleBarcodeScanSubmit = async (barcodeText) => {
         const code = barcodeText || scanBarcode;
         if (!code.trim()) return;
@@ -38,41 +76,12 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
         setScanSuccess('');
         try {
             const res = await api.get(`products/scan/?barcode=${encodeURIComponent(code.trim())}`);
-            const { product: scannedProduct, scanned_as, multiplier } = res.data;
-            
-            // Check if product is already in line items
-            const existingIndex = lineItems.findIndex(
-                (item) => Number(item.product) === Number(scannedProduct.id)
-            );
-
-            if (existingIndex > -1) {
-                // Increment quantity
-                setLineItems((prev) =>
-                    prev.map((item, idx) =>
-                        idx === existingIndex
-                            ? { ...item, quantity: item.quantity + multiplier }
-                            : item
-                    )
-                );
-                setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
-            } else {
-                // Add new line item
-                const newItem = {
-                    category: normalizeProductCategory(scannedProduct.category) || 'Tech',
-                    product: Number(scannedProduct.id),
-                    quantity: multiplier,
-                    unitPrice: Number(scannedProduct.sale_price || scannedProduct.unit_price || 0),
-                };
-                
-                // If the only line item is empty, replace it. Otherwise append.
-                if (lineItems.length === 1 && !lineItems[0].product) {
-                    setLineItems([newItem]);
-                } else {
-                    setLineItems((prev) => [...prev, newItem]);
-                }
-                setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}) to sale.`);
+            if (res.data.multiple_matches) {
+                setMultipleMatches(res.data.matches);
+                return;
             }
-            setScanBarcode('');
+            const { product: scannedProduct, scanned_as, multiplier } = res.data;
+            handleSelectProduct(scannedProduct, scanned_as, multiplier);
         } catch (err) {
             const msg = err.response?.data?.error || `Product with code "${code}" not found.`;
             setScanError(msg);
@@ -346,7 +355,8 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
     };
 
     return (
-        <Dialog open={isOpen} onClose={submitting ? () => {} : onClose} className="relative z-50">
+        <>
+            <Dialog open={isOpen} onClose={submitting ? () => {} : onClose} className="relative z-50">
             <div className="fixed inset-0 bg-primary/30" aria-hidden="true" />
 
             <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4">
@@ -661,6 +671,53 @@ const SaleForm = ({ isOpen, onClose, onSubmit, initialData, createdSale, createM
                 </Dialog.Panel>
             </div>
         </Dialog>
+
+        {/* Multiple Matches Selection Dialog */}
+        <Dialog open={multipleMatches.length > 0} onClose={() => setMultipleMatches([])} className="relative z-50">
+            <div className="fixed inset-0 bg-primary/30 backdrop-blur-xs" aria-hidden="true" />
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+                <Dialog.Panel className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[80vh]">
+                    <div className="flex justify-between items-center mb-4 border-b border-border pb-3 shrink-0">
+                        <div>
+                            <Dialog.Title className="text-base font-bold text-primary">
+                                Select Product
+                            </Dialog.Title>
+                            <p className="text-xs text-secondary mt-0.5">
+                                Multiple products match "{scanBarcode}". Please choose one:
+                            </p>
+                        </div>
+                        <button onClick={() => setMultipleMatches([])} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto divide-y divide-border/60 max-h-64 pr-1">
+                        {multipleMatches.map((match) => {
+                            const prod = match.product;
+                            return (
+                                <button
+                                    key={prod.id}
+                                    type="button"
+                                    onClick={() => handleSelectProduct(prod, match.scanned_as, match.multiplier)}
+                                    className="w-full text-left px-4 py-3 hover:bg-page/50 transition-colors flex items-center justify-between text-xs cursor-pointer group"
+                                >
+                                    <div className="min-w-0 pr-4">
+                                        <div className="font-bold text-primary group-hover:text-accent transition-colors truncate">{prod.name}</div>
+                                        <div className="text-[10px] text-secondary font-mono mt-0.5">{prod.sku || prod.product_code || 'No SKU'}</div>
+                                        <div className="text-[10px] text-accent/80 font-bold uppercase mt-1">{prod.category}</div>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <div className="font-extrabold text-primary">Rs. {Number(prod.sale_price || prod.unit_price || 0).toLocaleString()}</div>
+                                        <div className="text-[10px] text-secondary mt-0.5">{prod.current_stock} in stock</div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </Dialog.Panel>
+            </div>
+        </Dialog>
+        </>
     );
 };
 

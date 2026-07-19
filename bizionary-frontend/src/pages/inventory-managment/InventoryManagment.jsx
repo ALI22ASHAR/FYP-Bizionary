@@ -11,6 +11,7 @@ import OrderSlipForm from '../ordered-slips/OrderSlipForm';
 import { buildIncomingQuantityMap, buildInventoryRows, normalizeProductRecord, toNumber } from '../../utils/productInventoryTransforms';
 import { getCategoryPrefix } from '../../utils/productCategories';
 import PdfUploadModal from '../../components/common/PdfUploadModal';
+import DirectPurchaseModal from './DirectPurchaseModal';
 
 const InventoryManagment = () => {
     const navigate = useNavigate();
@@ -22,6 +23,7 @@ const InventoryManagment = () => {
     const [isIncomingBreakdownOpen, setIsIncomingBreakdownOpen] = useState(false);
     const [isScanStockInOpen, setIsScanStockInOpen] = useState(false);
     const [isPdfUploadOpen, setIsPdfUploadOpen] = useState(false);
+    const [isDirectPurchaseOpen, setIsDirectPurchaseOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState('');
     const [formSuccess, setFormSuccess] = useState('');
@@ -282,6 +284,13 @@ const InventoryManagment = () => {
                             Ordered Slips
                         </button>
                         <button
+                            onClick={() => setIsDirectPurchaseOpen(true)}
+                            className="inline-flex items-center justify-center px-5 py-2 bg-accent/15 text-accent border border-accent/25 rounded-full text-sm font-bold transition-all hover:bg-accent/25 shadow-sm cursor-pointer"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Record Direct Purchase
+                        </button>
+                        <button
                             onClick={() => {
                                 setFormMode('custom');
                                 setIsFormOpen(true);
@@ -528,6 +537,13 @@ const InventoryManagment = () => {
                 onSuccess={fetchInventoryData}
                 actionType="stock_in"
             />
+
+            {/* Direct Stock Purchase Modal */}
+            <DirectPurchaseModal
+                isOpen={isDirectPurchaseOpen}
+                onClose={() => setIsDirectPurchaseOpen(false)}
+                onSuccess={fetchInventoryData}
+            />
         </div>
     );
 };
@@ -668,10 +684,40 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
     const [scanBarcode, setScanBarcode] = useState('');
     const [scanError, setScanError] = useState('');
     const [scanSuccess, setScanSuccess] = useState('');
+    const [multipleMatches, setMultipleMatches] = useState([]);
     const [cameraOpen, setCameraOpen] = useState(false);
     const [deliveryLocation, setDeliveryLocation] = useState('WAREHOUSE');
     const [submitting, setSubmitting] = useState(false);
     const scannerRef = useRef(null);
+
+    const handleSelectProduct = (scannedProduct, scanned_as, multiplier) => {
+        const existingIndex = scannedItems.findIndex(
+            (item) => Number(item.product_id) === Number(scannedProduct.id)
+        );
+
+        if (existingIndex > -1) {
+            setScannedItems((prev) =>
+                prev.map((item, idx) =>
+                    idx === existingIndex
+                        ? { ...item, quantity: item.quantity + multiplier }
+                        : item
+                )
+            );
+            setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
+        } else {
+            const newItem = {
+                product_id: scannedProduct.id,
+                name: scannedProduct.name,
+                sku: scannedProduct.sku || scannedProduct.product_code,
+                quantity: multiplier,
+                scanned_as: scanned_as
+            };
+            setScannedItems((prev) => [...prev, newItem]);
+            setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}).`);
+        }
+        setScanBarcode('');
+        setMultipleMatches([]);
+    };
 
     const handleBarcodeScanSubmit = async (barcodeText) => {
         const code = barcodeText || scanBarcode;
@@ -681,33 +727,12 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
         setScanSuccess('');
         try {
             const res = await api.get(`products/scan/?barcode=${encodeURIComponent(code.trim())}`);
-            const { product: scannedProduct, scanned_as, multiplier } = res.data;
-
-            const existingIndex = scannedItems.findIndex(
-                (item) => Number(item.product_id) === Number(scannedProduct.id)
-            );
-
-            if (existingIndex > -1) {
-                setScannedItems((prev) =>
-                    prev.map((item, idx) =>
-                        idx === existingIndex
-                            ? { ...item, quantity: item.quantity + multiplier }
-                            : item
-                    )
-                );
-                setScanSuccess(`Incremented "${scannedProduct.name}" quantity by ${multiplier} (${scanned_as}).`);
-            } else {
-                const newItem = {
-                    product_id: scannedProduct.id,
-                    name: scannedProduct.name,
-                    sku: scannedProduct.sku,
-                    quantity: multiplier,
-                    scanned_as: scanned_as
-                };
-                setScannedItems((prev) => [...prev, newItem]);
-                setScanSuccess(`Added "${scannedProduct.name}" x${multiplier} (${scanned_as}).`);
+            if (res.data.multiple_matches) {
+                setMultipleMatches(res.data.matches);
+                return;
             }
-            setScanBarcode('');
+            const { product: scannedProduct, scanned_as, multiplier } = res.data;
+            handleSelectProduct(scannedProduct, scanned_as, multiplier);
         } catch (err) {
             const msg = err.response?.data?.error || `Product with code "${code}" not found.`;
             setScanError(msg);
@@ -798,181 +823,230 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
             setScanBarcode('');
             setScanError('');
             setScanSuccess('');
+            setMultipleMatches([]);
             setCameraOpen(false);
         }
     }, [isOpen]);
 
     return (
-        <Dialog open={isOpen} onClose={submitting ? () => {} : onClose} className="relative z-50">
-            <div className="fixed inset-0 bg-primary/30" aria-hidden="true" />
-            <div className="fixed inset-0 flex items-center justify-center p-4">
-                <Dialog.Panel className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[85vh]">
-                    <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
-                        <div>
-                            <Dialog.Title className="text-lg font-bold text-primary">
-                                Scan Stock In / Inventory Addition
-                            </Dialog.Title>
-                            <p className="text-xs text-secondary mt-0.5">
-                                Add products directly to inventory by scanning barcodes/SKUs
-                            </p>
-                        </div>
-                        <button onClick={onClose} disabled={submitting} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-sm font-semibold text-primary mb-1">Destination Location</label>
-                                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-page p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDeliveryLocation('WAREHOUSE')}
-                                        className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
-                                            deliveryLocation === 'WAREHOUSE'
-                                                ? 'bg-primary text-card shadow-xs'
-                                                : 'text-secondary hover:bg-card'
-                                        }`}
-                                    >
-                                        Warehouse
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDeliveryLocation('SHOP')}
-                                        className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
-                                            deliveryLocation === 'SHOP'
-                                                ? 'bg-primary text-card shadow-xs'
-                                                : 'text-secondary hover:bg-card'
-                                        }`}
-                                    >
-                                        Shop Outlet
-                                    </button>
-                                </div>
+        <>
+            <Dialog open={isOpen} onClose={submitting ? () => {} : onClose} className="relative z-50">
+                <div className="fixed inset-0 bg-primary/30" aria-hidden="true" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                    <Dialog.Panel className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[85vh]">
+                        <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
+                            <div>
+                                <Dialog.Title className="text-lg font-bold text-primary">
+                                    Scan Stock In / Inventory Addition
+                                </Dialog.Title>
+                                <p className="text-xs text-secondary mt-0.5">
+                                    Add products directly to inventory by scanning barcodes/SKUs
+                                </p>
                             </div>
-
-                            <div className="col-span-2">
-                                <label className="block text-sm font-semibold text-primary mb-1">Quick Scan (Barcode / SKU)</label>
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <input
-                                            type="text"
-                                            value={scanBarcode}
-                                            onChange={(e) => setScanBarcode(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    handleBarcodeScanSubmit();
-                                                }
-                                            }}
-                                            className="w-full rounded-lg border border-border bg-page p-2.5 pl-9 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-primary"
-                                            placeholder="Focus here & scan barcode/SKU..."
-                                        />
-                                        <Scan className="absolute left-3 top-3 w-4.5 h-4.5 text-secondary" />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setCameraOpen(!cameraOpen)}
-                                        className={`px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
-                                            cameraOpen
-                                                ? 'bg-status-info/10 text-status-info border-status-info/30 hover:bg-status-info/20'
-                                                : 'bg-primary text-card border-primary hover:bg-primary/95'
-                                        }`}
-                                    >
-                                        {cameraOpen ? <CameraOff className="w-4.5 h-4.5" /> : <Camera className="w-4.5 h-4.5" />}
-                                        {cameraOpen ? 'Close Camera' : 'Camera Scan'}
-                                    </button>
-                                </div>
-                            </div>
+                            <button onClick={onClose} disabled={submitting} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
 
-                        {cameraOpen && (
-                            <div className="flex flex-col items-center justify-center p-3 bg-page border border-border rounded-xl">
-                                <div id="inventory-reader" className="w-full max-w-sm overflow-hidden rounded-lg shadow-inner"></div>
-                                <p className="text-[10px] text-secondary mt-1.5">Hold QR/Barcode in front of the camera</p>
-                            </div>
-                        )}
+                        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-semibold text-primary mb-1">Destination Location</label>
+                                    <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-page p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeliveryLocation('WAREHOUSE')}
+                                            className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                                                deliveryLocation === 'WAREHOUSE'
+                                                    ? 'bg-primary text-card shadow-xs'
+                                                    : 'text-secondary hover:bg-card'
+                                            }`}
+                                        >
+                                            Warehouse
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeliveryLocation('SHOP')}
+                                            className={`rounded-lg py-2 text-xs font-bold transition-all cursor-pointer ${
+                                                deliveryLocation === 'SHOP'
+                                                    ? 'bg-primary text-card shadow-xs'
+                                                    : 'text-secondary hover:bg-card'
+                                            }`}
+                                        >
+                                            Shop Outlet
+                                        </button>
+                                    </div>
+                                </div>
 
-                        {(scanSuccess || scanError) && (
-                            <div className="flex flex-col gap-1.5">
-                                {scanSuccess && (
-                                    <div className="px-3 py-2 rounded-lg border border-emerald-100 bg-status-success/5 text-status-success text-xs font-semibold">
-                                        {scanSuccess}
-                                    </div>
-                                )}
-                                {scanError && (
-                                    <div className="px-3 py-2 rounded-lg border border-rose-100 bg-status-info/5 text-status-info text-xs font-semibold">
-                                        {scanError}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Scanned Items list */}
-                        <div className="border border-border rounded-xl overflow-hidden bg-background">
-                            <div className="bg-page px-4 py-2 border-b border-border text-xs font-bold text-secondary uppercase grid grid-cols-[1fr_100px_40px] gap-4">
-                                <div>Product</div>
-                                <div className="text-center">Quantity</div>
-                                <div className="text-right">Action</div>
-                            </div>
-                            <div className="divide-y divide-border max-h-48 overflow-y-auto">
-                                {scannedItems.length === 0 ? (
-                                    <div className="p-6 text-center text-xs text-textMuted italic">
-                                        No items scanned yet. Scan barcodes to build stock-in list.
-                                    </div>
-                                ) : (
-                                    scannedItems.map((item) => (
-                                        <div key={item.product_id} className="px-4 py-2.5 grid grid-cols-[1fr_100px_40px] gap-4 items-center text-xs">
-                                            <div className="min-w-0">
-                                                <div className="font-bold text-primary truncate">{item.name}</div>
-                                                <div className="text-[10px] text-secondary mt-0.5 font-mono">{item.sku}</div>
-                                            </div>
-                                            <div>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.quantity}
-                                                    onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
-                                                    className="w-full text-center border border-border rounded p-1 outline-none text-primary font-semibold"
-                                                />
-                                            </div>
-                                            <div className="text-right">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveItem(item.product_id)}
-                                                    className="p-1.5 text-status-info hover:bg-status-info/10 rounded-lg transition-colors cursor-pointer"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-semibold text-primary mb-1">Quick Scan (Barcode / SKU)</label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="text"
+                                                value={scanBarcode}
+                                                onChange={(e) => setScanBarcode(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleBarcodeScanSubmit();
+                                                    }
+                                                }}
+                                                className="w-full rounded-lg border border-border bg-page p-2.5 pl-9 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-primary"
+                                                placeholder="Focus here & scan barcode/SKU..."
+                                            />
+                                            <Scan className="absolute left-3 top-3 w-4.5 h-4.5 text-secondary" />
                                         </div>
-                                    ))
-                                )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setCameraOpen(!cameraOpen)}
+                                            className={`px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                                cameraOpen
+                                                    ? 'bg-status-info/10 text-status-info border-status-info/30 hover:bg-status-info/20'
+                                                    : 'bg-primary text-card border-primary hover:bg-primary/95'
+                                            }`}
+                                        >
+                                            {cameraOpen ? <CameraOff className="w-4.5 h-4.5" /> : <Camera className="w-4.5 h-4.5" />}
+                                            {cameraOpen ? 'Close Camera' : 'Camera Scan'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {cameraOpen && (
+                                <div className="flex flex-col items-center justify-center p-3 bg-page border border-border rounded-xl">
+                                    <div id="inventory-reader" className="w-full max-w-sm overflow-hidden rounded-lg shadow-inner"></div>
+                                    <p className="text-[10px] text-secondary mt-1.5">Hold QR/Barcode in front of the camera</p>
+                                </div>
+                            )}
+
+                            {(scanSuccess || scanError) && (
+                                <div className="flex flex-col gap-1.5">
+                                    {scanSuccess && (
+                                        <div className="px-3 py-2 rounded-lg border border-emerald-100 bg-status-success/5 text-status-success text-xs font-semibold">
+                                            {scanSuccess}
+                                        </div>
+                                    )}
+                                    {scanError && (
+                                        <div className="px-3 py-2 rounded-lg border border-rose-100 bg-status-info/5 text-status-info text-xs font-semibold">
+                                            {scanError}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Scanned Items list */}
+                            <div className="border border-border rounded-xl overflow-hidden bg-background">
+                                <div className="bg-page px-4 py-2 border-b border-border text-xs font-bold text-secondary uppercase grid grid-cols-[1fr_100px_40px] gap-4">
+                                    <div>Product</div>
+                                    <div className="text-center">Quantity</div>
+                                    <div className="text-right">Action</div>
+                                </div>
+                                <div className="divide-y divide-border max-h-48 overflow-y-auto">
+                                    {scannedItems.length === 0 ? (
+                                        <div className="p-6 text-center text-xs text-textMuted italic">
+                                            No items scanned yet. Scan barcodes to build stock-in list.
+                                        </div>
+                                    ) : (
+                                        scannedItems.map((item) => (
+                                            <div key={item.product_id} className="px-4 py-2.5 grid grid-cols-[1fr_100px_40px] gap-4 items-center text-xs">
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-primary truncate">{item.name}</div>
+                                                    <div className="text-[10px] text-secondary mt-0.5 font-mono">{item.sku}</div>
+                                                </div>
+                                                <div>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
+                                                        className="w-full text-center border border-border rounded p-1 outline-none text-primary font-semibold"
+                                                    />
+                                                </div>
+                                                <div className="text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveItem(item.product_id)}
+                                                        className="p-1.5 text-status-info hover:bg-status-info/10 rounded-lg transition-colors cursor-pointer"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-border">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            disabled={submitting}
-                            className="px-4 py-2 text-xs font-medium text-primary bg-card border border-border rounded-xl hover:bg-page transition-colors cursor-pointer"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={submitting || scannedItems.length === 0}
-                            className="px-4 py-2 text-xs font-medium text-card bg-primary rounded-xl hover:bg-secondary transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                            {submitting ? 'Saving...' : 'Confirm Stock In'}
-                        </button>
-                    </div>
-                </Dialog.Panel>
-            </div>
-        </Dialog>
+                        <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-border">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                disabled={submitting}
+                                className="px-4 py-2 text-xs font-medium text-primary bg-card border border-border rounded-xl hover:bg-page transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={submitting || scannedItems.length === 0}
+                                className="px-4 py-2 text-xs font-medium text-card bg-primary rounded-xl hover:bg-secondary transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                                {submitting ? 'Saving...' : 'Confirm Stock In'}
+                            </button>
+                        </div>
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
+
+            {/* Multiple Matches Selection Dialog */}
+            <Dialog open={multipleMatches.length > 0} onClose={() => setMultipleMatches([])} className="relative z-50">
+                <div className="fixed inset-0 bg-primary/30 backdrop-blur-xs" aria-hidden="true" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                    <Dialog.Panel className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-card flex flex-col max-h-[80vh]">
+                        <div className="flex justify-between items-center mb-4 border-b border-border pb-3 shrink-0">
+                            <div>
+                                <Dialog.Title className="text-base font-bold text-primary">
+                                    Select Product
+                                </Dialog.Title>
+                                <p className="text-xs text-secondary mt-0.5">
+                                    Multiple products match "{scanBarcode}". Please choose one:
+                                </p>
+                            </div>
+                            <button onClick={() => setMultipleMatches([])} className="p-2 text-secondary hover:text-primary rounded-full hover:bg-page transition-colors cursor-pointer">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto divide-y divide-border/60 max-h-64 pr-1">
+                            {multipleMatches.map((match) => {
+                                const prod = match.product;
+                                return (
+                                    <button
+                                        key={prod.id}
+                                        type="button"
+                                        onClick={() => handleSelectProduct(prod, match.scanned_as, match.multiplier)}
+                                        className="w-full text-left px-4 py-3 hover:bg-page/50 transition-colors flex items-center justify-between text-xs cursor-pointer group"
+                                    >
+                                        <div className="min-w-0 pr-4">
+                                            <div className="font-bold text-primary group-hover:text-accent transition-colors truncate">{prod.name}</div>
+                                            <div className="text-[10px] text-secondary font-mono mt-0.5">{prod.sku || prod.product_code || 'No SKU'}</div>
+                                            <div className="text-[10px] text-accent/80 font-bold uppercase mt-1">{prod.category}</div>
+                                        </div>
+                                        <div className="shrink-0 text-right">
+                                            <div className="font-extrabold text-primary">Rs. {Number(prod.sale_price || prod.unit_price || 0).toLocaleString()}</div>
+                                            <div className="text-[10px] text-secondary mt-0.5">{prod.warehouse_stock ?? 0} in stock</div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
+        </>
     );
 };
 
