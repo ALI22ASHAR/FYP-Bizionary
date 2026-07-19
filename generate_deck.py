@@ -328,299 +328,329 @@ def main():
     p_ai.font.name = 'Segoe UI'; p_ai.font.size = Pt(11); p_ai.font.color.rgb = TEXT_COLOR
 
     # ==========================================
-    # SLIDE 5: Historical Data & 6 Months Sales Generation
+    # SLIDE 5: Raw Master Catalog (Al-Noor Trading)
     # ==========================================
     s5 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s5, "Master Data & 6-Month Sales Seeding")
+    add_slide_header(s5, "Raw Product Master Catalog Data")
+    add_ui_image(s5, "media__1784459864365.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s5, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Product Catalog Excel Sheet", TITLE_COLOR)
+    s5_data_points = [
+        "Store Master Data: Defines Lahore office product keys, categorizations, and brands.",
+        "Key Fields: Includes SKUs, reorder limits, cost values, selling margins, and supplier listings.",
+        "System Mapping: The raw Excel contains structural attributes that are parsed into SQL product objects."
+    ]
+    add_bullet_points(s5, s5_data_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(2.0), font_size=13)
+    add_flow_diagram(s5, Inches(8.85), Inches(4.5), ["1. Open Excel", "2. Map Schema", "3. Seed DB"])
+
+    # ==========================================
+    # SLIDE 6: Raw 30-Day Sales Data (Al-Noor Trading)
+    # ==========================================
+    s6 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s6, "Raw 30-Day Monthly Sales Data Sheet")
+    add_ui_image(s6, "media__1784459858013.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s6, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Sales Sheet Columns", ACCENT_COLOR)
+    s6_data_points = [
+        "Monthly Logs: Stores transaction rows containing margins, reorder units, and stock statuses.",
+        "Daily Columns: Tracks unit sales quantities sold day-by-day (from 1-May to 30-May).",
+        "Parser Connection: Scans date headers dynamically to index quantities without hardcoded months."
+    ]
+    add_bullet_points(s6, s6_data_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(2.0), font_size=13)
+    add_flow_diagram(s6, Inches(8.85), Inches(4.5), ["1. Read Columns", "2. Parse Quantities", "3. Record Sales"])
+
+    # ==========================================
+    # SLIDE 7: Master Data & 6-Month Sales Seeding Flow
+    # ==========================================
+    s7 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s7, "Master Data & 6-Month Sales Seeding")
     
     # Sequence boxes (3 steps)
-    add_card(s5, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Step 1: Master Catalog Data", TITLE_COLOR)
-    st1 = s5.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.5), Inches(3.5), Inches(3.8))
+    add_card(s7, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Step 1: Master Catalog Data", TITLE_COLOR)
+    st1 = s7.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.5), Inches(3.5), Inches(3.8))
     st1.fill.solid(); st1.fill.fore_color.rgb = CODE_BG; st1.line.color.rgb = CARD_BORDER
     t_st1 = st1.text_frame; t_st1.word_wrap = True
     p_st1 = t_st1.paragraphs[0]; p_st1.text = "Initial Data Setup:\n• Exposes real catalogs of items, standard purchase costs, supplier profiles, and categories.\n• Registers items like Beverages, Grocery, Pharmaceuticals, and Stationery.\n• Pre-defines minimum stock thresholds for alert triggers."
     p_st1.font.name = 'Segoe UI'; p_st1.font.size = Pt(13); p_st1.font.color.rgb = TEXT_COLOR
     
-    arrow_st1 = s5.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.45), Inches(3.8), Inches(0.4), Inches(0.3))
+    arrow_st1 = s7.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.45), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_st1.fill.solid(); arrow_st1.fill.fore_color.rgb = ACCENT_COLOR; arrow_st1.line.fill.background()
 
-    add_card(s5, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Step 2: Seeding Engine", ACCENT_COLOR)
-    st2 = s5.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.15), Inches(2.5), Inches(3.5), Inches(3.8))
+    add_card(s7, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Step 2: Seeding Engine", ACCENT_COLOR)
+    st2 = s7.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.15), Inches(2.5), Inches(3.5), Inches(3.8))
     st2.fill.solid(); st2.fill.fore_color.rgb = CODE_BG; st2.line.color.rgb = CARD_BORDER
     t_st2 = st2.text_frame; t_st2.word_wrap = True
     p_st2 = t_st2.paragraphs[0]; p_st2.text = "Seeding Logic:\n• Executes script `seed_historical_sales.py` to generate sample logs.\n• Seeds data across multiple calendar months (e.g. January to April 2026).\n• Simulates random order sizes (1-8 pcs) and standard payment methods."
     p_st2.font.name = 'Segoe UI'; p_st2.font.size = Pt(13); p_st2.font.color.rgb = TEXT_COLOR
     
-    arrow_st2 = s5.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(3.8), Inches(0.4), Inches(0.3))
+    arrow_st2 = s7.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_st2.fill.solid(); arrow_st2.fill.fore_color.rgb = ACCENT_COLOR; arrow_st2.line.fill.background()
 
-    add_card(s5, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "Step 3: Outcome & Analytics", RGBColor(234, 179, 8))
-    st3 = s5.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.65), Inches(2.5), Inches(3.03), Inches(3.8))
+    add_card(s7, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "Step 3: Outcome & Analytics", RGBColor(234, 179, 8))
+    st3 = s7.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.65), Inches(2.5), Inches(3.03), Inches(3.8))
     st3.fill.solid(); st3.fill.fore_color.rgb = CODE_BG; st3.line.color.rgb = CARD_BORDER
     t_st3 = st3.text_frame; t_st3.word_wrap = True
     p_st3 = t_st3.paragraphs[0]; p_st3.text = "Outcome Results:\n• Generates 6 months of sales history representing over 100+ transactions.\n• Populates dashboard insights with real trending sales velocity curves.\n• Enables AI analytics to test demand forecasts, profit summaries, and reorder levels."
     p_st3.font.name = 'Segoe UI'; p_st3.font.size = Pt(13); p_st3.font.color.rgb = TEXT_COLOR
 
     # ==========================================
-    # SLIDE 6: Executive Dashboard (Screenshot 012114.png)
+    # SLIDE 8: Executive Dashboard (Screenshot 012114.png)
     # ==========================================
-    s6 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s6, "Executive Dashboard Overview")
-    add_ui_image(s6, "Screenshot 2026-07-19 012114.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s6, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Executive Summary stats", TITLE_COLOR)
-    s6_points = [
+    s8 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s8, "Executive Dashboard Overview")
+    add_ui_image(s8, "Screenshot 2026-07-19 012114.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s8, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Executive Summary stats", TITLE_COLOR)
+    s8_points = [
         "Overview: Displays total sales, expenses, net profits, and inventory value.",
         "Quick Buttons: Easily add products, register suppliers, or log adjustments."
     ]
-    add_bullet_points(s6, s6_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s8, s8_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
     # Graphic Flow Diagram
-    add_flow_diagram(s6, Inches(8.85), Inches(4.5), ["1. Open Screen", "2. Fetch Stats", "3. Show Dashboard"])
+    add_flow_diagram(s8, Inches(8.85), Inches(4.5), ["1. Open Screen", "2. Fetch Stats", "3. Show Dashboard"])
 
     # ==========================================
-    # SLIDE 7: Sales Insights Dashboard (Screenshot 012111.png)
+    # SLIDE 9: Sales Insights Dashboard (Screenshot 012111.png)
     # ==========================================
-    s7 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s7, "Sales Performance Insights Dashboard")
-    add_ui_image(s7, "Screenshot 2026-07-19 012111.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s7, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Interactive Sales Charts", ACCENT_COLOR)
-    s7_points = [
+    s9 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s9, "Sales Performance Insights Dashboard")
+    add_ui_image(s9, "Screenshot 2026-07-19 012111.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s9, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Interactive Sales Charts", ACCENT_COLOR)
+    s9_points = [
         "Charts: Shows categories sold (stacked bars) and revenue trends (lines).",
         "Filtering: Toggle days to filter trends instantly."
     ]
-    add_bullet_points(s7, s7_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s9, s9_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s7, Inches(8.85), Inches(4.5), ["1. Pick Period", "2. Group Dates", "3. Recharts Graph"])
+    add_flow_diagram(s9, Inches(8.85), Inches(4.5), ["1. Pick Period", "2. Group Dates", "3. Recharts Graph"])
 
     # ==========================================
-    # SLIDE 8: Accounts & Finance Ledger (Screenshot 012108.png)
+    # SLIDE 10: Accounts & Finance Ledger (Screenshot 012108.png)
     # ==========================================
-    s8 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s8, "Accounts & Financial Ledger Module")
-    add_ui_image(s8, "Screenshot 2026-07-19 012108.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s8, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Double-Entry Audits", TITLE_COLOR)
-    s8_points = [
+    s10 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s10, "Accounts & Financial Ledger Module")
+    add_ui_image(s10, "Screenshot 2026-07-19 012108.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s10, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Double-Entry Audits", TITLE_COLOR)
+    s10_points = [
         "Financial Tabs: View Revenues, Expenses, Utility Bills, and statement logs.",
         "Reconciliation: Simple button to verify debits equal credits instantly."
     ]
-    add_bullet_points(s8, s8_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s10, s10_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s8, Inches(8.85), Inches(4.5), ["1. Log Action", "2. Signals Trigger", "3. Ledger Entry"])
+    add_flow_diagram(s10, Inches(8.85), Inches(4.5), ["1. Log Action", "2. Signals Trigger", "3. Ledger Entry"])
 
     # ==========================================
-    # SLIDE 9: Product Catalog Grid (Screenshot 012102.png)
+    # SLIDE 11: Product Catalog Grid (Screenshot 012102.png)
     # ==========================================
-    s9 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s9, "Product Catalog & Custom Sections")
-    add_ui_image(s9, "Screenshot 2026-07-19 012102.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s9, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Inventory Catalog System", ACCENT_COLOR)
-    s9_points = [
+    s11 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s11, "Product Catalog & Custom Sections")
+    add_ui_image(s11, "Screenshot 2026-07-19 012102.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s11, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Inventory Catalog System", ACCENT_COLOR)
+    s11_points = [
         "Grid List: Shows catalog product SKUs, prices, margins, and active status.",
         "Custom Columns: Create extra fields for specific categories dynamically."
     ]
-    add_bullet_points(s9, s9_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s11, s11_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s9, Inches(8.85), Inches(4.5), ["1. Add Columns", "2. Alter Schema", "3. Update Tables"])
+    add_flow_diagram(s11, Inches(8.85), Inches(4.5), ["1. Add Columns", "2. Alter Schema", "3. Update Tables"])
 
     # ==========================================
-    # SLIDE 10: Stock Management Dashboard (Screenshot 012055.png)
+    # SLIDE 12: Stock Management Dashboard (Screenshot 012055.png)
     # ==========================================
-    s10 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s10, "Stock Management Control Center")
-    add_ui_image(s10, "Screenshot 2026-07-19 012055.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s10, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Reorder Alerts System", TITLE_COLOR)
-    s10_points = [
+    s12 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s12, "Stock Management Control Center")
+    add_ui_image(s12, "Screenshot 2026-07-19 012055.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s12, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Reorder Alerts System", TITLE_COLOR)
+    s12_points = [
         "Valuations: Tracks shop retail value vs. warehouse stock valuations.",
         "Alerts: Highlights items where stock quantity is below safety limits."
     ]
-    add_bullet_points(s10, s10_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s12, s12_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s10, Inches(8.85), Inches(4.5), ["1. Check Stock", "2. Compare Limit", "3. Trigger Alert"])
+    add_flow_diagram(s12, Inches(8.85), Inches(4.5), ["1. Check Stock", "2. Compare Limit", "3. Trigger Alert"])
 
     # ==========================================
-    # SLIDE 11: Warehouse & Incoming Stock Modals (Screenshot 012058.png & 012050.png)
+    # SLIDE 13: Warehouse & Incoming Stock Modals (Screenshot 012058.png & 012050.png)
     # ==========================================
-    s11 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s11, "Warehouse Stock & Incoming Modals")
-    add_ui_image(s11, "Screenshot 2026-07-19 012058.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s11, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Stock Locations Reports", ACCENT_COLOR)
-    s11_points = [
+    s13 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s13, "Warehouse Stock & Incoming Modals")
+    add_ui_image(s13, "Screenshot 2026-07-19 012058.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s13, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Stock Locations Reports", ACCENT_COLOR)
+    s13_points = [
         "Location Splitting: Traces items inside the warehouse vs. items in shop.",
         "Incoming Orders: List of pending items ordered from supplier shipments."
     ]
-    add_bullet_points(s11, s11_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s13, s13_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s11, Inches(8.85), Inches(4.5), ["1. Select Item", "2. Query Location", "3. Display Modal"])
+    add_flow_diagram(s13, Inches(8.85), Inches(4.5), ["1. Select Item", "2. Query Location", "3. Display Modal"])
 
     # ==========================================
-    # SLIDE 12: Sales Transaction Log & Ingestion Suite (Screenshot 012046.png)
+    # SLIDE 14: Sales Transaction Log & Ingestion Suite (Screenshot 012046.png)
     # ==========================================
-    s12 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s12, "Sales Transactions & Ingestion Suite")
-    add_ui_image(s12, "Screenshot 2026-07-19 012046.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s12, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Transactions Logging", TITLE_COLOR)
-    s12_points = [
+    s14 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s14, "Sales Transactions & Ingestion Suite")
+    add_ui_image(s14, "Screenshot 2026-07-19 012046.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s14, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Transactions Logging", TITLE_COLOR)
+    s14_points = [
         "Logs: Search and filter complete logs of customer sales and margins.",
         "Auto-Ingest: Drag-and-drop Excel sheets to parse transactions quickly."
     ]
-    add_bullet_points(s12, s12_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s14, s14_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s12, Inches(8.85), Inches(4.5), ["1. Import Sheet", "2. Pandas Parser", "3. Log Sale DB"])
+    add_flow_diagram(s14, Inches(8.85), Inches(4.5), ["1. Import Sheet", "2. Pandas Parser", "3. Log Sale DB"])
 
     # ==========================================
-    # SLIDE 13: Supplier Ordered Slips (Screenshot 012037.png)
+    # SLIDE 15: Supplier Ordered Slips (Screenshot 012037.png)
     # ==========================================
-    s13 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s13, "Supplier Ordered Slips Management")
-    add_ui_image(s13, "Screenshot 2026-07-19 012037.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s13, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Procurement Cycles", ACCENT_COLOR)
-    s13_points = [
+    s15 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s15, "Supplier Ordered Slips Management")
+    add_ui_image(s15, "Screenshot 2026-07-19 012037.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s15, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Procurement Cycles", ACCENT_COLOR)
+    s15_points = [
         "Tracking: Monitor supplier slips, quantities, total sums, and pending statuses.",
         "Stock-in: Easily mark items as received to update inventories immediately."
     ]
-    add_bullet_points(s13, s13_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s15, s15_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s13, Inches(8.85), Inches(4.5), ["1. Mark Received", "2. Update Slip Ratio", "3. Inflow Stock"])
+    add_flow_diagram(s15, Inches(8.85), Inches(4.5), ["1. Mark Received", "2. Update Slip Ratio", "3. Inflow Stock"])
 
     # ==========================================
-    # SLIDE 14: AI Chatbot Assistant Interface (Screenshot 012026.png)
+    # SLIDE 16: AI Chatbot Assistant Interface (Screenshot 012026.png)
     # ==========================================
-    s14 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s14, "AI Chatbot Assistant Interface")
-    add_ui_image(s14, "Screenshot 2026-07-19 012026.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s14, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Agentic AI Chatbot", TITLE_COLOR)
-    s14_points = [
+    s16 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s16, "AI Chatbot Assistant Interface")
+    add_ui_image(s16, "Screenshot 2026-07-19 012026.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s16, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Agentic AI Chatbot", TITLE_COLOR)
+    s16_points = [
         "RAG Agent: Answers questions on invoices, stock alerts, and revenues.",
         "Quick Shortcuts: One-click buttons to check margins or display charts."
     ]
-    add_bullet_points(s14, s14_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s16, s16_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s14, Inches(8.85), Inches(4.5), ["1. User Prompt", "2. Groq Tool Use", "3. Local Python DB"])
+    add_flow_diagram(s16, Inches(8.85), Inches(4.5), ["1. User Prompt", "2. Groq Tool Use", "3. Local Python DB"])
 
     # ==========================================
-    # SLIDE 15: Pack Price Calculator (media__1784456905899.png)
+    # SLIDE 17: Pack Price Calculator (media__1784456905899.png)
     # ==========================================
-    s15 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s15, "Pack & Carton Price Calculator")
-    add_ui_image(s15, "media__1784456905899.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s15, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Pack Dynamics Calculator", ACCENT_COLOR)
-    s15_points = [
+    s17 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s17, "Pack & Carton Price Calculator")
+    add_ui_image(s17, "media__1784456905899.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s17, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Pack Dynamics Calculator", ACCENT_COLOR)
+    s17_points = [
         "Inputs: Configure product single unit selling prices and carton multipliers.",
         "Profit Projections: Displays expected net revenue and margins instantly."
     ]
-    add_bullet_points(s15, s15_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s17, s17_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s15, Inches(8.85), Inches(4.5), ["1. Enter Quantity", "2. React State", "3. Compute Profit"])
+    add_flow_diagram(s17, Inches(8.85), Inches(4.5), ["1. Enter Quantity", "2. React State", "3. Compute Profit"])
 
     # ==========================================
-    # SLIDE 16: Direct Stock Purchase (media__1784456944788.png)
+    # SLIDE 18: Direct Stock Purchase (media__1784456944788.png)
     # ==========================================
-    s16 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s16, "Direct Stock Purchase (Latest Modification)")
-    add_ui_image(s16, "media__1784456944788.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s16, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Direct Inflow Ledger Entries", TITLE_COLOR)
-    s16_points = [
+    s18 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s18, "Direct Stock Purchase (Latest Modification)")
+    add_ui_image(s18, "media__1784456944788.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s18, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Direct Inflow Ledger Entries", TITLE_COLOR)
+    s18_points = [
         "Stock Intake: Log supplier purchases directly to shop or warehouse stock.",
         "Custom Pack Sizes: Input unit cost and packs to update catalogs."
     ]
-    add_bullet_points(s16, s16_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s18, s18_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s16, Inches(8.85), Inches(4.5), ["1. Select Product", "2. Route Location", "3. Signal Stock In"])
+    add_flow_diagram(s18, Inches(8.85), Inches(4.5), ["1. Select Product", "2. Route Location", "3. Signal Stock In"])
 
     # ==========================================
-    # SLIDE 17: AI Sales Slip PDF Upload (media__1784457199782.png)
+    # SLIDE 19: AI Sales Slip PDF Upload (media__1784457199782.png)
     # ==========================================
-    s17 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s17, "AI Sales Slip PDF Upload / Bulk Sale")
-    add_ui_image(s17, "media__1784457199782.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s17, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "AI-Driven Parser Modal", ACCENT_COLOR)
-    s17_points = [
+    s19 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s19, "AI Sales Slip PDF Upload / Bulk Sale")
+    add_ui_image(s19, "media__1784457199782.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
+    add_card(s19, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "AI-Driven Parser Modal", ACCENT_COLOR)
+    s19_points = [
         "Upload PDF: Extracts item name, quantities, and cost automatically.",
         "Fuzzy Matcher: AI maps scanned invoice details to existing catalog SKUs."
     ]
-    add_bullet_points(s17, s17_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    add_bullet_points(s19, s19_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
     
-    add_flow_diagram(s17, Inches(8.85), Inches(4.5), ["1. Upload File", "2. OpenAI Extract", "3. Record Sales DB"])
+    add_flow_diagram(s19, Inches(8.85), Inches(4.5), ["1. Upload File", "2. OpenAI Extract", "3. Record Sales DB"])
 
     # ==========================================
-    # SLIDE 18: Standalone Desktop Executable (.exe)
+    # SLIDE 20: Standalone Desktop Executable (.exe)
     # ==========================================
-    s18 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s18, "Standalone Desktop Executable (.exe)")
+    s20 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s20, "Standalone Desktop Executable (.exe)")
     
     # 3 sequence blocks for compilation pipeline
-    add_card(s18, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Vite React Compilation", TITLE_COLOR)
-    exe_c1 = s18.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.5), Inches(3.5), Inches(3.8))
+    add_card(s20, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Vite React Compilation", TITLE_COLOR)
+    exe_c1 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.5), Inches(3.5), Inches(3.8))
     exe_c1.fill.solid(); exe_c1.fill.fore_color.rgb = CODE_BG; exe_c1.line.color.rgb = CARD_BORDER
     tf_c1 = exe_c1.text_frame; tf_c1.word_wrap = True
     p_c1 = tf_c1.paragraphs[0]; p_c1.text = "Step 1: Frontend Build:\n• Cleans former build outputs.\n• Bundles static HTML, CSS, and JS components using Vite compiler.\n• Optimizes asset trees to generate single-page static distribution directories."
     p_c1.font.name = 'Segoe UI'; p_c1.font.size = Pt(13); p_c1.font.color.rgb = TEXT_COLOR
     
-    arrow_c1 = s18.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.45), Inches(3.8), Inches(0.4), Inches(0.3))
+    arrow_c1 = s20.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.45), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_c1.fill.solid(); arrow_c1.fill.fore_color.rgb = ACCENT_COLOR; arrow_c1.line.fill.background()
 
-    add_card(s18, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Django Ledger Migration", ACCENT_COLOR)
-    exe_c2 = s18.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.15), Inches(2.5), Inches(3.5), Inches(3.8))
+    add_card(s20, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Django Ledger Migration", ACCENT_COLOR)
+    exe_c2 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.15), Inches(2.5), Inches(3.5), Inches(3.8))
     exe_c2.fill.solid(); exe_c2.fill.fore_color.rgb = CODE_BG; exe_c2.line.color.rgb = CARD_BORDER
     tf_c2 = exe_c2.text_frame; tf_c2.word_wrap = True
     p_c2 = tf_c2.paragraphs[0]; p_c2.text = "Step 2: Database Preparation:\n• Runs Django model checkups and applies migrations to build a blank SQLite database schema.\n• Collects static bundles using python command-line scripts."
     p_c2.font.name = 'Segoe UI'; p_c2.font.size = Pt(13); p_c2.font.color.rgb = TEXT_COLOR
     
-    arrow_c2 = s18.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(3.8), Inches(0.4), Inches(0.3))
+    arrow_c2 = s20.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_c2.fill.solid(); arrow_c2.fill.fore_color.rgb = ACCENT_COLOR; arrow_c2.line.fill.background()
 
-    add_card(s18, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "PyInstaller Executable", RGBColor(234, 179, 8))
-    exe_c3 = s18.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.65), Inches(2.5), Inches(3.03), Inches(3.8))
+    add_card(s20, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "PyInstaller Executable", RGBColor(234, 179, 8))
+    exe_c3 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.65), Inches(2.5), Inches(3.03), Inches(3.8))
     exe_c3.fill.solid(); exe_c3.fill.fore_color.rgb = CODE_BG; exe_c3.line.color.rgb = CARD_BORDER
     tf_c3 = exe_c3.text_frame; tf_c3.word_wrap = True
     p_c3 = tf_c3.paragraphs[0]; p_c3.text = "Step 3: Packaged Binary:\n• Invokes PyInstaller compiler wrapping `run_server.py` and embedding Python DLLs and sqlite schemas.\n• Generates a standalone double-clickable `BizionaryERP_Windows.zip` archive containing the local runner."
     p_c3.font.name = 'Segoe UI'; p_c3.font.size = Pt(13); p_c3.font.color.rgb = TEXT_COLOR
 
     # ==========================================
-    # SLIDE 19: Data Portability & Disaster Recovery
+    # SLIDE 21: Data Portability & Disaster Recovery
     # ==========================================
-    s19 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s19, "Data Portability & Porting")
+    s21 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s21, "Data Portability & Porting")
     
-    add_card(s19, Inches(0.75), Inches(1.8), Inches(5.6), Inches(4.8), "Self-Contained SQLite Backups", TITLE_COLOR)
+    add_card(s21, Inches(0.75), Inches(1.8), Inches(5.6), Inches(4.8), "Self-Contained SQLite Backups", TITLE_COLOR)
     port_points_1 = [
         "Database Portability: All records (products, transactions, cash flows, user credentials) are saved in a single, robust file named `db.sqlite3`.",
         "Physical Isolation: The database resides inside the `_internal` subdirectory of the compiled standalone package.",
         "Simple Copy-Paste Backup: Users can back up their entire store database by making a duplicate copy of `db.sqlite3`."
     ]
-    add_bullet_points(s19, port_points_1, Inches(1.0), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
+    add_bullet_points(s21, port_points_1, Inches(1.0), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
     
-    add_card(s19, Inches(6.98), Inches(1.8), Inches(5.6), Inches(4.8), "Procedure for Updating System", ACCENT_COLOR)
+    add_card(s21, Inches(6.98), Inches(1.8), Inches(5.6), Inches(4.8), "Procedure for Updating System", ACCENT_COLOR)
     port_points_2 = [
         "1. Copy Old DB: Go to the old folder and copy `BizionaryERP/_internal/db.sqlite3`.",
         "2. Extract New Version: Extract the updated compiled zip package.",
         "3. Replace Template: Paste the copied `db.sqlite3` file into the new `_internal` directory, replacing the blank database.",
         "4. Run Launcher: Double-click the launch script; all historical records will load immediately."
     ]
-    add_bullet_points(s19, port_points_2, Inches(7.23), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
+    add_bullet_points(s21, port_points_2, Inches(7.23), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
 
     # ==========================================
-    # SLIDE 20: Future Enhancements
+    # SLIDE 22: Future Enhancements
     # ==========================================
-    s20 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s20, "Future Enhancements")
+    s22 = prs.slides.add_slide(blank_layout)
+    add_slide_header(s22, "Future Enhancements")
     
-    add_card(s20, Inches(0.75), Inches(1.8), Inches(11.83), Inches(4.8), "Scalability & Product Roadmap", ACCENT_COLOR)
+    add_card(s22, Inches(0.75), Inches(1.8), Inches(11.83), Inches(4.8), "Scalability & Product Roadmap", ACCENT_COLOR)
     future_points = [
         "Multi-Tenant SaaS Support: Transition the current single-enterprise design to support multi-tenant user bases, permitting multiple businesses to register and manage their operations independently.",
         "Hardware Integration: Build direct interfaces for POS peripheral devices, including barcode scanners, receipt thermal printers, and electronic cash drawers.",
         "Automated Notifications Pipeline: Connect SMS (Twilio) and Email (SendGrid) triggers to dynamically alert suppliers on low stock, send invoice reminders to customers, and email managers financial summaries.",
         "Extended AI Capabilities: Build deep learning models for advanced predictive demand forecasting based on external seasonal events, market trends, and historic data."
     ]
-    add_bullet_points(s20, future_points, Inches(1.0), Inches(2.4), Inches(11.33), Inches(3.9), font_size=16)
+    add_bullet_points(s22, future_points, Inches(1.0), Inches(2.4), Inches(11.33), Inches(3.9), font_size=16)
 
     # ==========================================
-    # SLIDE 21: Thank You & Q&A
+    # SLIDE 23: Thank You & Q&A
     # ==========================================
-    s21 = prs.slides.add_slide(blank_layout)
-    paint_bg(s21)
+    s23 = prs.slides.add_slide(blank_layout)
+    paint_bg(s23)
     
-    tb = s21.shapes.add_textbox(Inches(0.75), Inches(2.5), Inches(11.833), Inches(3.0))
+    tb = s23.shapes.add_textbox(Inches(0.75), Inches(2.5), Inches(11.833), Inches(3.0))
     tf = tb.text_frame
     tf.word_wrap = True
     
@@ -641,7 +671,7 @@ def main():
     p2.space_before = Pt(12)
     
     # Save the presentation
-    filename = "BizionaryERP_Presentation_v4.pptx"
+    filename = "BizionaryERP_Presentation_v5.pptx"
     prs.save(filename)
     print(f"Presentation saved successfully as {filename}")
 
