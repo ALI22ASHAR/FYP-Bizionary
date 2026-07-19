@@ -80,7 +80,7 @@ def main():
         title_p.font.bold = True
         title_p.font.color.rgb = TITLE_COLOR
 
-    # Helper to add bullet points with bold sub-headers
+    # Helper to add bullet points (Easy English, brief)
     def add_bullet_points(slide, items, left, top, width, height, font_size=13):
         tb = slide.shapes.add_textbox(left, top, width, height)
         tf = tb.text_frame
@@ -130,6 +130,39 @@ def main():
             p.font.size = Pt(14)
             p.font.color.rgb = RGBColor(239, 68, 68)
 
+    # Helper to draw horizontal flow diagram at the bottom of Right Card
+    def add_flow_diagram(slide, left, top, steps):
+        x = left
+        for i, step in enumerate(steps):
+            # Draw Step Rounded Rect
+            block = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, top, Inches(1.05), Inches(0.55))
+            block.fill.solid()
+            block.fill.fore_color.rgb = CODE_BG
+            block.line.color.rgb = ACCENT_COLOR
+            block.line.width = Pt(1.0)
+            
+            # Text block inside
+            tf = block.text_frame
+            tf.word_wrap = True
+            tf.margin_left = tf.margin_top = tf.margin_bottom = tf.margin_right = 0
+            p = tf.paragraphs[0]
+            p.text = step
+            p.alignment = PP_ALIGN.CENTER
+            p.font.name = 'Segoe UI'
+            p.font.size = Pt(8.5)
+            p.font.bold = True
+            p.font.color.rgb = TEXT_COLOR
+            
+            x += Inches(1.05)
+            
+            # Draw arrow if not last step
+            if i < len(steps) - 1:
+                arrow = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, x + Inches(0.05), top + Inches(0.18), Inches(0.18), Inches(0.2))
+                arrow.fill.solid()
+                arrow.fill.fore_color.rgb = TITLE_COLOR
+                arrow.line.fill.background()
+                x += Inches(0.28)
+
     # ==========================================
     # SLIDE 1: Title & Introduction Slide
     # ==========================================
@@ -157,27 +190,27 @@ def main():
     # Bottom columns
     add_card(s1, Inches(0.75), Inches(4.8), Inches(3.7), Inches(1.8), "Corporate Ledgers")
     points_1 = [
-        "Consolidated relational DB schemas.",
-        "Strict double-entry journal auditing.",
-        "Automatic database stock signals."
+        "Relational database schemas.",
+        "Double-entry ledger logs.",
+        "Automatic stock signals."
     ]
-    add_bullet_points(s1, points_1, Inches(0.9), Inches(5.3), Inches(3.4), Inches(1.2), font_size=12)
+    add_bullet_points(s1, points_1, Inches(0.95), Inches(5.3), Inches(3.3), Inches(1.2), font_size=12)
     
     add_card(s1, Inches(4.8), Inches(4.8), Inches(3.7), Inches(1.8), "AI-Driven Insights")
     points_2 = [
-        "Groq Llama 3.3 chatbot helper.",
-        "NLP pricing margin alerts.",
-        "Demand velocity forecasting models."
+        "Groq Llama 3.3 chatbot.",
+        "NLP pricing recommendations.",
+        "Stock velocity demand forecast."
     ]
-    add_bullet_points(s1, points_2, Inches(4.95), Inches(5.3), Inches(3.4), Inches(1.2), font_size=12)
+    add_bullet_points(s1, points_2, Inches(5.0), Inches(5.3), Inches(3.3), Inches(1.2), font_size=12)
     
     add_card(s1, Inches(8.85), Inches(4.8), Inches(3.7), Inches(1.8), "Dynamic Ingest")
     points_3 = [
-        "Drag & Drop sales PDF uploader.",
-        "Robust monthly Excel parser.",
-        "Zero-downtime key administration."
+        "Drag & Drop sales PDF upload.",
+        "Monthly Excel parser.",
+        "Zero-downtime key rotation."
     ]
-    add_bullet_points(s1, points_3, Inches(9.0), Inches(5.3), Inches(3.4), Inches(1.2), font_size=12)
+    add_bullet_points(s1, points_3, Inches(9.05), Inches(5.3), Inches(3.3), Inches(1.2), font_size=12)
 
     # ==========================================
     # SLIDE 2: Problem & Solution
@@ -187,19 +220,19 @@ def main():
     
     add_card(s2, Inches(0.75), Inches(1.8), Inches(5.6), Inches(4.8), "SME Operational Bottlenecks", RGBColor(239, 68, 68))
     prob_points = [
-        "Fragmented Tools: rely on offline sheets and paper slips, causing stock data mismatches.",
-        "No Transaction Auditing: updates occur without logs, masking errors or theft.",
-        "Delayed Business Intelligence: compiling cash flow sheets manually takes weeks.",
-        "Costly Restock Checks: physical inventory checks cause stockouts or overstocks."
+        "Data Silos: Using paper bills and offline sheets causes inventory mismatch.",
+        "No Auditing: Database changes are done without logs, leading to errors.",
+        "No Real-time Profit View: Creating financial statements takes weeks.",
+        "Bad Restock Habits: Checking stock by hand leads to out-of-stock items."
     ]
     add_bullet_points(s2, prob_points, Inches(0.95), Inches(2.4), Inches(5.2), Inches(3.9), font_size=14)
     
     add_card(s2, Inches(6.98), Inches(1.8), Inches(5.6), Inches(4.8), "The Integrated Solution", ACCENT_COLOR)
     sol_points = [
-        "Centralized ERP Layout: relational DB linking Sales, Purchases, Ledgers, and stock.",
-        "Automated Ledger Signals: hooks post transactions to double-entry journals instantly.",
-        "Agentic Conversational BI: chatbot runs local queries to fetch real-time reports.",
-        "Automated Ingestion Pipeline: parsers ingest Excel sheets and PDFs to update database."
+        "One Database: Connects Sales, Purchases, Ledgers, and stock in one place.",
+        "Auto Journals: Database signals save debit/credit journals automatically.",
+        "Sub-Second AI Help: Chatbot queries the live DB to show reports.",
+        "Auto-Ingest: Drag-and-drop Excel or PDFs to update inventory quickly."
     ]
     add_bullet_points(s2, sol_points, Inches(7.18), Inches(2.4), Inches(5.2), Inches(3.9), font_size=14)
 
@@ -283,7 +316,7 @@ def main():
     sh_db = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.45), Inches(2.3), Inches(3.2), Inches(1.5))
     sh_db.fill.solid(); sh_db.fill.fore_color.rgb = CODE_BG; sh_db.line.color.rgb = CARD_BORDER
     tf_db = sh_db.text_frame; tf_db.word_wrap = True
-    p_db = tf_db.paragraphs[0]; p_db.text = "• SQLite 3 local storage\n• PostgreSQL deployment schema\n• Double-entry general ledger logs"
+    p_db = tf_db.paragraphs[0]; p_db.text = "• SQLite 3 local storage\n• PostgreSQL database structure\n• Double-entry journal tables"
     p_db.font.name = 'Segoe UI'; p_db.font.size = Pt(11); p_db.font.color.rgb = TEXT_COLOR
 
     # 4. AI box
@@ -291,7 +324,7 @@ def main():
     sh_ai = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.45), Inches(4.8), Inches(3.2), Inches(1.5))
     sh_ai.fill.solid(); sh_ai.fill.fore_color.rgb = CODE_BG; sh_ai.line.color.rgb = CARD_BORDER
     tf_ai = sh_ai.text_frame; tf_ai.word_wrap = True
-    p_ai = tf_ai.paragraphs[0]; p_ai.text = "• Groq Llama 3.3 Function calling\n• Local database query router\n• OpenAI sentiment and OCR text parsing"
+    p_ai = tf_ai.paragraphs[0]; p_ai.text = "• Groq Llama 3.3 chatbot agent\n• Local function calling mapping\n• OpenAI sentiment and OCR matching"
     p_ai.font.name = 'Segoe UI'; p_ai.font.size = Pt(11); p_ai.font.color.rgb = TEXT_COLOR
 
     # ==========================================
@@ -329,172 +362,185 @@ def main():
     p_st3.font.name = 'Segoe UI'; p_st3.font.size = Pt(13); p_st3.font.color.rgb = TEXT_COLOR
 
     # ==========================================
-    # SLIDE 6: Executive Dashboard (Screenshot 012114.png) - WIDER IMAGE
+    # SLIDE 6: Executive Dashboard (Screenshot 012114.png)
     # ==========================================
     s6 = prs.slides.add_slide(blank_layout)
     add_slide_header(s6, "Executive Dashboard Overview")
     add_ui_image(s6, "Screenshot 2026-07-19 012114.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s6, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Metrics & Workflows", TITLE_COLOR)
+    add_card(s6, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Executive Summary stats", TITLE_COLOR)
     s6_points = [
-        "Interface: Displays revenue (Rs. 212M), expenses (Rs. 8M), net profits (Rs. 57M), active items, pending ordered slips, and asset valuation.",
-        "Link: React fetches `/api/dashboard/summary/`. Django ORM aggregates records and caches the outputs.",
-        "Outcome: Immediate overview of company liquidity and shortcuts to core operations."
+        "Overview: Displays total sales, expenses, net profits, and inventory value.",
+        "Quick Buttons: Easily add products, register suppliers, or log adjustments."
     ]
-    add_bullet_points(s6, s6_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s6, s6_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    # Graphic Flow Diagram
+    add_flow_diagram(s6, Inches(8.85), Inches(4.5), ["1. Open Screen", "2. Fetch Stats", "3. Show Dashboard"])
 
     # ==========================================
-    # SLIDE 7: Sales Insights Dashboard (Screenshot 012111.png) - WIDER IMAGE
+    # SLIDE 7: Sales Insights Dashboard (Screenshot 012111.png)
     # ==========================================
     s7 = prs.slides.add_slide(blank_layout)
     add_slide_header(s7, "Sales Performance Insights Dashboard")
     add_ui_image(s7, "Screenshot 2026-07-19 012111.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
     add_card(s7, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Interactive Sales Charts", ACCENT_COLOR)
     s7_points = [
-        "Interface: Stacked vertical category bars (Clothing, Grocery, Stationery) and profit lines over 10-day period.",
-        "Link: Recharts SPA queries `/api/dashboard/insights/?period=10`. Backend returns transaction grouped JSON data.",
-        "Outcome: Renders immediate sales dynamics, tracking margins and categories sold."
+        "Charts: Shows categories sold (stacked bars) and revenue trends (lines).",
+        "Filtering: Toggle days to filter trends instantly."
     ]
-    add_bullet_points(s7, s7_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s7, s7_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s7, Inches(8.85), Inches(4.5), ["1. Pick Period", "2. Group Dates", "3. Recharts Graph"])
 
     # ==========================================
-    # SLIDE 8: Accounts & Finance Ledger (Screenshot 012108.png) - WIDER IMAGE
+    # SLIDE 8: Accounts & Finance Ledger (Screenshot 012108.png)
     # ==========================================
     s8 = prs.slides.add_slide(blank_layout)
     add_slide_header(s8, "Accounts & Financial Ledger Module")
     add_ui_image(s8, "Screenshot 2026-07-19 012108.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s8, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Ledger Rollup & Reconciliation", TITLE_COLOR)
+    add_card(s8, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Double-Entry Audits", TITLE_COLOR)
     s8_points = [
-        "Interface: Monthly financial aggregates (Profit, Cost, Cash) with general journal transaction entries.",
-        "Link: Queries `/api/accounts/ledger-summary/`. Reconcile button calls backend `/api/accounts/reconcile/` checking debits/credits balance.",
-        "Outcome: Auto-balancing transaction ledger checks and click-to-verify audits."
+        "Financial Tabs: View Revenues, Expenses, Utility Bills, and statement logs.",
+        "Reconciliation: Simple button to verify debits equal credits instantly."
     ]
-    add_bullet_points(s8, s8_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s8, s8_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s8, Inches(8.85), Inches(4.5), ["1. Log Action", "2. Signals Trigger", "3. Ledger Entry"])
 
     # ==========================================
-    # SLIDE 9: Product Catalog Grid (Screenshot 012102.png) - WIDER IMAGE
+    # SLIDE 9: Product Catalog Grid (Screenshot 012102.png)
     # ==========================================
     s9 = prs.slides.add_slide(blank_layout)
     add_slide_header(s9, "Product Catalog & Custom Sections")
     add_ui_image(s9, "Screenshot 2026-07-19 012102.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s9, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Metadata Columns & Inventory Sync", ACCENT_COLOR)
+    add_card(s9, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Inventory Catalog System", ACCENT_COLOR)
     s9_points = [
-        "Interface: Product catalog grid showing SKU, purchase/selling price, margins, shop/warehouse stock, and edit tools.",
-        "Link: React tables render records. Dynamic columns calls `/api/products/custom-columns/` schema modification.",
-        "Outcome: Complete items cataloging and automatic price adjustments across POS terminals."
+        "Grid List: Shows catalog product SKUs, prices, margins, and active status.",
+        "Custom Columns: Create extra fields for specific categories dynamically."
     ]
-    add_bullet_points(s9, s9_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s9, s9_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s9, Inches(8.85), Inches(4.5), ["1. Add Columns", "2. Alter Schema", "3. Update Tables"])
 
     # ==========================================
-    # SLIDE 10: Stock Management Dashboard (Screenshot 012055.png) - WIDER IMAGE
+    # SLIDE 10: Stock Management Dashboard (Screenshot 012055.png)
     # ==========================================
     s10 = prs.slides.add_slide(blank_layout)
     add_slide_header(s10, "Stock Management Control Center")
     add_ui_image(s10, "Screenshot 2026-07-19 012055.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s10, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Reorder Threshold Alerts", TITLE_COLOR)
+    add_card(s10, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Reorder Alerts System", TITLE_COLOR)
     s10_points = [
-        "Interface: Inventory valuation cards, low stock alerts, incoming items cards.",
-        "Link: Client fetches `/api/stock/status/`. Modifying the warning parameters updates `/api/stock/settings/` immediately.",
-        "Outcome: Eliminates stockouts by raising flags on low stock thresholds."
+        "Valuations: Tracks shop retail value vs. warehouse stock valuations.",
+        "Alerts: Highlights items where stock quantity is below safety limits."
     ]
-    add_bullet_points(s10, s10_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s10, s10_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s10, Inches(8.85), Inches(4.5), ["1. Check Stock", "2. Compare Limit", "3. Trigger Alert"])
 
     # ==========================================
-    # SLIDE 11: Warehouse & Incoming Stock Modals (Screenshot 012058.png & 012050.png) - WIDER IMAGE
+    # SLIDE 11: Warehouse & Incoming Stock Modals (Screenshot 012058.png & 012050.png)
     # ==========================================
     s11 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s11, "Warehouse Stock & Procurement Modals")
+    add_slide_header(s11, "Warehouse Stock & Incoming Modals")
     add_ui_image(s11, "Screenshot 2026-07-19 012058.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s11, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Granular Location Tracking", ACCENT_COLOR)
+    add_card(s11, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Stock Locations Reports", ACCENT_COLOR)
     s11_points = [
-        "Interface: Modal lists breakdown of items inside the warehouse vs. pending supplier shipments.",
-        "Link: React hooks query `/api/stock/warehouse-breakdown/` and `/api/procurement/pending-breakdown/` endpoints.",
-        "Outcome: Total tracking of item location balances and incoming supplier arrivals."
+        "Location Splitting: Traces items inside the warehouse vs. items in shop.",
+        "Incoming Orders: List of pending items ordered from supplier shipments."
     ]
-    add_bullet_points(s11, s11_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s11, s11_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s11, Inches(8.85), Inches(4.5), ["1. Select Item", "2. Query Location", "3. Display Modal"])
 
     # ==========================================
-    # SLIDE 12: Sales Transaction Log & Ingestion Suite (Screenshot 012046.png) - WIDER IMAGE
+    # SLIDE 12: Sales Transaction Log & Ingestion Suite (Screenshot 012046.png)
     # ==========================================
     s12 = prs.slides.add_slide(blank_layout)
     add_slide_header(s12, "Sales Transactions & Ingestion Suite")
     add_ui_image(s12, "Screenshot 2026-07-19 012046.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s12, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Transaction Logging & PDF Upload", TITLE_COLOR)
+    add_card(s12, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Transactions Logging", TITLE_COLOR)
     s12_points = [
-        "Interface: Sales goal analytics gauge, sales table displaying references, dates, costs, customer details.",
-        "Link: Renders paginated listings from `/api/sales/transactions/`. Excel/PDF uploads call bulk import services.",
-        "Outcome: Immutable audit trails and immediate ledger synchronization upon upload."
+        "Logs: Search and filter complete logs of customer sales and margins.",
+        "Auto-Ingest: Drag-and-drop Excel sheets to parse transactions quickly."
     ]
-    add_bullet_points(s12, s12_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s12, s12_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s12, Inches(8.85), Inches(4.5), ["1. Import Sheet", "2. Pandas Parser", "3. Log Sale DB"])
 
     # ==========================================
-    # SLIDE 13: Supplier Ordered Slips (Screenshot 012037.png) - WIDER IMAGE
+    # SLIDE 13: Supplier Ordered Slips (Screenshot 012037.png)
     # ==========================================
     s13 = prs.slides.add_slide(blank_layout)
     add_slide_header(s13, "Supplier Ordered Slips Management")
     add_ui_image(s13, "Screenshot 2026-07-19 012037.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s13, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Procurement Order Cycles", ACCENT_COLOR)
+    add_card(s13, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Procurement Cycles", ACCENT_COLOR)
     s13_points = [
-        "Interface: Supplier slips table tracking ordered/received ratios, costs, totals, and pending status.",
-        "Link: Exposes `/api/procurement/slips/`. 'Mark Partial' endpoint registers incoming units to inventory.",
-        "Outcome: Seamless tracking of vendor shipments and click-to-print procurement slips."
+        "Tracking: Monitor supplier slips, quantities, total sums, and pending statuses.",
+        "Stock-in: Easily mark items as received to update inventories immediately."
     ]
-    add_bullet_points(s13, s13_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s13, s13_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s13, Inches(8.85), Inches(4.5), ["1. Mark Received", "2. Update Slip Ratio", "3. Inflow Stock"])
 
     # ==========================================
-    # SLIDE 14: AI Chatbot Assistant Interface (Screenshot 012026.png) - WIDER IMAGE
+    # SLIDE 14: AI Chatbot Assistant Interface (Screenshot 012026.png)
     # ==========================================
     s14 = prs.slides.add_slide(blank_layout)
     add_slide_header(s14, "AI Chatbot Assistant Interface")
     add_ui_image(s14, "Screenshot 2026-07-19 012026.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
-    add_card(s14, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Agentic Chatbot", TITLE_COLOR)
+    add_card(s14, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Agentic AI Chatbot", TITLE_COLOR)
     s14_points = [
-        "Interface: Conversational panel answering database queries (e.g. low stock, sales totals) and outputting graphs.",
-        "Link: Groq API `/api/chatbot/query/` using RAG. Chatbot maps queries to local python tool calling functions.",
-        "Outcome: Rapid analytics reporting and quick stats lookup without manual search."
+        "RAG Agent: Answers questions on invoices, stock alerts, and revenues.",
+        "Quick Shortcuts: One-click buttons to check margins or display charts."
     ]
-    add_bullet_points(s14, s14_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s14, s14_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s14, Inches(8.85), Inches(4.5), ["1. User Prompt", "2. Groq Tool Use", "3. Local Python DB"])
 
     # ==========================================
-    # SLIDE 15: Pack Price Calculator (media__1784456905899.png) - WIDER IMAGE
+    # SLIDE 15: Pack Price Calculator (media__1784456905899.png)
     # ==========================================
     s15 = prs.slides.add_slide(blank_layout)
     add_slide_header(s15, "Pack & Carton Price Calculator")
     add_ui_image(s15, "media__1784456905899.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
     add_card(s15, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Pack Dynamics Calculator", ACCENT_COLOR)
     s15_points = [
-        "Interface: Interactive calculations panel with input selectors (Single Unit vs Carton Mode) and dynamically updated profit margin indicators.",
-        "Link: Real-time React calculation inputs updating unit margin ratios based on custom carton size parameters.",
-        "Outcome: Minimizes arithmetic estimation errors, helping shopkeepers evaluate expected profits immediately."
+        "Inputs: Configure product single unit selling prices and carton multipliers.",
+        "Profit Projections: Displays expected net revenue and margins instantly."
     ]
-    add_bullet_points(s15, s15_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s15, s15_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s15, Inches(8.85), Inches(4.5), ["1. Enter Quantity", "2. React State", "3. Compute Profit"])
 
     # ==========================================
-    # SLIDE 16: Direct Stock Purchase (media__1784456944788.png) - WIDER IMAGE
+    # SLIDE 16: Direct Stock Purchase (media__1784456944788.png)
     # ==========================================
     s16 = prs.slides.add_slide(blank_layout)
     add_slide_header(s16, "Direct Stock Purchase (Latest Modification)")
     add_ui_image(s16, "media__1784456944788.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
     add_card(s16, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "Direct Inflow Ledger Entries", TITLE_COLOR)
     s16_points = [
-        "Interface: Overlay modal panel for recording direct purchases, selecting product catalogues, and configuring pack sizes.",
-        "Link: Submits records to Purchases API and triggers database signals routing stock quantities to Shop or Warehouse.",
-        "Outcome: Instant ledger records and COGS updates for products purchased directly from suppliers."
+        "Stock Intake: Log supplier purchases directly to shop or warehouse stock.",
+        "Custom Pack Sizes: Input unit cost and packs to update catalogs."
     ]
-    add_bullet_points(s16, s16_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s16, s16_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s16, Inches(8.85), Inches(4.5), ["1. Select Product", "2. Route Location", "3. Signal Stock In"])
 
     # ==========================================
-    # SLIDE 17: AI Sales Slip PDF Upload (media__1784457199782.png) - WIDER IMAGE
+    # SLIDE 17: AI Sales Slip PDF Upload (media__1784457199782.png)
     # ==========================================
     s17 = prs.slides.add_slide(blank_layout)
     add_slide_header(s17, "AI Sales Slip PDF Upload / Bulk Sale")
     add_ui_image(s17, "media__1784457199782.png", Inches(0.5), Inches(1.8), Inches(8.0), Inches(4.8))
     add_card(s17, Inches(8.7), Inches(1.8), Inches(4.13), Inches(4.8), "AI-Driven Parser Modal", ACCENT_COLOR)
     s17_points = [
-        "Interface: Drag-and-drop file upload dialog and dynamic extracted products table (matching parsed names with existing items).",
-        "Link: React extracts PDF texts and posts metadata to `/api/sales/bulk-upload/` resolving matches using OpenAI GPT models.",
-        "Outcome: Automatically processes bulk invoice items, logs general journals, and increments catalog stock."
+        "Upload PDF: Extracts item name, quantities, and cost automatically.",
+        "Fuzzy Matcher: AI maps scanned invoice details to existing catalog SKUs."
     ]
-    add_bullet_points(s17, s17_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(3.9), font_size=13)
+    add_bullet_points(s17, s17_points, Inches(8.85), Inches(2.4), Inches(3.8), Inches(1.5), font_size=13)
+    
+    add_flow_diagram(s17, Inches(8.85), Inches(4.5), ["1. Upload File", "2. OpenAI Extract", "3. Record Sales DB"])
 
     # ==========================================
     # SLIDE 18: Standalone Desktop Executable (.exe)
@@ -595,7 +641,7 @@ def main():
     p2.space_before = Pt(12)
     
     # Save the presentation
-    filename = "BizionaryERP_Presentation_v3.pptx"
+    filename = "BizionaryERP_Presentation_v4.pptx"
     prs.save(filename)
     print(f"Presentation saved successfully as {filename}")
 
