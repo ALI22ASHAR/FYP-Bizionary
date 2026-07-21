@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -26,7 +26,16 @@ const NAV_ITEMS = [
     { name: 'Accounts', href: '/accounts', icon: CreditCard },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Stock', href: '/inventory-managment', icon: Boxes },
-    { name: 'Sales', href: '/sales', icon: ShoppingCart },
+    {
+        name: 'Sales',
+        href: '/sales',
+        icon: ShoppingCart,
+        subItems: [
+            { name: 'Sales Ledger', href: '/sales' },
+            { name: 'Invoices & Billing', href: '/invoices' },
+            { name: 'Report Generator', href: '/insights' }
+        ]
+    },
     { name: 'Create Order', href: '/ordered-slips', icon: ClipboardList },
     { name: 'AI Chatbot', href: '/chatbot', icon: Bot },
     { name: 'Admin', href: '/user-management', icon: Lock, adminOnly: true },
@@ -40,6 +49,24 @@ const Sidebar = ({ isOpen, onClose }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [openSubMenus, setOpenSubMenus] = useState({});
+
+    // Auto-expand/collapse submenus based on route path
+    useEffect(() => {
+        const path = location.pathname;
+        const hasActiveSubItem = path.startsWith('/sales') || path.startsWith('/invoices') || path.startsWith('/insights');
+        setOpenSubMenus(prev => ({
+            ...prev,
+            Sales: hasActiveSubItem
+        }));
+    }, [location.pathname]);
+
+    const toggleSubMenu = (menuName) => {
+        setOpenSubMenus(prev => ({
+            ...prev,
+            [menuName]: !prev[menuName]
+        }));
+    };
 
     const displayName = user?.first_name
         ? `${user.first_name} ${user.last_name || ''}`.trim()
@@ -117,6 +144,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 to={item.href}
                                 end={item.href === '/'}
                                 onClick={() => {
+                                    if (item.subItems) {
+                                        toggleSubMenu(item.name);
+                                    }
                                     if (window.innerWidth < 1024 && !item.subItems) closeMobile();
                                 }}
                                 className={({ isActive }) =>
@@ -128,11 +158,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 }
                             >
                                 <Icon className="w-4.5 h-4.5 shrink-0 text-primary" />
-                                <span className="text-[13px] truncate font-semibold">
+                                <span className="text-[13px] truncate font-semibold flex-1">
                                     {item.name}
                                 </span>
+                                {item.subItems && (
+                                    <ChevronDown className={`w-4 h-4 text-primary shrink-0 transition-transform duration-200 ${openSubMenus[item.name] ? 'rotate-180' : ''}`} />
+                                )}
                             </NavLink>
-                            {item.subItems && !isCollapsed && (
+                            {item.subItems && openSubMenus[item.name] && !isCollapsed && (
                                 <div className="pl-9 space-y-1 mt-1 border-l border-card/45 ml-5">
                                     {item.subItems.map((sub) => (
                                         <NavLink

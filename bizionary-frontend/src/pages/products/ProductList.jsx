@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Search, Edit2, Trash2, Upload, X, FileText } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
 import Skeleton from '../../components/ui/Skeleton';
@@ -15,6 +15,7 @@ import { useDynamicColumns } from '../../hooks/useDynamicColumns';
 
 const ProductList = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const isAdminOrManager = user && (
         user.role_level === 'ADMIN' || 
@@ -76,7 +77,31 @@ const ProductList = () => {
     useEffect(() => {
         fetchProducts();
         fetchSuppliers();
+
+        // Read URL query parameter for pre-filtering
+        const params = new URLSearchParams(window.location.search);
+        const searchVal = params.get('search');
+        if (searchVal) {
+            setSearchTerm(searchVal);
+        }
     }, []);
+
+    // Observer effect for URL parameter updates to instantly switch between product pages on click
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const searchVal = params.get('search');
+        if (searchVal && products.length > 0) {
+            setSearchTerm(searchVal);
+            setSelectedSection('ALL');
+            const exactMatch = products.find(
+                p => p.name.toLowerCase() === searchVal.toLowerCase() ||
+                (p.product_code && p.product_code.toLowerCase() === searchVal.toLowerCase())
+            );
+            if (exactMatch) {
+                openEditForm(exactMatch);
+            }
+        }
+    }, [location.search, products]);
 
     const fetchSuppliers = async () => {
         try {
@@ -95,7 +120,21 @@ const ProductList = () => {
             const res = await api.get('products/');
             // Support DRF pagination (`results`) or custom `{data: [...]}` shapes
             const productsPayload = res.data?.results || res.data?.data || res.data || [];
-            setProducts(productsPayload.map((item) => normalizeProductRecord(item)));
+            const normalized = productsPayload.map((item) => normalizeProductRecord(item));
+            setProducts(normalized);
+
+            // Auto-open product details if search match is found on mount
+            const params = new URLSearchParams(window.location.search);
+            const searchVal = params.get('search');
+            if (searchVal) {
+                const exactMatch = normalized.find(
+                    p => p.name.toLowerCase() === searchVal.toLowerCase() ||
+                    (p.product_code && p.product_code.toLowerCase() === searchVal.toLowerCase())
+                );
+                if (exactMatch) {
+                    openEditForm(exactMatch);
+                }
+            }
         } catch (error) {
             console.warn('Failed to fetch products from backend.');
             setProducts([]);

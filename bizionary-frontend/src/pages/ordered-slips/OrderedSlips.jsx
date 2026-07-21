@@ -115,9 +115,24 @@ const OrderedSlips = () => {
 
     const handlePartialReceipt = async (id) => {
         try {
-            const quantityReceived = Number(partialQuantities[id] || 0);
+            const slip = orderedSlips.find(s => s.id === id);
+            let quantityReceived = Number(partialQuantities[id] || 0);
+            
+            // Auto-default to (current_received + 1) if the input is left blank
+            if (!quantityReceived && slip) {
+                quantityReceived = (slip.quantity_received || 0) + 1;
+            }
+
             if (!quantityReceived) {
                 setFormError('Enter received quantity before marking partial receipt.');
+                return;
+            }
+            if (slip && quantityReceived <= (slip.quantity_received || 0)) {
+                setFormError(`Received quantity must be greater than current received quantity (${slip.quantity_received || 0}).`);
+                return;
+            }
+            if (slip && quantityReceived > slip.quantity_ordered) {
+                setFormError(`Received quantity cannot exceed ordered quantity (${slip.quantity_ordered}).`);
                 return;
             }
 
@@ -605,37 +620,46 @@ const OrderedSlips = () => {
                                     </div>
                                 </div>
 
-                                <div className="px-6 pb-6 grid gap-4 lg:grid-cols-[1fr_auto] items-end border-t border-gray-50 pt-4">
-                                    <div>
-                                        <div className="text-xs uppercase tracking-wider text-textMuted font-semibold mb-2">Received So Far</div>
-                                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max={slip.quantity_ordered}
-                                                value={partialQuantities[slip.id] || ''}
-                                                onChange={(event) => setPartialQuantities((prev) => ({ ...prev, [slip.id]: event.target.value }))}
-                                                className="w-full sm:w-40 px-3 py-2 border border-card rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                                                placeholder="Total received"
-                                            />
-                                            <button
-                                                onClick={() => handlePartialReceipt(slip.id)}
-                                                disabled={busySlipId === slip.id}
-                                                className="inline-flex items-center px-4 py-2 rounded-xl bg-status-info text-sm font-semibold text-card hover:bg-amber-600 disabled:opacity-60"
-                                            >
-                                                <Clock3 className="h-4 w-4 mr-2" />
-                                                Mark Partial Received
-                                            </button>
+                                {slip.status !== 'COMPLETED' ? (
+                                    <div className="px-6 pb-6 grid gap-4 lg:grid-cols-[1fr_auto] items-end border-t border-gray-50 pt-4">
+                                        <div>
+                                            <div className="text-xs uppercase tracking-wider text-textMuted font-semibold mb-2">Received So Far</div>
+                                            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                                                <input
+                                                    type="number"
+                                                    min={(slip.quantity_received || 0) + 1}
+                                                    max={slip.quantity_ordered}
+                                                    value={partialQuantities[slip.id] || ''}
+                                                    onChange={(event) => setPartialQuantities((prev) => ({ ...prev, [slip.id]: event.target.value }))}
+                                                    className="w-full sm:w-40 px-3 py-2 border border-card rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                                                    placeholder="Total received"
+                                                />
+                                                <button
+                                                    onClick={() => handlePartialReceipt(slip.id)}
+                                                    disabled={busySlipId === slip.id}
+                                                    className="inline-flex items-center px-4 py-2 rounded-xl bg-status-info text-sm font-semibold text-card hover:bg-amber-600 disabled:opacity-60"
+                                                >
+                                                    <Clock3 className="h-4 w-4 mr-2" />
+                                                    Mark Partial Received
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="text-right">
-                                        <div className="text-xs uppercase tracking-wider text-textMuted font-semibold mb-1">Inventory</div>
-                                        <div className={`text-sm font-bold ${slip.status === 'COMPLETED' ? 'text-status-success' : 'text-textMain'}`}>
-                                            {slip.status === 'COMPLETED' ? 'Stock updated' : 'Waiting for receipt'}
+                                        <div className="text-right">
+                                            <div className="text-xs uppercase tracking-wider text-textMuted font-semibold mb-1">Inventory</div>
+                                            <div className="text-sm font-bold text-textMain">
+                                                Waiting for receipt
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="px-6 pb-6 flex justify-between items-center border-t border-gray-50 pt-4 text-sm font-bold text-status-success">
+                                        <span>All items received successfully.</span>
+                                        <span className="bg-emerald-50 text-status-success px-2.5 py-0.5 rounded-full text-xs">
+                                            Stock Updated
+                                         </span>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

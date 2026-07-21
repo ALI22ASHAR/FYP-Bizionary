@@ -279,53 +279,200 @@ def main():
     p5.font.name = 'Segoe UI'; p5.font.size = Pt(12); p5.font.color.rgb = TEXT_COLOR
 
     # ==========================================
-    # SLIDE 4: Whole Project System Architecture (Visualization Diagram)
+    # SLIDE 4: Whole Project System Architecture (Detailed Visualization Diagram)
     # ==========================================
     s4 = prs.slides.add_slide(blank_layout)
     add_slide_header(s4, "Project Components & Data Flow Diagram")
     
-    # 1. Frontend box
-    add_card(s4, Inches(0.5), Inches(2.2), Inches(3.5), Inches(4.0), "1. Frontend (React SPA)", TITLE_COLOR)
-    sh_fe = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.8), Inches(3.2), Inches(3.2))
-    sh_fe.fill.solid(); sh_fe.fill.fore_color.rgb = CODE_BG; sh_fe.line.color.rgb = CARD_BORDER
-    tf_fe = sh_fe.text_frame; tf_fe.word_wrap = True
-    p_fe = tf_fe.paragraphs[0]; p_fe.text = "Visual Screens:\n• Executive Dashboard\n• POS Scan Form & Ingestion\n• Stock Modals & Calculations\n\nMechanism:\n• Asynchronous Axios clients\n• JWT Bearer Auth tokens"
-    p_fe.font.name = 'Segoe UI'; p_fe.font.size = Pt(12); p_fe.font.color.rgb = TEXT_COLOR
-    
-    # Arrow FE -> BE
-    arrow1 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.1), Inches(3.8), Inches(0.7), Inches(0.4))
-    arrow1.fill.solid(); arrow1.fill.fore_color.rgb = ACCENT_COLOR; arrow1.line.fill.background()
+    # helper for drawing small items
+    def add_sub_item(slide, left, top, width, height, text, bg_color):
+        rect = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
+        rect.fill.solid()
+        rect.fill.fore_color.rgb = bg_color
+        rect.line.color.rgb = CARD_BORDER
+        rect.line.width = Pt(1.0)
+        tf = rect.text_frame
+        tf.word_wrap = True
+        tf.margin_left = tf.margin_top = tf.margin_bottom = tf.margin_right = 0
+        p = tf.paragraphs[0]
+        p.text = text
+        p.alignment = PP_ALIGN.CENTER
+        p.font.name = 'Segoe UI'
+        p.font.size = Pt(10)
+        p.font.bold = True
+        p.font.color.rgb = TEXT_COLOR
+        return rect
 
-    # 2. Backend box
-    add_card(s4, Inches(4.9), Inches(2.2), Inches(3.5), Inches(4.0), "2. Django REST API", ACCENT_COLOR)
-    sh_be = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.05), Inches(2.8), Inches(3.2), Inches(3.2))
-    sh_be.fill.solid(); sh_be.fill.fore_color.rgb = CODE_BG; sh_be.line.color.rgb = CARD_BORDER
-    tf_be = sh_be.text_frame; tf_be.word_wrap = True
-    p_be = tf_be.paragraphs[0]; p_be.text = "Endpoints Viewsets:\n• `/api/dashboard/summary/`\n• `/api/sales/transactions/`\n• `/api/chatbot/query/`\n\nEvent Triggers:\n• Django DB Signals (COGS, cash flows, inventory items mapping)"
-    p_be.font.name = 'Segoe UI'; p_be.font.size = Pt(12); p_be.font.color.rgb = TEXT_COLOR
+    # 1. Frontend Client (React SPA)
+    add_card(s4, Inches(0.5), Inches(2.0), Inches(2.6), Inches(4.8), "Client (React SPA)", TITLE_COLOR)
+    add_sub_item(s4, Inches(0.7), Inches(2.7), Inches(2.2), Inches(0.7), "Vite Single Page UI\n(Responsive Screens)", CODE_BG)
+    add_sub_item(s4, Inches(0.7), Inches(3.6), Inches(2.2), Inches(0.7), "Custom State Hooks\n(Axios Requests)", CODE_BG)
+    add_sub_item(s4, Inches(0.7), Inches(4.5), Inches(2.2), Inches(0.7), "Recharts Visualization\n(Sales Charts)", CODE_BG)
+    add_sub_item(s4, Inches(0.7), Inches(5.4), Inches(2.2), Inches(0.7), "jsPDF Invoicing\n(Offline PDF exports)", CODE_BG)
     
-    # Arrow BE -> DB & AI
-    arrow2 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.5), Inches(3.0), Inches(0.7), Inches(0.4))
-    arrow2.fill.solid(); arrow2.fill.fore_color.rgb = ACCENT_COLOR; arrow2.line.fill.background()
+    # Arrow 1: FE -> BE (Right Arrow)
+    a1 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(3.2), Inches(4.1), Inches(1.1), Inches(0.4))
+    a1.fill.solid(); a1.fill.fore_color.rgb = ACCENT_COLOR; a1.line.fill.background()
+
+    # 2. Backend Server (Django REST)
+    add_card(s4, Inches(4.4), Inches(2.0), Inches(2.6), Inches(4.8), "Server (Django REST)", ACCENT_COLOR)
+    add_sub_item(s4, Inches(4.6), Inches(2.7), Inches(2.2), Inches(0.7), "API Router Gateway\n(JWT Authentication)", CODE_BG)
+    add_sub_item(s4, Inches(4.6), Inches(3.6), Inches(2.2), Inches(0.7), "post_save Signals\n(Ledger post hooks)", CODE_BG)
+    add_sub_item(s4, Inches(4.6), Inches(4.5), Inches(2.2), Inches(0.7), "Excel Pandas Parser\n(Bulk synchronizer)", CODE_BG)
+    add_sub_item(s4, Inches(4.6), Inches(5.4), Inches(2.2), Inches(0.7), "API Key Cache Manager\n(In-memory caching)", CODE_BG)
+
+    # Connecting BE to DB and AI Tiers
+    # Arrow 2: BE -> DB (Right Arrow top)
+    a2 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(7.1), Inches(3.0), Inches(1.1), Inches(0.3))
+    a2.fill.solid(); a2.fill.fore_color.rgb = TITLE_COLOR; a2.line.fill.background()
     
-    arrow3 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.5), Inches(4.6), Inches(0.7), Inches(0.4))
-    arrow3.fill.solid(); arrow3.fill.fore_color.rgb = ACCENT_COLOR; arrow3.line.fill.background()
+    # Arrow 3: DB -> BE (Left Arrow top)
+    a3 = s4.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, Inches(7.1), Inches(3.6), Inches(1.1), Inches(0.3))
+    a3.fill.solid(); a3.fill.fore_color.rgb = MUTED_COLOR; a3.line.fill.background()
 
-    # 3. DB box
-    add_card(s4, Inches(9.3), Inches(1.8), Inches(3.5), Inches(2.2), "3. Relational DB", RGBColor(234, 179, 8))
-    sh_db = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.45), Inches(2.3), Inches(3.2), Inches(1.5))
-    sh_db.fill.solid(); sh_db.fill.fore_color.rgb = CODE_BG; sh_db.line.color.rgb = CARD_BORDER
-    tf_db = sh_db.text_frame; tf_db.word_wrap = True
-    p_db = tf_db.paragraphs[0]; p_db.text = "• SQLite 3 local storage\n• PostgreSQL database structure\n• Double-entry journal tables"
-    p_db.font.name = 'Segoe UI'; p_db.font.size = Pt(11); p_db.font.color.rgb = TEXT_COLOR
+    # Arrow 4: BE -> AI (Right Arrow bottom)
+    a4 = s4.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(7.1), Inches(4.8), Inches(1.1), Inches(0.3))
+    a4.fill.solid(); a4.fill.fore_color.rgb = TITLE_COLOR; a4.line.fill.background()
+    
+    # Arrow 5: AI -> BE (Left Arrow bottom)
+    a5 = s4.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, Inches(7.1), Inches(5.4), Inches(1.1), Inches(0.3))
+    a5.fill.solid(); a5.fill.fore_color.rgb = MUTED_COLOR; a5.line.fill.background()
 
-    # 4. AI box
-    add_card(s4, Inches(9.3), Inches(4.3), Inches(3.5), Inches(2.2), "4. AI Layer (Groq & OpenAI)", RGBColor(168, 85, 247))
-    sh_ai = s4.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.45), Inches(4.8), Inches(3.2), Inches(1.5))
-    sh_ai.fill.solid(); sh_ai.fill.fore_color.rgb = CODE_BG; sh_ai.line.color.rgb = CARD_BORDER
-    tf_ai = sh_ai.text_frame; tf_ai.word_wrap = True
-    p_ai = tf_ai.paragraphs[0]; p_ai.text = "• Groq Llama 3.3 chatbot agent\n• Local function calling mapping\n• OpenAI sentiment and OCR matching"
-    p_ai.font.name = 'Segoe UI'; p_ai.font.size = Pt(11); p_ai.font.color.rgb = TEXT_COLOR
+    # 3. Database Tier (Relational DB)
+    add_card(s4, Inches(8.3), Inches(2.0), Inches(2.2), Inches(4.8), "Database Tier", RGBColor(234, 179, 8))
+    add_sub_item(s4, Inches(8.5), Inches(2.8), Inches(1.8), Inches(1.2), "SQLite / Postgres\n\n(Enforces integrity,\nforeign key constraints)", CODE_BG)
+    add_sub_item(s4, Inches(8.5), Inches(4.6), Inches(1.8), Inches(1.2), "Double-Entry Journals\n\n(Balanced assets,\ncash flows, COGS)", CODE_BG)
+
+    # 4. Cognitive Tier (External AI)
+    add_card(s4, Inches(10.6), Inches(2.0), Inches(2.2), Inches(4.8), "Cognitive AI Tier", RGBColor(168, 85, 247))
+    add_sub_item(s4, Inches(10.8), Inches(2.8), Inches(1.8), Inches(1.2), "Groq Llama 3.3\n\n(High-speed RAG,\nfunction calling)", CODE_BG)
+    add_sub_item(s4, Inches(10.8), Inches(4.6), Inches(1.8), Inches(1.2), "OpenAI API\n\n(PDF text parsing,\nsentiment metrics)", CODE_BG)
+
+    # ==========================================
+    # SLIDE 4A: Backend Architecture & Database Schema
+    # ==========================================
+    s4a = prs.slides.add_slide(blank_layout)
+    add_slide_header(s4a, "Data Links & Storage", "BIZIONARY BACKEND SERVICE")
+    
+    # 30% Theory Left Card
+    add_card(s4a, Inches(0.5), Inches(1.8), Inches(4.5), Inches(4.9), "How Data is Linked", TITLE_COLOR)
+    s4a_points = [
+        "Automated Links: Connects products, sales, and purchases so we don't have to enter them twice.",
+        "Safe Deletes: Prevents accidental deletions from breaking our inventory history.",
+        "Easy Storage: Works with simple local files or scales to cloud databases."
+    ]
+    add_bullet_points(s4a, s4a_points, Inches(0.7), Inches(2.4), Inches(4.1), Inches(4.0), font_size=13)
+    
+    # 70% Visualization Right Card (Database ERD Tables layout)
+    add_card(s4a, Inches(5.5), Inches(1.8), Inches(7.33), Inches(4.9), "How Our Data is Connected", ACCENT_COLOR)
+    
+    # Draw Table Cards
+    # Table 1: Product
+    add_sub_item(s4a, Inches(5.8), Inches(2.3), Inches(3.0), Inches(1.3), "Products Table (Main)\n------------------\n• product_id\n• product_name\n• current_stock\n• shop_stock", CODE_BG)
+    # Table 2: InventoryTransaction (FK to Product)
+    add_sub_item(s4a, Inches(9.4), Inches(2.3), Inches(3.0), Inches(1.3), "Stock Logs Table\n------------------\n• log_id\n• product_id\n• change_amount\n• action_type (IN/OUT)", CODE_BG)
+    # Table 3: Sale (FK to Product)
+    add_sub_item(s4a, Inches(5.8), Inches(4.4), Inches(3.0), Inches(1.8), "Sales Table\n------------------\n• sale_id\n• product_id\n• quantity_sold\n• total_cost\n• paid_status", CODE_BG)
+    # Table 4: CashTransaction
+    add_sub_item(s4a, Inches(9.4), Inches(4.4), Inches(3.0), Inches(1.8), "Cash Book Table\n------------------\n• transaction_id\n• link_id\n• link_type\n• amount\n• type (IN/OUT)", CODE_BG)
+
+    # Connections
+    # Product Table -> InventoryTransaction Table
+    a_prod_inv = s4a.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(2.8), Inches(0.35), Inches(0.25))
+    a_prod_inv.fill.solid(); a_prod_inv.fill.fore_color.rgb = TITLE_COLOR; a_prod_inv.line.fill.background()
+    
+    # Sale Table -> CashTransaction Table
+    a_sale_cash = s4a.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(5.15), Inches(0.35), Inches(0.25))
+    a_sale_cash.fill.solid(); a_sale_cash.fill.fore_color.rgb = ACCENT_COLOR; a_sale_cash.line.fill.background()
+
+    # ==========================================
+    # SLIDE 4B: API Communication & Security Pipeline
+    # ==========================================
+    s4b = prs.slides.add_slide(blank_layout)
+    add_slide_header(s4b, "Safe Screen-to-Server Talk", "BIZIONARY BACKEND SERVICE")
+    
+    # 30% Theory Left Card
+    add_card(s4b, Inches(0.5), Inches(1.8), Inches(4.5), Inches(4.9), "Safe Data Travel", TITLE_COLOR)
+    s4b_points = [
+        "Secure Login Keys: Users get a unique login token to check invoices securely.",
+        "Security Gates: Blocks hackers and blocks unsafe websites from accessing data.",
+        "Data Validation: Scans every input form instantly and blocks bad values."
+    ]
+    add_bullet_points(s4b, s4b_points, Inches(0.7), Inches(2.4), Inches(4.1), Inches(4.0), font_size=13)
+    
+    # 70% Visualization Right Card (API Loop Layout)
+    add_card(s4b, Inches(5.5), Inches(1.8), Inches(7.33), Inches(4.9), "API Call Lifecycle (Clockwise Flow)", ACCENT_COLOR)
+    
+    # Clockwise API cycle blocks
+    add_sub_item(s4b, Inches(5.8), Inches(2.3), Inches(3.0), Inches(0.9), "1. Web Screen\n(User clicks 'Save Sale'\non their browser)", CODE_BG)
+    add_sub_item(s4b, Inches(9.4), Inches(2.3), Inches(3.0), Inches(0.9), "2. Security Check\n(Checks if user has a\nvalid security login key)", CODE_BG)
+    add_sub_item(s4b, Inches(9.4), Inches(3.7), Inches(3.0), Inches(0.9), "3. Input Scanner\n(Checks if fields are filled\ncorrectly without errors)", CODE_BG)
+    add_sub_item(s4b, Inches(5.8), Inches(3.7), Inches(3.0), Inches(0.9), "4. Business Logic\n(Deducts stock quantities\nand calculates cash)", CODE_BG)
+    add_sub_item(s4b, Inches(5.8), Inches(5.1), Inches(6.6), Inches(0.9), "5. Database File\n(Saves transaction rows atomically and sends back a success message)", CODE_BG)
+    
+    # Connections for clockwise flow
+    # React Client -> JWT Gate (Right)
+    a_f1 = s4b.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.9), Inches(2.6), Inches(0.4), Inches(0.3))
+    a_f1.fill.solid(); a_f1.fill.fore_color.rgb = TITLE_COLOR; a_f1.line.fill.background()
+    # JWT Gate -> DRF Serializer (Down)
+    a_f2 = s4b.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(10.75), Inches(3.3), Inches(0.3), Inches(0.3))
+    a_f2.fill.solid(); a_f2.fill.fore_color.rgb = TITLE_COLOR; a_f2.line.fill.background()
+    # DRF Serializer -> Django View (Left)
+    a_f3 = s4b.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, Inches(8.9), Inches(4.0), Inches(0.4), Inches(0.3))
+    a_f3.fill.solid(); a_f3.fill.fore_color.rgb = ACCENT_COLOR; a_f3.line.fill.background()
+    # Django View -> DB Layer (Down)
+    a_f4 = s4b.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(7.15), Inches(4.7), Inches(0.3), Inches(0.3))
+    a_f4.fill.solid(); a_f4.fill.fore_color.rgb = ACCENT_COLOR; a_f4.line.fill.background()
+
+    # ==========================================
+    # SLIDE 4C: Signal-Driven Ledger & Auditing Pipeline
+    # ==========================================
+    s4c = prs.slides.add_slide(blank_layout)
+    add_slide_header(s4c, "Automatic Bookkeeping Flow", "BIZIONARY BACKEND SERVICE")
+    
+    # 30% Theory Left Card
+    add_card(s4c, Inches(0.5), Inches(1.8), Inches(4.5), Inches(4.9), "Automated Ledgers", TITLE_COLOR)
+    s4c_points = [
+        "One-Click Updates: Saving a sale updates stock, logs cash, and writes audits automatically.",
+        "All-or-Nothing: If one log fails, the entire sale cancels to keep numbers correct.",
+        "Auto Reverse: Deleting a sale automatically returns stock and refunds cash."
+    ]
+    add_bullet_points(s4c, s4c_points, Inches(0.7), Inches(2.4), Inches(4.1), Inches(4.0), font_size=13)
+    
+    # 70% Visualization Right Card (Signal diagram)
+    add_card(s4c, Inches(5.5), Inches(1.8), Inches(7.33), Inches(4.9), "Auto-Ledger & Bookkeeping Flow", ACCENT_COLOR)
+    
+    # Flow elements
+    # Root
+    add_sub_item(s4c, Inches(7.66), Inches(2.2), Inches(3.0), Inches(0.8), "New Transaction Saved\n(e.g., Sale is logged)", CODE_BG)
+    
+    # 3 Parallel Branches
+    add_sub_item(s4c, Inches(5.8), Inches(3.8), Inches(2.0), Inches(1.1), "Deduct Inventory\n(Removes item\nfrom stock levels)", CODE_BG)
+    add_sub_item(s4c, Inches(8.15), Inches(3.8), Inches(2.0), Inches(1.1), "Log Cash Inflow\n(Records cash\nreceived)", CODE_BG)
+    add_sub_item(s4c, Inches(10.5), Inches(3.8), Inches(2.0), Inches(1.1), "Write Activity Log\n(Saves who did what\nfor auditing)", CODE_BG)
+    
+    # Atomic barrier
+    add_sub_item(s4c, Inches(5.8), Inches(5.4), Inches(6.7), Inches(0.8), "Atomic Transaction Guard\n[All steps must succeed together, or everything is undone]", CODE_BG)
+
+    # Branch down-arrows from root to child blocks
+    a_b1 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(6.7), Inches(3.15), Inches(0.2), Inches(0.55))
+    a_b1.fill.solid(); a_b1.fill.fore_color.rgb = TITLE_COLOR; a_b1.line.fill.background()
+    
+    a_b2 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(9.15), Inches(3.15), Inches(0.2), Inches(0.55))
+    a_b2.fill.solid(); a_b2.fill.fore_color.rgb = TITLE_COLOR; a_b2.line.fill.background()
+    
+    a_b3 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(11.5), Inches(3.15), Inches(0.2), Inches(0.55))
+    a_b3.fill.solid(); a_b3.fill.fore_color.rgb = TITLE_COLOR; a_b3.line.fill.background()
+
+    # Branch down-arrows from child blocks to barrier
+    a_c1 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(6.7), Inches(5.05), Inches(0.18), Inches(0.28))
+    a_c1.fill.solid(); a_c1.fill.fore_color.rgb = ACCENT_COLOR; a_c1.line.fill.background()
+    
+    a_c2 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(9.15), Inches(5.05), Inches(0.18), Inches(0.28))
+    a_c2.fill.solid(); a_c2.fill.fore_color.rgb = ACCENT_COLOR; a_c2.line.fill.background()
+    
+    a_c3 = s4c.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, Inches(11.5), Inches(5.05), Inches(0.18), Inches(0.28))
+    a_c3.fill.solid(); a_c3.fill.fore_color.rgb = ACCENT_COLOR; a_c3.line.fill.background()
 
     # ==========================================
     # SLIDE 5: Raw Master Catalog (Al-Noor Trading)
@@ -579,53 +726,53 @@ def main():
     add_slide_header(s20, "Standalone Desktop Executable (.exe)")
     
     # 3 sequence blocks for compilation pipeline
-    add_card(s20, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Vite React Compilation", TITLE_COLOR)
+    add_card(s20, Inches(0.5), Inches(2.0), Inches(3.8), Inches(4.5), "Build Screen Files", TITLE_COLOR)
     exe_c1 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.65), Inches(2.5), Inches(3.5), Inches(3.8))
     exe_c1.fill.solid(); exe_c1.fill.fore_color.rgb = CODE_BG; exe_c1.line.color.rgb = CARD_BORDER
     tf_c1 = exe_c1.text_frame; tf_c1.word_wrap = True
-    p_c1 = tf_c1.paragraphs[0]; p_c1.text = "Step 1: Frontend Build:\n• Cleans former build outputs.\n• Bundles static HTML, CSS, and JS components using Vite compiler.\n• Optimizes asset trees to generate single-page static distribution directories."
+    p_c1 = tf_c1.paragraphs[0]; p_c1.text = "Step 1: Screen Code:\n• Packages interface code into clean, fast browser files.\n• Optimizes screens to load instantly on any user desktop.\n• Removes temporary folders to keep the app lightweight."
     p_c1.font.name = 'Segoe UI'; p_c1.font.size = Pt(13); p_c1.font.color.rgb = TEXT_COLOR
     
     arrow_c1 = s20.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(4.45), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_c1.fill.solid(); arrow_c1.fill.fore_color.rgb = ACCENT_COLOR; arrow_c1.line.fill.background()
 
-    add_card(s20, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Django Ledger Migration", ACCENT_COLOR)
+    add_card(s20, Inches(5.0), Inches(2.0), Inches(3.8), Inches(4.5), "Prepare Database", ACCENT_COLOR)
     exe_c2 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(5.15), Inches(2.5), Inches(3.5), Inches(3.8))
     exe_c2.fill.solid(); exe_c2.fill.fore_color.rgb = CODE_BG; exe_c2.line.color.rgb = CARD_BORDER
     tf_c2 = exe_c2.text_frame; tf_c2.word_wrap = True
-    p_c2 = tf_c2.paragraphs[0]; p_c2.text = "Step 2: Database Preparation:\n• Runs Django model checkups and applies migrations to build a blank SQLite database schema.\n• Collects static bundles using python command-line scripts."
+    p_c2 = tf_c2.paragraphs[0]; p_c2.text = "Step 2: Database Setup:\n• Prepares the SQLite database file structures.\n• Sets up the tables and rules for products and invoices.\n• Collects final files using simple scripts."
     p_c2.font.name = 'Segoe UI'; p_c2.font.size = Pt(13); p_c2.font.color.rgb = TEXT_COLOR
     
     arrow_c2 = s20.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Inches(8.95), Inches(3.8), Inches(0.4), Inches(0.3))
     arrow_c2.fill.solid(); arrow_c2.fill.fore_color.rgb = ACCENT_COLOR; arrow_c2.line.fill.background()
 
-    add_card(s20, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "PyInstaller Executable", RGBColor(234, 179, 8))
+    add_card(s20, Inches(9.5), Inches(2.0), Inches(3.33), Inches(4.5), "Create Installer (.exe)", RGBColor(234, 179, 8))
     exe_c3 = s20.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.65), Inches(2.5), Inches(3.03), Inches(3.8))
     exe_c3.fill.solid(); exe_c3.fill.fore_color.rgb = CODE_BG; exe_c3.line.color.rgb = CARD_BORDER
     tf_c3 = exe_c3.text_frame; tf_c3.word_wrap = True
-    p_c3 = tf_c3.paragraphs[0]; p_c3.text = "Step 3: Packaged Binary:\n• Invokes PyInstaller compiler wrapping `run_server.py` and embedding Python DLLs and sqlite schemas.\n• Generates a standalone double-clickable `BizionaryERP_Windows.zip` archive containing the local runner."
+    p_c3 = tf_c3.paragraphs[0]; p_c3.text = "Step 3: Standalone App:\n• Bundles server code and files into a double-clickable installer file.\n• Creates a single zip folder containing the offline runner.\n• Users can copy it to a USB drive and launch it on any Windows PC."
     p_c3.font.name = 'Segoe UI'; p_c3.font.size = Pt(13); p_c3.font.color.rgb = TEXT_COLOR
 
     # ==========================================
     # SLIDE 21: Data Portability & Disaster Recovery
     # ==========================================
     s21 = prs.slides.add_slide(blank_layout)
-    add_slide_header(s21, "Data Portability & Porting")
+    add_slide_header(s21, "Data Backups & Upgrades")
     
-    add_card(s21, Inches(0.75), Inches(1.8), Inches(5.6), Inches(4.8), "Self-Contained SQLite Backups", TITLE_COLOR)
+    add_card(s21, Inches(0.75), Inches(1.8), Inches(5.6), Inches(4.8), "All-in-One File Backups", TITLE_COLOR)
     port_points_1 = [
-        "Database Portability: All records (products, transactions, cash flows, user credentials) are saved in a single, robust file named `db.sqlite3`.",
-        "Physical Isolation: The database resides inside the `_internal` subdirectory of the compiled standalone package.",
-        "Simple Copy-Paste Backup: Users can back up their entire store database by making a duplicate copy of `db.sqlite3`."
+        "Easy Storage: All records (products, sales, cash logs) live in one file: `db.sqlite3`.",
+        "Safe Location: The database file sits safely inside the app's internal folder.",
+        "Copy-Paste Backup: Back up everything by simply making a copy of this single file."
     ]
     add_bullet_points(s21, port_points_1, Inches(1.0), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
     
-    add_card(s21, Inches(6.98), Inches(1.8), Inches(5.6), Inches(4.8), "Procedure for Updating System", ACCENT_COLOR)
+    add_card(s21, Inches(6.98), Inches(1.8), Inches(5.6), Inches(4.8), "How to Upgrade the App", ACCENT_COLOR)
     port_points_2 = [
-        "1. Copy Old DB: Go to the old folder and copy `BizionaryERP/_internal/db.sqlite3`.",
-        "2. Extract New Version: Extract the updated compiled zip package.",
-        "3. Replace Template: Paste the copied `db.sqlite3` file into the new `_internal` directory, replacing the blank database.",
-        "4. Run Launcher: Double-click the launch script; all historical records will load immediately."
+        "1. Copy Old Database: Copy the `db.sqlite3` file from your current app folder.",
+        "2. Unzip New Version: Unpack the new version folder you downloaded.",
+        "3. Paste Database: Paste your copied file into the new app folder, replacing the blank one.",
+        "4. Start App: Double-click the app icon to load all your records instantly."
     ]
     add_bullet_points(s21, port_points_2, Inches(7.23), Inches(2.4), Inches(5.1), Inches(3.8), font_size=16)
 
@@ -671,7 +818,7 @@ def main():
     p2.space_before = Pt(12)
     
     # Save the presentation
-    filename = "BizionaryERP_Presentation_v5.pptx"
+    filename = "BizionaryERP_Presentation_v6.pptx"
     prs.save(filename)
     print(f"Presentation saved successfully as {filename}")
 

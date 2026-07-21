@@ -12,6 +12,7 @@ import { buildIncomingQuantityMap, buildInventoryRows, normalizeProductRecord, t
 import { getCategoryPrefix } from '../../utils/productCategories';
 import PdfUploadModal from '../../components/common/PdfUploadModal';
 import DirectPurchaseModal from './DirectPurchaseModal';
+import useCategories from '../../hooks/useCategories';
 
 const InventoryManagment = () => {
     const navigate = useNavigate();
@@ -690,6 +691,23 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
     const [submitting, setSubmitting] = useState(false);
     const scannerRef = useRef(null);
 
+    // Quick register product states
+    const { categories = [] } = useCategories();
+    const [showQuickAdd, setShowQuickAdd] = useState(false);
+    const [quickAddName, setQuickAddName] = useState('');
+    const [quickAddCategory, setQuickAddCategory] = useState('');
+    const [quickAddCostPrice, setQuickAddCostPrice] = useState('');
+    const [quickAddSalePrice, setQuickAddSalePrice] = useState('');
+    const [quickAddPcsPerPack, setQuickAddPcsPerPack] = useState(12);
+    const [quickAdding, setQuickAdding] = useState(false);
+
+    // Synchronize default category when categories load
+    useEffect(() => {
+        if (categories && categories.length > 0 && !quickAddCategory) {
+            setQuickAddCategory(categories[0].value);
+        }
+    }, [categories, quickAddCategory]);
+
     const handleSelectProduct = (scannedProduct, scanned_as, multiplier) => {
         const existingIndex = scannedItems.findIndex(
             (item) => Number(item.product_id) === Number(scannedProduct.id)
@@ -736,6 +754,49 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
         } catch (err) {
             const msg = err.response?.data?.error || `Product with code "${code}" not found.`;
             setScanError(msg);
+        }
+    };
+
+    const handleQuickAddSubmit = async () => {
+        if (!quickAddName.trim()) return;
+        setQuickAdding(true);
+        setScanError('');
+        try {
+            const prefix = getCategoryPrefix(quickAddCategory) || 'CU';
+            const cleanName = String(quickAddName).replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toUpperCase();
+            const productCode = `${prefix}-${cleanName.slice(0, 16) || 'ITEM'}-${Date.now().toString().slice(-6)}`;
+
+            const payload = {
+                product_code: productCode,
+                name: quickAddName,
+                category: quickAddCategory,
+                cost_price: Number(quickAddCostPrice || 0),
+                unit_price: Number(quickAddCostPrice || 0),
+                sale_price: Number(quickAddSalePrice || quickAddCostPrice || 0),
+                stock_quantity: 0,
+                min_stock: 1,
+                status: 'ACTIVE',
+                barcode: scanBarcode.trim(),
+                pcs_per_pack: quickAddPcsPerPack
+            };
+
+            const res = await api.post('products/', payload);
+            const newProd = res.data;
+            
+            // Add directly to the scanned items list in modal
+            handleSelectProduct(newProd, 'unit barcode', 1);
+            
+            setShowQuickAdd(false);
+            setQuickAddName('');
+            setQuickAddCostPrice('');
+            setQuickAddSalePrice('');
+            setScanError('');
+            onSuccess(); // refresh products list in parent dashboard
+        } catch (err) {
+            const msg = err.response?.data?.error || 'Failed to create product. Check if the SKU or name already exists.';
+            setScanError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+        } finally {
+            setQuickAdding(false);
         }
     };
 
@@ -825,6 +886,10 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
             setScanSuccess('');
             setMultipleMatches([]);
             setCameraOpen(false);
+            setShowQuickAdd(false);
+            setQuickAddName('');
+            setQuickAddCostPrice('');
+            setQuickAddSalePrice('');
         }
     }, [isOpen]);
 
@@ -920,19 +985,113 @@ const ScanStockInModal = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
                             )}
 
-                            {(scanSuccess || scanError) && (
-                                <div className="flex flex-col gap-1.5">
-                                    {scanSuccess && (
-                                        <div className="px-3 py-2 rounded-lg border border-emerald-100 bg-status-success/5 text-status-success text-xs font-semibold">
-                                            {scanSuccess}
+                            {showQuickAdd ? (
+                                <div className="p-4 bg-page border border-border rounded-xl space-y-3.5 shadow-inner">
+                                    <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                                        <h4 className="text-xs font-bold text-accent uppercase tracking-wider">Quick Register New Product</h4>
+                                        <span className="text-[10px] font-mono text-secondary bg-background px-2 py-0.5 rounded-md border border-border">
+                                            Barcode: {scanBarcode}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3.5">
+                                        <div className="col-span-2">
+                                            <label className="block text-[10px] font-bold text-secondary mb-1 uppercase">Product Name</label>
+                                            <input
+                                                type="text"
+                                                value={quickAddName}
+                                                onChange={(e) => setQuickAddName(e.target.value)}
+                                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-accent text-primary font-medium"
+                                                placeholder="e.g. Kleenex Tissues"
+                                            />
                                         </div>
-                                    )}
-                                    {scanError && (
-                                        <div className="px-3 py-2 rounded-lg border border-rose-100 bg-status-info/5 text-status-info text-xs font-semibold">
-                                            {scanError}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-secondary mb-1 uppercase">Category</label>
+                                            <select
+                                                value={quickAddCategory}
+                                                onChange={(e) => setQuickAddCategory(e.target.value)}
+                                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-accent text-primary font-semibold"
+                                            >
+                                                {categories.map((c) => (
+                                                    <option key={c.value} value={c.value} className="bg-card text-primary">{c.label}</option>
+                                                ))}
+                                            </select>
                                         </div>
-                                    )}
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-secondary mb-1 uppercase">Pcs per Pack</label>
+                                            <input
+                                                type="number"
+                                                value={quickAddPcsPerPack}
+                                                onChange={(e) => setQuickAddPcsPerPack(Math.max(1, parseInt(e.target.value) || 1))}
+                                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-accent text-primary font-medium"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-secondary mb-1 uppercase">Cost Price (Rs.)</label>
+                                            <input
+                                                type="number"
+                                                value={quickAddCostPrice}
+                                                onChange={(e) => setQuickAddCostPrice(e.target.value)}
+                                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-accent text-primary font-medium"
+                                                placeholder="Cost"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-bold text-secondary mb-1 uppercase">Sale Price (Rs.)</label>
+                                            <input
+                                                type="number"
+                                                value={quickAddSalePrice}
+                                                onChange={(e) => setQuickAddSalePrice(e.target.value)}
+                                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-accent text-primary font-medium"
+                                                placeholder="Retail Price"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowQuickAdd(false)}
+                                            className="px-3.5 py-2 text-xs font-bold text-secondary hover:text-primary transition-all cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleQuickAddSubmit}
+                                            disabled={quickAdding || !quickAddName.trim()}
+                                            className="px-4 py-2 text-xs font-bold text-card bg-accent rounded-xl hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                        >
+                                            {quickAdding ? 'Adding...' : 'Register & Add to Scan'}
+                                        </button>
+                                    </div>
                                 </div>
+                            ) : (
+                                (scanSuccess || scanError) && (
+                                    <div className="flex flex-col gap-1.5">
+                                        {scanSuccess && (
+                                            <div className="px-3 py-2 rounded-lg border border-emerald-100 bg-status-success/5 text-status-success text-xs font-semibold">
+                                                {scanSuccess}
+                                            </div>
+                                        )}
+                                        {scanError && (
+                                            <div className="px-3 py-2 rounded-lg border border-rose-100 bg-status-info/5 text-status-info text-xs font-semibold flex items-center justify-between">
+                                                <span>{scanError}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setQuickAddName('');
+                                                        setQuickAddCostPrice('');
+                                                        setQuickAddSalePrice('');
+                                                        setQuickAddPcsPerPack(12);
+                                                        setShowQuickAdd(true);
+                                                    }}
+                                                    className="px-2 py-1 bg-accent/20 hover:bg-accent/30 text-accent font-black text-[10px] rounded-md transition-all cursor-pointer inline-flex items-center gap-1"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" /> Quick Add Product
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )
                             )}
 
                             {/* Scanned Items list */}

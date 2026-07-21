@@ -163,6 +163,7 @@ ANSWER RULES:
                 '- NEVER output generic hyperlinks. Always use the `route:` prefix inside standard markdown links for ERP pages.\n\n'
                 'ANSWER RULES FOR REPORTS AND EXPORTS:\n'
                 '- If the user asks for a report download or export (like sales, expenses, or inventory report), ALWAYS call `generate_report` with the correct report_type.\n'
+                '- If the user asks for a PDF report or a comprehensive report of sales and stock invoices, ALWAYS call `generate_invoices_pdf_report` with optional date parameters.\n'
                 '- In your response, present the download URL returned by the tool as a standard link button in markdown: `[Download <type> Report](url)` where url is the download_url returned by the tool.\n\n'
                 'CONVERSATIONAL SALE RECORDING RULES:\n'
                 '- When the user asks to record, create, register, add, or make a sale, you MUST NOT execute the `create_sale` tool immediately.\n'
@@ -393,6 +394,31 @@ CHATBOT_TOOLS = [
                 }
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_invoices_pdf_report",
+            "description": "Generate a comprehensive, human-friendly PDF report analyzing all sales invoices and stock invoices (procurements). Returns a download link.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "start_date": {"type": "string", "description": "Optional start date in YYYY-MM-DD format to filter invoices."},
+                    "end_date": {"type": "string", "description": "Optional end date in YYYY-MM-DD format to filter invoices."}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_demand_alerts",
+            "description": "Get high-demand products, spikes in sales velocity, and rising demand alerts.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
     }
 ]
 
@@ -460,6 +486,21 @@ def execute_tool(name, arguments):
                     "min_stock": p.min_stock,
                     "sku": p.sku
                 } for p in products
+            ])
+            
+        elif name == "get_demand_alerts":
+            from insights.services import get_demand_alerts
+            alerts = get_demand_alerts()
+            if not alerts:
+                return "No high-demand items or sales velocity spikes detected."
+            return json.dumps([
+                {
+                    "product_name": a['product_name'],
+                    "sku": a['sku'],
+                    "sales_count": a['sales_count'],
+                    "recommendation": a['recommendation'],
+                    "timeframe": a.get('timeframe', '30 days')
+                } for a in alerts
             ])
             
         elif name == "get_financial_kpis":
@@ -843,6 +884,25 @@ def execute_tool(name, arguments):
                 "report_type": report_type,
                 "download_url": download_url,
                 "message": f"Successfully generated a download link for the {report_type} report. Please present this link in markdown format [Download {report_type.capitalize()} Report]({download_url}) to the user so they can click it to download."
+            })
+            
+        elif name == "generate_invoices_pdf_report":
+            start_date = arguments.get("start_date")
+            end_date = arguments.get("end_date")
+            
+            params = []
+            if start_date:
+                params.append(f"start_date={start_date}")
+            if end_date:
+                params.append(f"end_date={end_date}")
+                
+            query_str = "?" + "&".join(params) if params else ""
+            download_url = f"/api/chatbot/download-pdf-report/{query_str}"
+            
+            return json.dumps({
+                "success": True,
+                "download_url": download_url,
+                "message": f"Successfully generated a download link for the Sales & Stock PDF Invoice Report. Please present this link in markdown format [Download PDF Invoice Report]({download_url}) to the user so they can click it to download."
             })
             
         elif name == "get_sales_by_category":

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Package, AlertCircle, Zap, Brain } from 'lucide-react';
 import { insightsApi } from '../../services/insightsApi';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/ui/PageHeader';
 
@@ -198,6 +199,23 @@ const AIInsights = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    };
+
+    const downloadPdfInvoiceReport = () => {
+        const period = NLP_PERIODS[selectedNlpPeriod] || NLP_PERIODS.monthly;
+        const days = period.days;
+        
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+        const startDateStr = start.toISOString().split('T')[0];
+        
+        let backendUrl = 'http://localhost:8000';
+        if (api && api.defaults && api.defaults.baseURL) {
+            backendUrl = api.defaults.baseURL.replace(/\/api\/?$/, '');
+        }
+        
+        const downloadUrl = `${backendUrl}/api/chatbot/download-pdf-report/?start_date=${startDateStr}`;
+        window.open(downloadUrl, '_blank');
     };
 
     const submitCustomerReview = async (event) => {
@@ -483,9 +501,15 @@ const AIInsights = () => {
                                     </select>
                                     <button
                                         onClick={downloadNlpReportCsv}
-                                        className="px-4 py-2 rounded-full bg-primary text-sm font-semibold"
+                                        className="px-4 py-2 rounded-full bg-[#8A7F6E] hover:bg-[#72695B] text-white text-sm font-semibold transition-all duration-200"
                                     >
                                         Download CSV
+                                    </button>
+                                    <button
+                                        onClick={downloadPdfInvoiceReport}
+                                        className="px-4 py-2 rounded-full bg-primary hover:bg-opacity-90 text-white text-sm font-semibold shadow-sm transition-all duration-200 active:scale-95"
+                                    >
+                                        Download PDF Report
                                     </button>
                                 </div>
                             </div>

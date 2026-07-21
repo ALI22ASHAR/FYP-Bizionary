@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Menu,
@@ -11,10 +11,14 @@ import {
     Settings,
     History,
     Sliders,
+    Bell,
+    AlertCircle,
+    TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSidebar } from '../../context/SidebarContext';
+import api from '../../services/api';
 import Logo from '../common/Logo';
 
 const Topbar = () => {
@@ -24,6 +28,65 @@ const Topbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [alerts, setAlerts] = useState([]);
+    const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+    const [activeAlertTab, setActiveAlertTab] = useState('all');
+
+    const handleAlertClick = (type, productName) => {
+        setIsAlertsOpen(false);
+        navigate(`/products?search=${encodeURIComponent(productName)}`);
+    };
+
+    useEffect(() => {
+        const fetchAlerts = async () => {
+            try {
+                const [demandRes, stockRes] = await Promise.all([
+                    api.get('insights/demand-alerts/'),
+                    api.get('insights/stock-warnings/')
+                ]);
+                
+                const loadedAlerts = [];
+                
+                // Process demand alerts
+                if (demandRes.data && Array.isArray(demandRes.data.data)) {
+                    demandRes.data.data.forEach(item => {
+                        loadedAlerts.push({
+                            id: `demand-${item.product_id}`,
+                            productId: item.product_id,
+                            productName: item.product_name,
+                            type: 'demand',
+                            title: 'High Demand Signal',
+                            description: `${item.product_name}: ${item.recommendation || 'Rising sales velocity detected.'}`,
+                            time: 'Just now'
+                        });
+                    });
+                }
+                
+                // Process stock alerts
+                if (stockRes.data && Array.isArray(stockRes.data.data)) {
+                    stockRes.data.data.forEach(item => {
+                        loadedAlerts.push({
+                            id: `stock-${item.product_id}`,
+                            productId: item.product_id,
+                            productName: item.product_name,
+                            type: 'stock',
+                            title: 'Low Stock Warning',
+                            description: `${item.product_name} is low on stock (${item.current_stock} left, min threshold ${item.reorder_level}).`,
+                            time: 'Urgent'
+                        });
+                    });
+                }
+                
+                setAlerts(loadedAlerts);
+            } catch (err) {
+                console.error("Failed to load alerts for bell widget:", err);
+            }
+        };
+        
+        fetchAlerts();
+        const interval = setInterval(fetchAlerts, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getActiveWorkspaceName = () => {
         const path = location.pathname;
@@ -104,6 +167,136 @@ const Topbar = () => {
 
             {/* Right — profile */}
             <div className="flex items-center gap-2">
+                {/* Notifications Bell Widget */}
+                <div className="relative mr-1">
+                    {isAlertsOpen && (
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsAlertsOpen(false)}
+                        />
+                    )}
+                    
+                    <button
+                        onClick={() => setIsAlertsOpen(prev => !prev)}
+                        className="p-1.5 text-secondary hover:text-primary hover:bg-active-pill/30 rounded-full transition-colors relative cursor-pointer focus:outline-none flex items-center justify-center"
+                        aria-label="Notifications"
+                    >
+                        <Bell className="w-4.5 h-4.5 text-primary" />
+                        {alerts.length > 0 && (
+                            <span className="absolute top-1 right-1 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                        )}
+                    </button>
+                    
+                    {/* Alerts Dropdown Card */}
+                    <div className={`
+                        absolute right-0 mt-2.5 w-[calc(100vw-2.5rem)] sm:w-96 max-w-md
+                        bg-card border border-card
+                        rounded-2xl shadow-2xl
+                        p-4 text-primary
+                        z-50 flex flex-col gap-3
+                        transition-all duration-200 origin-top-right
+                        ${isAlertsOpen ? 'scale-100 opacity-100 visible' : 'scale-95 opacity-0 invisible pointer-events-none'}
+                    `}>
+                        <div className="flex items-center justify-between border-b border-card pb-2">
+                            <span className="font-bold text-xs uppercase tracking-wider text-secondary">Active ERP Alerts</span>
+                            {alerts.length > 0 && (
+                                <span className="text-[10px] bg-rose-500/10 text-rose-500 font-bold px-2.5 py-0.5 rounded-full">
+                                    {alerts.length} Total
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Dropdown Tabs Filter Bar */}
+                        <div className="flex items-center gap-1 bg-page/80 dark:bg-slate-900/60 p-1 rounded-full w-full border border-card">
+                            <button
+                                onClick={() => setActiveAlertTab('all')}
+                                className={`flex-1 text-center py-1.5 rounded-full text-[10px] font-extrabold transition-all duration-200 cursor-pointer ${
+                                    activeAlertTab === 'all'
+                                        ? 'bg-primary text-white shadow-xs'
+                                        : 'text-textMuted hover:text-primary hover:bg-active-pill/20'
+                                }`}
+                            >
+                                All ({alerts.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveAlertTab('stock')}
+                                className={`flex-1 text-center py-1.5 rounded-full text-[10px] font-extrabold transition-all duration-200 cursor-pointer ${
+                                    activeAlertTab === 'stock'
+                                        ? 'bg-rose-500 text-white shadow-xs'
+                                        : 'text-textMuted hover:text-rose-500 hover:bg-rose-500/5'
+                                }`}
+                            >
+                                Stock ({alerts.filter(a => a.type === 'stock').length})
+                            </button>
+                            <button
+                                onClick={() => setActiveAlertTab('demand')}
+                                className={`flex-1 text-center py-1.5 rounded-full text-[10px] font-extrabold transition-all duration-200 cursor-pointer ${
+                                    activeAlertTab === 'demand'
+                                        ? 'bg-primary text-white shadow-xs'
+                                        : 'text-textMuted hover:text-primary hover:bg-active-pill/20'
+                                }`}
+                            >
+                                Demand ({alerts.filter(a => a.type === 'demand').length})
+                            </button>
+                        </div>
+                        
+                        <div className="max-h-60 overflow-y-auto space-y-2.5 pr-0.5">
+                            {alerts.length === 0 ? (
+                                <div className="text-center py-6 text-xs text-textMuted font-semibold">
+                                    All systems operational. No warnings!
+                                </div>
+                            ) : (
+                                alerts
+                                    .filter(alert => {
+                                        if (activeAlertTab === 'stock') return alert.type === 'stock';
+                                        if (activeAlertTab === 'demand') return alert.type === 'demand';
+                                        return true;
+                                    })
+                                    .map(alert => (
+                                        <div 
+                                            key={alert.id} 
+                                            onClick={() => handleAlertClick(alert.type, alert.productName)}
+                                            className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs transition-all duration-150 cursor-pointer select-none active:scale-[0.99] ${
+                                                alert.type === 'stock' 
+                                                ? 'bg-rose-500/5 border-rose-500/10 hover:bg-rose-500/8 hover:-translate-y-0.5 hover:shadow-xs' 
+                                                : 'bg-primary/5 border-primary/10 hover:bg-primary/8 hover:-translate-y-0.5 hover:shadow-xs'
+                                            }`}
+                                        >
+                                            <div className={`p-1.5 rounded-lg shrink-0 ${
+                                                alert.type === 'stock' ? 'bg-rose-500/10 text-rose-500' : 'bg-primary/10 text-primary'
+                                            }`}>
+                                                {alert.type === 'stock' ? <AlertCircle className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-primary truncate">{alert.title}</span>
+                                                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                                                        alert.type === 'stock' ? 'bg-rose-500/10 text-rose-500' : 'bg-primary/10 text-primary'
+                                                    }`}>{alert.time}</span>
+                                                </div>
+                                                <p className="text-secondary text-[11px] mt-1 leading-relaxed whitespace-normal break-words">
+                                                    {alert.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                            {alerts.length > 0 && alerts.filter(alert => {
+                                if (activeAlertTab === 'stock') return alert.type === 'stock';
+                                if (activeAlertTab === 'demand') return alert.type === 'demand';
+                                return true;
+                            }).length === 0 && (
+                                <div className="text-center py-6 text-xs text-textMuted font-semibold">
+                                    No warnings in this section.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Profile dropdown */}
                 <div className="relative">
                     {isDropdownOpen && (

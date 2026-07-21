@@ -112,3 +112,26 @@ def download_report(request):
         
     return response
 
+
+@api_view(['GET'])
+def download_pdf_report(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    # Clean empty strings
+    if start_date == '':
+        start_date = None
+    if end_date == '':
+        end_date = None
+        
+    try:
+        from .pdf_report_service import generate_sales_stock_pdf_report
+        pdf_bytes = generate_sales_stock_pdf_report(start_date=start_date, end_date=end_date)
+        
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="bizionary_sales_stock_report.pdf"'
+        return response
+    except Exception as exc:
+        return HttpResponse(f"Error generating PDF report: {str(exc)}", status=500)
+
+

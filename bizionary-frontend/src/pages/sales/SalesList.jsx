@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/ui/PageHeader';
 import Skeleton from '../../components/ui/Skeleton';
 import ConfirmModal from '../../components/ui/ConfirmModal';
@@ -69,7 +70,7 @@ const MagneticButton = ({ children, onClick, disabled, className }) => {
 };
 
 const SalesList = () => {
-
+    const navigate = useNavigate();
     const [sales, setSales] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -190,6 +191,15 @@ const SalesList = () => {
             setLoading(false);
         }
     };
+
+    // Parse URL query parameter for pre-filtering sales on load
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const searchVal = params.get('search');
+        if (searchVal) {
+            setSearchTerm(searchVal);
+        }
+    }, []);
 
     // Trigger API call when page or filters change
     useEffect(() => {
@@ -438,6 +448,13 @@ const SalesList = () => {
                     >
                         <FileText className="h-4 w-4 mr-2 text-accent" />
                         Upload Sales PDF
+                    </button>
+                    <button
+                        onClick={() => navigate('/insights')}
+                        className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-white via-slate-50 to-white bg-[length:200%_auto] hover:bg-[100%_0] border border-card text-textMain hover:border-primary hover:text-primary rounded-full text-sm font-bold transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] hover:-translate-y-[4px] hover:shadow-[0_12px_24px_-4px_rgba(0,0,0,0.08)] active:scale-[0.98] w-full sm:w-auto"
+                    >
+                        <FileText className="h-4 w-4 mr-2 text-primary" />
+                        Report Generator
                     </button>
                     <button
                         onClick={openAddForm}

@@ -263,8 +263,8 @@ def ordered_slip_mark_partial(request, pk):
         return Response({'quantity_received': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     received_quantity = int(received_quantity)
-    if received_quantity < 0 or received_quantity > ordered_slip.quantity_ordered:
-        return Response({'quantity_received': 'Received quantity must be between 0 and the ordered quantity.'}, status=status.HTTP_400_BAD_REQUEST)
+    if received_quantity <= ordered_slip.quantity_received or received_quantity > ordered_slip.quantity_ordered:
+        return Response({'quantity_received': f'Received quantity must be between {ordered_slip.quantity_received + 1} and the ordered quantity ({ordered_slip.quantity_ordered}).'}, status=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
         _apply_receipt_to_inventory(ordered_slip, received_quantity)
@@ -285,6 +285,28 @@ def ordered_slip_mark_partial(request, pk):
                 notes=f"Generated from Completed OrderedSlip #{ordered_slip.id} (Delivered to: {loc_display})"
             )
         ordered_slip.save(update_fields=['quantity_received', 'status', 'received_at', 'updated_at'])
+
+        # Create or update Invoice for Invoices & Billing section
+        from invoices.models import Invoice
+        from decimal import Decimal
+        from datetime import timedelta
+        inv_num = f"INV-OS-{ordered_slip.id:04d}"
+        inv_status = 'PARTIALLY_PAID' if ordered_slip.status == OrderedSlip.STATUS_PARTIAL else 'PAID'
+        amt_paid = Decimal(str(ordered_slip.unit_cost)) * received_quantity
+        
+        Invoice.objects.update_or_create(
+            invoice_number=inv_num,
+            defaults={
+                'customer_name': ordered_slip.company_name,
+                'invoice_date': timezone.now().date(),
+                'due_date': timezone.now().date() + timedelta(days=14),
+                'subtotal': ordered_slip.total_cost,
+                'total_amount': ordered_slip.total_cost,
+                'amount_paid': amt_paid,
+                'status': inv_status,
+                'notes': f"Stock Invoice generated from Ordered Slip #{ordered_slip.id} (Received {received_quantity}/{ordered_slip.quantity_ordered} units of {ordered_slip.product.name})."
+            }
+        )
 
     log_action(request, 'UPDATE', f"Order slip #{ordered_slip.id}: marked partial receipt — {received_quantity}/{ordered_slip.quantity_ordered} units received.", module='Purchases')
     return Response(OrderedSlipSerializer(ordered_slip).data)
@@ -313,6 +335,25 @@ def ordered_slip_mark_complete(request, pk):
             purchase_date=timezone.now().date(),
             payment_status='PAID',
             notes=f"Generated from Completed OrderedSlip #{ordered_slip.id} (Delivered to: {loc_display})"
+        )
+
+        # Create or update Invoice for Invoices & Billing section
+        from invoices.models import Invoice
+        from datetime import timedelta
+        inv_num = f"INV-OS-{ordered_slip.id:04d}"
+        
+        Invoice.objects.update_or_create(
+            invoice_number=inv_num,
+            defaults={
+                'customer_name': ordered_slip.company_name,
+                'invoice_date': timezone.now().date(),
+                'due_date': timezone.now().date() + timedelta(days=14),
+                'subtotal': ordered_slip.total_cost,
+                'total_amount': ordered_slip.total_cost,
+                'amount_paid': ordered_slip.total_cost,
+                'status': 'PAID',
+                'notes': f"Stock Invoice generated from Completed Ordered Slip #{ordered_slip.id} ({ordered_slip.quantity_ordered} units of {ordered_slip.product.name})."
+            }
         )
 
     log_action(request, 'UPDATE', f"Order slip #{ordered_slip.id}: marked fully complete — all {ordered_slip.quantity_ordered} units received.", module='Purchases')
