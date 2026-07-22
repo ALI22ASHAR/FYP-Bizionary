@@ -10,7 +10,6 @@ import {
     User,
     Settings,
     History,
-    Sliders,
     Bell,
     AlertCircle,
     TrendingUp,
@@ -359,19 +358,7 @@ const Topbar = () => {
                             ))}
                         </div>
 
-                        {/* Preferences */}
-                        {!isAccountant && (
-                            <div className="flex flex-col gap-1.5 border-t border-card pt-3">
-                                <span className="text-[9px] font-bold text-secondary uppercase tracking-wider px-2 mb-0.5">Preferences</span>
-                                <button
-                                    onClick={() => { setIsDropdownOpen(false); navigate('/settings'); }}
-                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl text-left text-xs font-semibold text-primary hover:bg-active-pill/20 hover:pl-4 transition-all duration-200"
-                                >
-                                    <Sliders className="h-3.5 w-3.5 text-secondary" />
-                                    <span>API Configuration</span>
-                                </button>
-                            </div>
-                        )}
+
 
                         {/* Logout */}
                         <div className="border-t border-card pt-3">

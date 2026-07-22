@@ -16,7 +16,6 @@ import {
     User,
     Settings,
     History,
-    Sliders,
     TrendingUp,
     Bell,
     AlertCircle
@@ -395,24 +394,7 @@ const Navbar = ({ onToggleSidebar }) => {
                         </button>
                     </div>
 
-                    {/* Section 3: Preferences / AI Toggles */}
-                    {!isAccountant && (
-                        <div className="flex flex-col gap-1.5 border-t border-card dark:border-slate-800/80 pt-3">
-                            <span className="text-[9px] font-bold text-secondary dark:text-secondary uppercase tracking-wider px-2 mb-0.5">Preferences</span>
-                            
-                            {/* API Config button */}
-                            <button
-                                onClick={() => {
-                                    setIsDropdownOpen(false);
-                                    navigate('/settings');
-                                }}
-                                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-left text-xs font-semibold text-primary dark:text-slate-350 hover:bg-page dark:hover:bg-primary/60 hover:text-primary dark:hover:text-card hover:pl-4 transition-all duration-200 ease-in-out"
-                            >
-                                <Sliders className="h-3.5 w-3.5 text-secondary" />
-                                <span>API Configuration</span>
-                            </button>
-                        </div>
-                    )}
+
 
                     {/* Section 4: Danger Zone */}
                     <div className="border-t border-card dark:border-slate-800/80 pt-3">
